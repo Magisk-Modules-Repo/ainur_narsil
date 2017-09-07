@@ -1,0 +1,20 @@
+#!/system/bin/sh
+# AINUR SAURON
+# Alsa configurator
+
+if [ -d "/system_root" ]; then
+  ROOT=/system_root
+else
+  ROOT=""
+fi
+
+mount -t debugfs debugfs /sys/kernel/debug
+
+chmod 777 $ROOT/dev/snd/*
+chown 0:0 $ROOT/dev/snd/*
+
+alsa_ctl restore
+
+export AUDIODRIVER alsa
+
+alsa_ctl store
