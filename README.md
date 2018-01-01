@@ -7,7 +7,7 @@
  
 ## Troubleshooting
  - if flash fails, provide recovery logs 
- - if boot fails, provide device logs and magisk logs
+ - if boot fails, provide ADB logs and magisk logs
 
 ## Support
  - [Ainur Audio @ XDA-Developers](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516)
