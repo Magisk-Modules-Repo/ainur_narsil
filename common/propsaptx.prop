@@ -1,0 +1,7 @@
+#setprop persist.service.btui.use_aptx 1
+#setprop audio.a2dp.codec.latency 0
+setprop persist.bt.enableAptXHD true
+setprop persist.bt.a2dp.aptx_disable false
+setprop persist.bt.a2dp.aptx_hd_disable false
+#setprop persist.bt.a2dp_offload_cap=sbc-aptx-aptxhd
+setprop persistent.bt.a2dp_offload_cap=sbc-aptx-aptXHD-aac-ldac

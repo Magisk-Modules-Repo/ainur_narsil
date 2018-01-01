@@ -1,0 +1,12 @@
+setprop tunnel.audio.encode false
+setprop audio_hal.period_size 192
+setprop audio.pp.asphere.enabled false
+setprop audio.safx.pbe.enabled true
+#setprop audio.deep_buffer.media false
+setprop ro.ril.enable.amr.wideband 1
+setprop persist.dev.pm.dyn_samplingrate 1
+setprop lpa.decode false
+setprop lpa.use-stagefright false
+setprop lpa.releaselock false
+#setprop alsa.mixer.playback.master DAC1
+setprop ro.lenovo.hifi_support true

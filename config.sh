@@ -23,10 +23,6 @@
 
 # NOTE: This part has to be adjusted to fit your own needs
 
-# This will be the folder name under /magisk
-# This should also be the same as the id in your module.prop to prevent confusion
-AMLID=audmodlib
-
 # Set to true if you need to enable Magic Mount
 # Most mods would like it to be enabled
 AUTOMOUNT=true
@@ -35,7 +31,7 @@ AUTOMOUNT=true
 POSTFSDATA=true
 
 # Set to true if you need late_start service script
-LATESTARTSERVICE=false
+LATESTARTSERVICE=true
 
 ##########################################################################################
 # Installation Message
@@ -45,13 +41,16 @@ LATESTARTSERVICE=false
 
 print_modname() {
   ui_print " "
-  ui_print "    *******************************************"
-  ui_print "    *<name>*"
-  ui_print "    *******************************************"
-  ui_print "    *             Universal - Mod             *"
-  ui_print "    *<version>*"
-  ui_print "    *<author>*"
-  ui_print "    *******************************************"
+  ui_print "                                               "
+  ui_print "                    A I N U R                  " 
+  ui_print "                   S A U R O N                 " 
+  ui_print "                    M K    II                  " 
+  ui_print "                                               "
+  # ui_print "    *<name>*"
+  # ui_print "    *******************************************"
+  # ui_print "    *<version>*"
+  ui_print "     <author> "
+  ui_print "                                               "
   ui_print " "
 }
 
@@ -84,9 +83,9 @@ REPLACE="
 # NOTE: This part has to be adjusted to fit your own needs
 
 set_permissions() {
-  # DEFAULT PERMISSIONS, DON'T REMOVE THEM
-  test "$MAGISK" == "true" && set_perm_recursive $MODPATH 0 0 0755 0644
-
+  # DEFAULT PERMISSIONS, DON'T REMOVE THEM 
+  test "$MAGISK" == "true" && set_perm_recursive $MODPATH 0 0 0755 0644 
+ 
   # CUSTOM PERMISSIONS
   
   # Some templates if you have no idea what to do:
@@ -97,7 +96,7 @@ set_permissions() {
   # set_perm_recursive  <dirname>                <owner> <group> <dirpermission> <filepermission> <contexts> (default: u:object_r:system_file:s0)
   # set_perm_recursive $UNITY$SYS/lib 0 0 0755 0644
   # set_perm_recursive $UNITY$VEN/lib/soundfx 0 0 0755 0644
-  set_perm_recursive $MODPATH$SYS/bin 0 0 0755 0777
+  test "$MAGISK" == "true" && set_perm_recursive $UNITY$SYS/bin 0 0 0755 0777
 
   # set_perm  <filename>                         <owner> <group> <permission> <contexts> (default: u:object_r:system_file:s0)
   # set_perm $UNITY$SYS/lib/libart.so 0 0 0644

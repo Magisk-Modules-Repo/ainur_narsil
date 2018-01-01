@@ -1,50 +1,38 @@
-# v DO NOT MODIFY v
-# See instructions file for predefined variables
-# User defined custom rules
-# Can have multiple ones based on when you want them to be run
-# You can create copies of this file and name is the same as this but with the next number after it (ex: unity-customrules2.sh)
-# See instructions for TIMEOFEXEC values, do not remove it
-# Do not remove last 3 lines (the if statement). Add any files added in custom rules before the sed statement and uncomment the whole thing (ex: echo "$UNITY$SYS/lib/soundfx/libv4a_fx_ics.so" >> $INFO)
-# ^ DO NOT MODIFY ^
-TIMEOFEXEC=2
-if [ "$QCP" ]; then
-  $MK_PRFX $UNITY$SFX$MK_SFFX
-  $MK_PRFX $UNITY$VSFX$MK_SFFX
-  if [ -d "$VLIB64" ]; then
-	$MK_PRFX $UNITY$VSFX64$MK_SFFX
-  fi
-  if [ -d "$ACDBDATA" ]; then
-	  $MK_PRFX $UNITY$ACDBDATA$MK_SFFX
-  fi
-  if [ "$M9" ]; then
-	  $MK_PRFX $UNITY$ETC$MK_SFFX
-	  $MK_PRFX $UNITY$LIB$MK_SFFX
-	  if [ -d "$LIB64" ]; then
-		$MK_PRFX $UNITY$LIB64$MK_SFFX
-	  fi
-	  if [ $API -ge 24 ] && [ -d "$SFX64" ]; then
-		$MK_PRFX $UNITY$SFX64$MK_SFFX
-	  fi
-  fi  
-  if [ -e "$HTC_CONFIG_FILE" ]; then
-	  $MK_PRFX $UNITY$ETC$MK_SFFX
-	  $MK_PRFX $UNITY$LIB$MK_SFFX
-  fi
-  $MK_PRFX $UNITY$VLIB$MK_SFFX
-  $MK_PRFX $UNITY$LIB/modules$MK_SFFX
-  $MK_PRFX $UNITY$ADSP$MK_SFFX
-  $MK_PRFX $UNITY$BIN$MK_SFFX
-  if [ -d "$VLIB64" ]; then
-	$MK_PRFX $UNITY$VLIB64$MK_SFFX
-  fi
-fi
-if [ -d "$LIB64" ]; then
-  $MK_PRFX $UNITY$SFX64$MK_SFFX
-fi
-if [ "$XML" == true ]; then
-  $MK_PRFX $UNITY$XBIN
-fi
+TIMEOFEXEC=4
 
-#if [ "$MAGISK" == false ]; then
-#    sed -i 's/\/system\///g' $INFO
-#fi
+get_uo() {
+  eval "$1=$(grep_prop "$2" $AUO)"
+  if [ -z $(eval echo \$$1) ]; then
+    eval "$1=false"
+  else
+    case $(eval echo \$$1) in
+      "true"|"True"|"TRUE") eval "$1=true";;
+      *) eval "$1=false";;
+    esac
+  fi
+  if [ ! -z $3 ]; then
+    test -z \$$3 && eval "$1=false"
+  fi
+}
+
+AUO=$UNITY$SYS/etc/sauron_useroptions
+get_uo "AP" "audpol"
+get_uo "FMAS" "install.fmas"
+get_uo "SHB" "qc.install.shoebox" "QCP"
+get_uo "OAP" "qc.out.audpol" "QCP"
+get_uo "ASP" "qc.install.asp" "QCP"
+get_uo "APTX" "qc.install.aptx" "QCP"
+get_uo "HWD" "qc.install.hw.dolby" "QCP"
+get_uo "COMP" "qc.remove.compander" "QCP"
+if [ "$QCP" ]; then
+  IMPEDANCE=$(grep_prop "qc.impedance" $AUO)
+  RESAMPLE=$(grep_prop "qc.resample.khz" $AUO)
+  BTRESAMPLE=$(grep_prop "qc.bt.resample.khz" $AUO)     
+  case $(grep_prop "qc.bitsize" $AUO) in
+    16) BIT=S16_LE;;
+    24) BIT=S24_LE;;
+    32) $QCNEW && BIT=S32_LE || BIT="";;
+    *) BIT="";;
+  esac
+fi
+rm -f $AUO

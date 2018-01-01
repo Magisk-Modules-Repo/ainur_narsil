@@ -1,33 +1,32 @@
-#!/system/bin/sh
-# Please don't hardcode /magisk/modname/... ; instead, please use $MODDIR/...
-# This will make your scripts compatible even if Magisk change its mount point in the future
-MODDIR=${0%/*}
-
-# This script will be executed in late_start service mode
-# More info in the main Magisk thread
-
-ABDeviceCheck=$(cat /proc/cmdline | grep slot_suffix | wc -l)
-if [ "$ABDeviceCheck" -gt 0 ]; then
-  isABDevice=true
-  if [ -d "/system_root" ]; then
-    ROOT=/system_root
-    SYSTEM=$ROOT/system
-  else
-    ROOT=""
-    SYSTEM=$ROOT/system/system
+# Hexagon DTS script by UltraM8
+set_metadata() {
+  file="$1"
+  if [ -e "$file" ]; then
+    shift
+    until [ ! "$2" ]; do
+    case $1 in
+      uid) chown "$2" "$file";;
+      gid) chown :"$2" "$file";;
+      mode) chmod "$2" "$file";;
+      capabilities) ;;
+      selabel)
+      chcon -h "$2" "$file"
+      chcon "$2" "$file"
+      ;;
+      *) ;;
+    esac
+    shift 2
+    done
   fi
-else
-  isABDevice=false
-  ROOT=""
-  SYSTEM=$ROOT/system
-fi
-
-if [ $isABDevice == true ] || [ ! -d $SYSTEM/vendor ]; then
-  VENDOR=/vendor
-else
-  VENDOR=$SYSTEM/vendor
-fi
-
-if [ -e "$MODDIR/sauron_alsa" ]; then
-  $SYSTEM/bin/sh $MODDIR/sauron_alsa
-fi
+}
+chcon 'u:object_r:dts_data_file:s0' /data/misc/dts/*
+set_metadata /data/misc/dts/effect uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect9 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect13 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect17 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect21 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect24 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect25 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_metadata /data/misc/dts/effect33 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
+set_sepolicy audioserver dts_data_file dir open,getattr,search,read,execute,associate
+set_sepolicy mediaserver dts_data_file dir open,getattr,search,read,execute,associate

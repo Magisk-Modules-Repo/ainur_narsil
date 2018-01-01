@@ -1,0 +1,3 @@
+# setprop af.resample ?
+setprop af.resampler.quality 7
+setprop persist.af.resampler.quality 7

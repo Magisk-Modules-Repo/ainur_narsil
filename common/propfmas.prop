@@ -1,0 +1,4 @@
+setprop fmas.spkr_6ch 35,20,110
+setprop fmas.spkr_2ch 35,25
+setprop fmas.spkr_angles 10
+setprop fmas.spkr_sgain 1
