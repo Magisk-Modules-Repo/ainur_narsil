@@ -8,7 +8,7 @@
  - if boot fails, provide ADB logs and magisk logs
 
 ## Support & Extra features
- - [Ainur Audio @ XDA-Developers](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516)
+ - [Ainur Audio @ XDA-Developers](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516) to find out extra stuff
  - [Ainur Audio @ Telegram](https://t.me/ainuraudio)
  - [Ainur Audio @ 4pda](http://4pda.ru/forum/index.php?showtopic=744922)
 
