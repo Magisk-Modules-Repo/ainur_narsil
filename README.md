@@ -1,15 +1,13 @@
 # Ainur Sauron MK II
 
 ## Installation instructions
- - Flash module
- - ???
- - profit !!!
+ - Magisk install uses Basic and Advanced features, which install automatically by Sauron. To know how to use extra stuff, go to official xda, or 4pda threads (links below) 
  
 ## Troubleshooting
  - if flash fails, provide recovery logs 
  - if boot fails, provide ADB logs and magisk logs
 
-## Support
+## Support & Extra features
  - [Ainur Audio @ XDA-Developers](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516)
  - [Ainur Audio @ Telegram](https://t.me/ainuraudio)
  - [Ainur Audio @ 4pda](http://4pda.ru/forum/index.php?showtopic=744922)
