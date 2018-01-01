@@ -19,4 +19,4 @@
  - [Ainur Sauron](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516)
  - [Magisk](https://github.com/topjohnwu/Magisk) by [topjohnwu](https://forum.xda-developers.com/member.php?u=4470081)
  - [Magisk module template](https://github.com/topjohnwu/magisk-module-template) by [topjohnwu](https://forum.xda-developers.com/member.php?u=4470081)
- - [Audio Modification Library] (https://github.com/therealahrion/Audio-Modification-Library)
+ - [Audio Modification Library](https://github.com/therealahrion/Audio-Modification-Library)
