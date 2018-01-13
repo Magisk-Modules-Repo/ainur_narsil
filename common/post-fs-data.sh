@@ -14,7 +14,7 @@ if [ $IDE ]; then
 	chmod 444 $IDE
 fi
 
-#Preallocate DMA memory buffer expander
+#Preallocate DMA memory buffer expander by UltraM8@XDA
 MSS=$(find $ROOT/sys/module -name maximum_substreams)
 if [ $MSS ]; then
 	chmod 666 $MSS
@@ -37,7 +37,7 @@ G6=$(grep "ro.product.device=lucye" $SYS/build.prop)
 Z9=$(grep "ro.product.model=NX508J" $SYS/build.prop)
 Z9M=$(grep -E "ro.product.model=NX510J|ro.product.model=NX518J" $SYS/build.prop)
 Z11=$(grep "ro.product.model=NX531J" $SYS/build.prop)
-LX3=$(grep "ro.build.product=X3c50" $SYS/build.prop)
+LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
 
 # Mixer edits by UltraM8
 if [ "$AX7" ]; then

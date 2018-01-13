@@ -171,7 +171,7 @@ if [ "$QCP" ]; then
       patch_mixer_toplevel "HIFI Custom Filter" "6" $AMLPATH$MIX
     fi  
     if [ -f $AMPA ]; then 
-      patch_mixer_toplevel "HTC_AS20_VOL Index" "Fourteen" $AMLPATH$MIX
+      patch_mixer_toplevel "HTC_AS20_VOL Index" "Eleven" $AMLPATH$MIX
     fi 
     if [ "$QC8996" ] && [ "$QC8998" ]; then 
       patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn" $AMLPATH$MIX
@@ -204,11 +204,11 @@ if [ "$QCP" ]; then
     patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS" $AMLPATH$MIX
     patch_mixer_toplevel "DS2 OnOff" "Off" $AMLPATH$MIX	
     # HW  DTS HPX edits  ##	
-    if $HWD; then
-      patch_mixer_toplevel "DS2 OnOff" "On" $AMLPATH$MIX
-      patch_mixer_toplevel "Set HPX OnOff" "0" $AMLPATH$MIX
-      patch_mixer_toplevel "Set HPX ActiveBe" "0" $AMLPATH$MIX	  
-    fi  
+#    if $HWD; then
+#      patch_mixer_toplevel "DS2 OnOff" "On" $AMLPATH$MIX
+#      patch_mixer_toplevel "Set HPX OnOff" "0" $AMLPATH$MIX
+#      patch_mixer_toplevel "Set HPX ActiveBe" "0" $AMLPATH$MIX	  
+#    fi  
     # APTX Dec License ##
     # Codec Bandwith Expansion
     patch_mixer_toplevel "Codec Wideband" "1" $AMLPATH$MIX

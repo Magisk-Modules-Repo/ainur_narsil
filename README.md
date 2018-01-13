@@ -1,19 +1,20 @@
 # Ainur Sauron MK II
 
 ## Installation instructions
- - Flash module, profit
+ - Magisk install uses Basic and Advanced features, which install automatically by Sauron. To know how to use extra stuff, go to official xda, or 4pda threads (links below) 
  
 ## Troubleshooting
  - if flash fails, provide recovery logs 
- - if boot fails, provide device logs and magisk logs
- - always make a nandroid backup before flashing test-builds
- - when bootlooping, flash mount magisk from here: https://forum.xda-developers.com/apps/magisk/collection-magisk-modules-t3445257, open file manager, go to magisk folder and delete AINUR module or flash magisk uninstaller from magisk thread and start fresh
+ - if boot fails, provide ADB logs and magisk logs
 
-## Support
- - [Ainur Audio @ XDA-Developers](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516)
+## Support & Extra features
+ - [Ainur Audio @ XDA-Developers](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516) to find out extra stuff
+ - [Ainur Audio @ Telegram](https://t.me/ainuraudio)
+ - [Ainur Audio @ 4pda](http://4pda.ru/forum/index.php?showtopic=744922)
+
  
 ## Sources and used/needed tools
- - [Sauron] (https://github.com/ObyeBoss/Ainur_Audio_Sauron)
+ - [Ainur Sauron](https://forum.xda-developers.com/android/software/soundmod-ainur-audio-t3450516)
  - [Magisk](https://github.com/topjohnwu/Magisk) by [topjohnwu](https://forum.xda-developers.com/member.php?u=4470081)
  - [Magisk module template](https://github.com/topjohnwu/magisk-module-template) by [topjohnwu](https://forum.xda-developers.com/member.php?u=4470081)
- - [Audio Modification Library] (https://github.com/therealahrion/Audio-Modification-Library)
+ - [Audio Modification Library](https://github.com/therealahrion/Audio-Modification-Library)

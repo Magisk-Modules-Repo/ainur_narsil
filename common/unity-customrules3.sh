@@ -30,16 +30,16 @@ else
   ui_print "   sauron_useroptions detected"
   ui_print "   Using specified options"
 fi
-$CP_NBPRFX $AUO $UNITY$SYS/etc/sauron_useroptions
+$CP_NBPRFX $AUO $SYS/etc/sauron_useroptions
 AUO=$UNITY$SYS/etc/sauron_useroptions
-test "$MAGISK" == false && sed -i "/^EOF/ i\\$AUO" $INSTALLER/system/addon.d/modid.sh
+$MAGISK || sed -i "/^EOF/ i\\$AUO" $INSTALLER/system/addon.d/modid.sh
 get_uo "AP" "audpol"
 get_uo "FMAS" "install.fmas"
 get_uo "SHB" "qc.install.shoebox" "QCP"
 get_uo "OAP" "qc.out.audpol" "QCP"
 get_uo "ASP" "qc.install.asp" "QCP"
 get_uo "APTX" "qc.install.aptx" "QCP"
-get_uo "HWD" "qc.install.hw.dolby" "QCP"
+#get_uo "HWD" "qc.install.hw.dolby" "QCP"
 get_uo "COMP" "qc.remove.compander" "QCP"
 if [ "$QCP" ]; then
   IMPEDANCE=$(grep_prop "qc.impedance" $AUO)

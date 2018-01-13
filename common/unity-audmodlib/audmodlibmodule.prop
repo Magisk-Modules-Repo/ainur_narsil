@@ -1,7 +1,7 @@
 id=AudModLib
 name=Audio Modification Library
-version=v2.8
-versionCode=14
+version=v2.9
+versionCode=15
 author=ahrion, zackptg5
 description=AudModLib is a framework that allows the seamless integration of multiple audio mods in Magisk
 support=https://forum.xda-developers.com/apps/magisk/module-audio-modification-library-t3579612

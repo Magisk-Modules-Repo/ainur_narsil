@@ -35,11 +35,6 @@ audpol=
 qc.out.audpol=
 
 #
-# Install Hexagon DSP Dolby modules, props & drivers
-# Can be set true or false
-qc.install.hw.dolby=
-
-#
 # Qualcomm 3D audio effect
 # Install Audiosphere SW & HW effect drivers
 # Can be set true or false

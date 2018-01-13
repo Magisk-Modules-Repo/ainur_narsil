@@ -25,7 +25,15 @@ VSFX64=$VLIB64/soundfx
 VETC=$VEN/etc
 HW=$LIB/hw
 SUD=$SYS/su.d
-ADSP=$VEN/lib/rfsa/adsp
+DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
+if [ -z $DSPBLOCK ]; then
+  ADSP=$VEN/lib/rfsa/adsp
+else
+  ADSP=/dsp
+  mkdir /dsp
+  if is_mounted /dsp; then mount -o remount,rw $DSPBLOCK /dsp; else mount -o rw $DSPBLOCK /dsp; fi
+  is_mounted /dsp || { ui_print "! Cannot mount /dsp"; exit 1; }
+fi
 ACDB=$ETC/acdbdata
 AMPA=$ETC/TAS2557_A.ftcfg
 HWDTS=/dsp/DTS_HPX_MODULE.so.1
@@ -58,6 +66,6 @@ G6=$(grep "ro.product.device=lucye" $SYS/build.prop)
 Z9=$(grep "ro.product.model=NX508J" $SYS/build.prop)
 Z9M=$(grep -E "ro.product.model=NX510J|ro.product.model=NX518J" $SYS/build.prop)
 Z11=$(grep "ro.product.model=NX531J" $SYS/build.prop)
-LX3=$(grep "ro.build.product=X3c50" $SYS/build.prop)
+LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
 OP5=$(grep -E "ro.build.product=OnePlus5|ro.build.product=OnePlus5T" $SYS/build.prop)
 X9=$(grep "ro.product.model=X900*" $SYS/build.prop)
