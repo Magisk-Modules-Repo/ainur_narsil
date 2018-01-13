@@ -46,7 +46,7 @@ qc.install.asp=
 qc.install.shoebox=
 
 #
-# Install Aptx/HD drivers & HW offloadable cappi modules & props
+# Install Aptx/HD dirvers & HW offloadable cappi modules & props
 # Needs further improvements
 # Can be set true or false
 qc.install.aptx=
