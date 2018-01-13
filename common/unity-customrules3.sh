@@ -30,9 +30,9 @@ else
   ui_print "   sauron_useroptions detected"
   ui_print "   Using specified options"
 fi
-$CP_NBPRFX $AUO $UNITY$SYS/etc/sauron_useroptions
+$CP_NBPRFX $AUO $SYS/etc/sauron_useroptions
 AUO=$UNITY$SYS/etc/sauron_useroptions
-test "$MAGISK" == false && sed -i "/^EOF/ i\\$AUO" $INSTALLER/system/addon.d/modid.sh
+$MAGISK || sed -i "/^EOF/ i\\$AUO" $INSTALLER/system/addon.d/modid.sh
 get_uo "AP" "audpol"
 get_uo "FMAS" "install.fmas"
 get_uo "SHB" "qc.install.shoebox" "QCP"

@@ -25,7 +25,15 @@ VSFX64=$VLIB64/soundfx
 VETC=$VEN/etc
 HW=$LIB/hw
 SUD=$SYS/su.d
-ADSP=$VEN/lib/rfsa/adsp
+DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
+if [ -z $DSPBLOCK ]; then
+  ADSP=$VEN/lib/rfsa/adsp
+else
+  ADSP=/dsp
+  mkdir /dsp
+  if is_mounted /dsp; then mount -o remount,rw $DSPBLOCK /dsp; else mount -o rw $DSPBLOCK /dsp; fi
+  is_mounted /dsp || { ui_print "! Cannot mount /dsp"; exit 1; }
+fi
 ACDB=$ETC/acdbdata
 AMPA=$ETC/TAS2557_A.ftcfg
 HWDTS=/dsp/DTS_HPX_MODULE.so.1

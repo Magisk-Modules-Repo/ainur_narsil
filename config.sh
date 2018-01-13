@@ -46,10 +46,8 @@ print_modname() {
   ui_print "                   S A U R O N                 " 
   ui_print "                    M K    II                  " 
   ui_print "                                               "
-  # ui_print "    *<name>*"
-  # ui_print "    *******************************************"
-  # ui_print "    *<version>*"
-  ui_print "     <author> "
+  ui_print "          by: UltraM8, Zackptg5, Ahrion,       "
+  ui_print "              James34602, LazerL0rd            "
   ui_print "                                               "
   ui_print " "
 }

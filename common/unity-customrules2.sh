@@ -36,3 +36,8 @@ if [ "$QCP" ]; then
   esac
 fi
 rm -f $AUO
+
+# Unmount dsp partition if applicable
+if [ "$DSPBLOCK" ]; then
+  if $BOOTMODE; then mount -o remount,ro $DSPBLOCK /dsp; else umount -l /dsp 2>/dev/null; rm -rf /dsp; fi
+fi

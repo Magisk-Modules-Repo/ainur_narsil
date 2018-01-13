@@ -71,6 +71,35 @@ is_mounted() {
   return $?
 }
 
+find_boot_image() {
+  BOOTIMAGE=
+  if [ ! -z $SLOT ]; then
+    BOOTIMAGE=`find /dev/block -iname boot$SLOT | head -n 1` 2>/dev/null
+  fi
+  if [ -z "$BOOTIMAGE" ]; then
+    # The slot info is incorrect...
+    SLOT=
+    for BLOCK in boot_a kern-a android_boot kernel boot lnx bootimg; do
+      BOOTIMAGE=`find /dev/block -iname $BLOCK | head -n 1` 2>/dev/null
+      [ ! -z $BOOTIMAGE ] && break
+    done
+  fi
+  # Recovery fallback
+  if [ -z "$BOOTIMAGE" ]; then
+    for FSTAB in /etc/*fstab*; do
+      BOOTIMAGE=`grep -v '#' $FSTAB | grep -E '/boot[^a-zA-Z]' | grep -oE '/dev/[a-zA-Z0-9_./-]*'`
+      [ ! -z $BOOTIMAGE ] && break
+    done
+  fi
+  [ ! -z "$BOOTIMAGE" ] && BOOTIMAGE=`resolve_link $BOOTIMAGE`
+}
+
+
+find_dtbo_image() {
+  DTBOIMAGE=`find /dev/block -iname dtbo$SLOT | head -n 1` 2>/dev/null
+  [ ! -z $DTBOIMAGE ] && DTBOIMAGE=`resolve_link $DTBOIMAGE`
+}
+
 mount_partitions_system() {
   # Check A/B slot
   SLOT=`getprop ro.boot.slot_suffix`
@@ -78,6 +107,9 @@ mount_partitions_system() {
     SLOT=_`getprop ro.boot.slot`
     [ $SLOT = "_" ] && SLOT=
   fi
+  # Check the boot image to make sure the slot actually make sense
+  find_boot_image
+  find_dtbo_image
   [ -z $SLOT ] || ui_print "- A/B partition detected, current slot: $SLOT"
   ui_print "- Mounting /system, /vendor"
   REALSYS=/system
@@ -85,7 +117,7 @@ mount_partitions_system() {
   if ! is_mounted /system && ! [ -f /system/build.prop ]; then
     SYSTEMBLOCK=`find /dev/block -iname system$SLOT | head -n 1`
     mount -t ext4 -o rw $SYSTEMBLOCK /system
-    REALSYS=/system/system
+    REALSYS=$SYSTEMBLOCK
   fi
   is_mounted /system || [ -f /system/build.prop ] || abort "! Cannot mount /system"
   cat /proc/mounts | grep -E '/dev/root|/system_root' >/dev/null && SKIP_INITRAMFS=true || SKIP_INITRAMFS=false
@@ -222,6 +254,14 @@ action_complete() {
   if $INSTALL; then ui_print "    $TMP Installer by ahrion & zackptg5 @ XDA"; else ui_print "    $TMP Uninstaller by ahrion & zackptg5 @ XDA"; fi
 }
 
+device_check() { 
+  if [ "$(grep_prop ro.product.device)" == "$1" ] || [ "$(grep_prop ro.build.product)" == "$1" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 sys_wipe_ch() {
   TPARTMOD=false
   cat $INFO | {
@@ -268,18 +308,25 @@ wipe_ch() {
 }
 
 cp_ch() {
-  mkdir -p "${2%/*}"
-  chmod 0755 "${2%/*}"
-  cp -af "$1" "$2"
-  if [ -z $3 ]; then chmod 0644 "$2"; else chmod "$3" "$2"; fi
+  case $2 in
+    $MOUNTPATH/audmodlib*) CP=$2;;
+    */system/*|*/vendor/*) CP=$UNITY$2;;
+    *) CP=$2;;
+  esac
+  mkdir -p "${CP%/*}"
+  chmod 0755 "${CP%/*}"
+  cp -af "$1" "$CP"
+  if [ -z $3 ]; then chmod 0644 "$CP"; else chmod "$3" "$CP"; fi
 }
 
-sys_cp_ch() {
-  if [ -f "$2" ] && [ ! -f "$2.bak" ]; then
-    cp -f "$2" "$2.bak"
-    echo "$2.bak" >> $INFO
+cp_ch_bak() {
+  if ! $MAGISK; then
+    if [ -f "$2" ] && [ ! -f "$2.bak" ]; then
+      cp -f "$2" "$2.bak"
+      echo "$2.bak" >> $INFO
+    fi
+    test ! "$(grep "$2" $INFO)" && echo "$2" >> $INFO
   fi
-  test ! "$(grep "$2" $INFO)" && echo "$2" >> $INFO
   cp_ch $1 $2 $3
 }
 
@@ -329,9 +376,9 @@ add_to_info() {
 
 custom_app_install() {
   if $OREONEW; then
-    $CP_PRFX $INSTALLER/custom/$1/$1.apk $UNITY$VEN/app/$1/$1.apk
+    $CP_PRFX $INSTALLER/custom/$1/$1.apk $VEN/app/$1/$1.apk
   else
-    if $OLDAPP; then $CP_PRFX $INSTALLER/custom/$1/$1.apk $UNITY/system/app/$1.apk; else $CP_PRFX $INSTALLER/custom/$1/$1.apk $UNITY/system/priv-app/$1/$1.apk; fi
+    if $OLDAPP; then $CP_PRFX $INSTALLER/custom/$1/$1.apk /system/app/$1.apk; else $CP_PRFX $INSTALLER/custom/$1/$1.apk /system/priv-app/$1/$1.apk; fi
   fi
 }
 
@@ -365,15 +412,19 @@ unzip -o "$ZIP" -d $INSTALLER 2>/dev/null
 
 [ ! -f $INSTALLER/config.sh ] && { ui_print "! Unable to extract zip file !"; exit 1; }
 
+test "$(grep_prop id $INSTALLER/module.prop)" == "AMLTemplate" && { ui_print "! AML Template is not a separate module !"; ui_print "! AML is already included in all modules that use it !"; ui_print "! This template is for devs only !"; exit 1; }
+
 # INSERT MODULE INFO INTO CONFIG.SH
 for TMP in version name author; do
   NEW=$(grep_prop $TMP $INSTALLER/module.prop)
   test "$TMP" == "author" && NEW="by ${NEW}"
   CHARS=$((${#NEW}-$(echo "$NEW" | tr -cd "©®™" | wc -m)))
   SPACES=""
-  for i in $(seq $(((41-$CHARS) / 2))); do
-    SPACES="${SPACES} "
-  done
+  if [ $CHARS -le 41 ]; then
+    for i in $(seq $(((41-$CHARS) / 2))); do
+      SPACES="${SPACES} "
+    done
+  fi
   if [ $(((41-$CHARS) % 2)) == 1 ]; then sed -i "s/<$TMP>/$SPACES$NEW${SPACES} /" $INSTALLER/config.sh; else sed -i "s/<$TMP>/$SPACES$NEW$SPACES/" $INSTALLER/config.sh; fi
 done
 
@@ -412,6 +463,7 @@ pre_install() {
   
   # UNIVERSAL VARIABLES
   CP_NBPRFX="cp_ch"
+  CP_PRFX="cp_ch_bak"
   WP_PRFX="wipe_ch"
   SYS=/system
   
@@ -447,9 +499,8 @@ magisk_install() {
   # PREP FILES & VARIABLES
   pre_install
   MAGISK=true
-  CP_PRFX="cp_ch"
-  WPAPP_PRFX="mktouch"
   UNITY="$MODPATH"
+  WPAPP_PRFX="mktouch"
   AMLSCRIPT="$AMLPATH/post-fs-data.sh"
   if $BOOTMODE; then
     INFO="/sbin/.core/img/$MODID/$MODID-files"
@@ -506,9 +557,8 @@ system_install() {
   fi
   # SYSTEM ONLY VARIABLES
   MAGISK=false
-  CP_PRFX="sys_cp_ch"
-  WPAPP_PRFX="sys_wipe_ch"
   UNITY=""
+  WPAPP_PRFX="sys_wipe_ch"
   AMLPATH=""
   PROPFILE="$SH/$MODID-props"
   AMLSCRIPT="$SH/audmodlib-post-fs-data"
@@ -566,23 +616,6 @@ unity_prop_copy() {
   fi
 }
 
-# UNITY FILE/FOLDER WIPE
-unity_mod_wipe() {
-  ui_print " "
-  ui_print "- Wiping conflicting files/folders -"
-  $MAGISK || rm -f $CONFPROPS
-  test ! -f "$INFO" && mktouch $INFO
-
-  cat $INSTALLER/common/unity-files-wipe.sh | while read LINE; do
-    wipe_ch $LINE
-  done
-
-  NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
-    test "$(grep "TIMEOFEXEC=1" $INSTALLER/common/unity-customrules$NUM.sh)" && source $INSTALLER/common/unity-customrules$NUM.sh
-    NUM=$((NUM+1))
-  done
-}
-
 # AUDIO MODIFICATION LIBRARY
 aml_mod() {
   ### CREATE AUDIO MODIFICATION LIBRARY ###
@@ -598,6 +631,12 @@ aml_mod() {
     fi
     test ! -f $AMLPATH$FILE && $CP_NBPRFX $FILE $AMLPATH$FILE
   done
+  # Create vendor audio_effects.conf if missing
+  if [ -f /system/etc/audio_effects.conf ] && [ ! -f $VEN/etc/audio_effects.conf ]; then
+    $MAGISK || { add_to_info $VEN/etc/audio_effects.conf $AMLINFO; add_to_info $VEN/etc/audio_effects.conf.bak $AMLINFO; }
+    if [ -f /system/etc/audio_effects.conf.bak ]; then $CP_NBPRFX /system/etc/audio_effects.conf.bak $AMLPATH$VEN/etc/audio_effects.conf.bak; else $CP_NBPRFX /system/etc/audio_effects.conf $AMLPATH$VEN/etc/audio_effects.conf.bak; fi
+    $CP_NBPRFX /system/etc/audio_effects.conf $AMLPATH$VEN/etc/audio_effects.conf
+  fi
   
   if $INSTALL && [ ! -f $AMLSCRIPT ]; then
     $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlib-post-fs-data.sh $AMLSCRIPT 0755
@@ -648,13 +687,13 @@ aml_mod_patch() {
   source $INSTALLER/common/aml-patches-remove.sh
   
   for FILE in /system/etc/audio_effects.conf $VEN/etc/audio_effects.conf; do
-    if [ -f $FILE ] && [ ! "$(grep '^# *volume_listener {' $AMLPATH$FILE)" ] && [ "$(grep '^ *volume_listener {' $AMLPATH$FILE)" ]; then
-      sed -i '/volume_listener {/,/}/ s/^/#/' $AMLPATH$FILE
+    if [ -f $FILE ] && [ ! "$(grep '^# *music {' $AMLPATH$FILE)" ] && [ "$(grep '^ *music {' $AMLPATH$FILE)" ]; then
+      sed -i "/output_session_processing {/,/^}/ {/music {/,/^    }/ s/^/#/g}" $AMLPATH$FILE
     fi
   done
   for FILE in /system/etc/audio_effects.xml $VEN/etc/audio_effects.xml; do
-    if [ -f $FILE ] && [ ! "$(grep '^ *<!--<library name=\"volume_listener\" path=\"libvolumelistener.so\"/>-->' $AMLPATH$FILE)" ] && [ "$(grep '^ *<library name=\"volume_listener\" path=\"libvolumelistener.so\"/>' $AMLPATH$FILE)" ]; then
-      sed -i "s|<library name=\"volume_listener\" path=\"libvolumelistener.so\"/>|<!--<library name=\"volume_listener\" path=\"libvolumelistener.so\"/>-->|" $AMLPATH$FILE
+    if [ -f $FILE ] && [ ! "$(grep '^ *<\!--<stream type=\"music\">' $AMLPATH$FILE)" ] && [ "$(grep '^ *<stream type=\"music\">' $AMLPATH$FILE)" ]; then
+      sed -i "/^ *<postprocess>$/,/<\/postprocess>/ {/<stream type=\"music\">/,/<\/stream>/ s/<stream type=\"music\">/<\!--<stream type=\"music\">/; s/<\/stream>/<\/stream>-->/}" $AMLPATH$FILE
     fi
   done
   
@@ -745,7 +784,8 @@ unity_mod_copy() {
   
   # PROCESS FOLDERS AND FILES
   find -L $INSTALLER/system -type f -print > $INSTALLER/tfiles
-  test "$(find $INSTALLER/data -type f -print)" != "$INSTALLER/data/placeholder" && find $INSTALLER/data -type f -print >> $INSTALLER/tfiles
+  rm -f $INSTALLER/data/placeholder
+  find $INSTALLER/data -type f -print >> $INSTALLER/tfiles
   sed -i -e '/addon.d/ d' -e 's/&/\\&/g' -e "s|$INSTALLER||g" $INSTALLER/tfiles
   $IS64BIT || sed -i '/lib64/ d' $INSTALLER/tfiles
   
@@ -758,7 +798,7 @@ unity_mod_copy() {
     else
       $OLDAPP && LINE2=$(echo $LINE | sed 's|/system/app/.*/|/system/app/|') || LINE2=$(echo $LINE | sed 's|/system/app/|/system/priv-app/|')
     fi
-    if [ "$(echo "$LINE" | cut -c 1-6)" == "/data/" ]; then sys_cp_ch $INSTALLER$LINE $LINE; else $CP_PRFX $INSTALLER$LINE $UNITY$LINE2; fi
+    $CP_PRFX $INSTALLER$LINE $LINE2
   done
 
   NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
@@ -852,8 +892,20 @@ standard_procedure() {
   fi
 
   if $INSTALL; then
-    # WIPE FILES
-    unity_mod_wipe
+    # MAKE INFO FILE
+    $MAGISK || rm -f $CONFPROPS
+    test ! -f "$INFO" && mktouch $INFO
+    
+    # RUN CUSTOMFULES1
+    NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
+      test "$(grep "TIMEOFEXEC=1" $INSTALLER/common/unity-customrules$NUM.sh)" && source $INSTALLER/common/unity-customrules$NUM.sh
+      NUM=$((NUM+1))
+    done
+    
+    # WIPE FILES/FOLDERS
+    cat $INSTALLER/common/unity-files-wipe.sh | while read LINE; do
+      wipe_ch $LINE
+    done
 
     # PATCH FILES
     $AUDMODLIB && aml_mod
