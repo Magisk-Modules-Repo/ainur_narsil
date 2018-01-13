@@ -687,8 +687,8 @@ aml_mod_patch() {
   source $INSTALLER/common/aml-patches-remove.sh
   
   for FILE in /system/etc/audio_effects.conf $VEN/etc/audio_effects.conf; do
-    if [ -f $FILE ] && [ ! "$(grep '^# *music {' $AMLPATH$FILE)" ] && [ "$(grep '^ *music {' $AMLPATH$FILE)" ]; then
-      sed -i "/output_session_processing {/,/^}/ {/music {/,/^    }/ s/^/#/g}" $AMLPATH$FILE
+    if [ -f $FILE ] && [ ! "$(grep '^ *# *music_helper {' $AMLPATH$FILE)" ] && [ "$(grep '^ *music_helper {' $AMLPATH$FILE)" ]; then
+      sed -i "/effects {/,/^}/ {/music_helper {/,/}/ s/^/#/g}" $AMLPATH$FILE
     fi
   done
   for FILE in /system/etc/audio_effects.xml $VEN/etc/audio_effects.xml; do
