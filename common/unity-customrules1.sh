@@ -109,13 +109,13 @@ if [ "$QCP" ]; then
       $CP_PRFX $SAU/lib/libqtigef2.so $VLIB64/libqtigef.so 
     fi  
   fi  
-  if $HWD; then
-    unity_prop_copy $INSTALLER/common/propsdolby.prop 
-    $CP_PRFX $MORG/hammer/DolbyMobileModule.so.1 $ADSP/DolbyMobileModule.so.1
-    $CP_PRFX $MORG/hammer/DolbySurroundModule.so.1 $ADSP/DolbySurroundModule.so.1
-    if [ ! -f "$VLIB/libhwdaphal.so" ]; then
-	  $CP_PRFX $SAU/lib/libhwdaphal.so $VLIB/libhwdaphal.so
-    fi	
+#  if $HWD; then
+#    unity_prop_copy $INSTALLER/common/propsdolby.prop 
+#    $CP_PRFX $MORG/hammer/DolbyMobileModule.so.1 $ADSP/DolbyMobileModule.so.1
+#    $CP_PRFX $MORG/hammer/DolbySurroundModule.so.1 $ADSP/DolbySurroundModule.so.1
+#    if [ ! -f "$VLIB/libhwdaphal.so" ]; then
+#	  $CP_PRFX $SAU/lib/libhwdaphal.so $VLIB/libhwdaphal.so
+#    fi	
   fi  
   if $APTX; then
     unity_prop_copy $INSTALLER/common/propsaptx.prop
