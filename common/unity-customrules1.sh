@@ -46,18 +46,18 @@ if [ "$QCP" ]; then
     fi
   fi  
   if [ "$M8" ]; then
-  $CP_PRFX $SAU/files/audio/tfa9887_feature.config $ETC/audio/tfa9887_feature.config
-  $CP_PRFX $SAU/files/libtfa9887.so $LIB/libtfa9887.so
+    $CP_PRFX $SAU/files/audio/tfa9887_feature.config $ETC/audio/tfa9887_feature.config
+    $CP_PRFX $SAU/files/libtfa9887.so $LIB/libtfa9887.so
   fi  
   if [ -f "$AMPA" ]; then
     unity_prop_copy $INSTALLER/common/propsresample.prop
     $CP_PRFX $SAU/files/TAS2557_A.ftcfg $ETC/TAS2557_A.ftcfg
     $CP_PRFX $SAU/files/TAS2557_B.ftcfg $ETC/TAS2557_B.ftcfg
     $CP_PRFX $SAU/files/fw/tas2557s_uCDSP_PG21.bin $ETC/firmware/tas2557s_uCDSP_PG21.bin
-	if [ -f "U11P" ]; then
-    $CP_PRFX $SAU/files/fw/tas2557s_uCDSP_24bit.bin $VETC/firmware/tas2557s_uCDSP_24bit.bin	
-    $CP_PRFX $SAU/files/fw/tas2557s_uCDSP.bin $VETC/firmware/tas2557s_uCDSP.bin
-	fi
+    if [ -f "U11P" ]; then
+      $CP_PRFX $SAU/files/fw/tas2557s_uCDSP_24bit.bin $VETC/firmware/tas2557s_uCDSP_24bit.bin	
+      $CP_PRFX $SAU/files/fw/tas2557s_uCDSP.bin $VETC/firmware/tas2557s_uCDSP.bin
+    fi
     $CP_PRFX $SAU/files/bin/ti_audio_s $BIN/ti_audio_s
   fi
   if [ "$OP5" ]; then
@@ -88,9 +88,9 @@ if [ "$QCP" ]; then
   fi
   if $ASP; then
     sed -i -r "s/audio.pp.asphere.enabled(.?)false/audio.pp.asphere.enabled\1true/" $PROPFILE
-	if [ $API -ge 26 ]; then  
-    echo "vendor.audio.pp.asphere.enabled=1" >> $PROPFILE
-	fi
+    if [ $API -ge 26 ]; then  
+      echo "vendor.audio.pp.asphere.enabled=1" >> $PROPFILE
+    fi
     $CP_PRFX $SAU/audiosphere/audiosphere.jar $SYS/framework/audiosphere.jar
     $CP_PRFX $SAU/audiosphere/audiosphere.xml $SYS/etc/permissions/audiosphere.xml
     $CP_PRFX $SAU/audiosphere/libasphere.so $SFX/libasphere.so
@@ -108,15 +108,7 @@ if [ "$QCP" ]; then
       $CP_PRFX $SAU/lib/libqtigef.so $VLIB/libqtigef.so
       $CP_PRFX $SAU/lib/libqtigef2.so $VLIB64/libqtigef.so 
     fi  
-  fi  
-#  if $HWD; then
-#    unity_prop_copy $INSTALLER/common/propsdolby.prop 
-#    $CP_PRFX $MORG/hammer/DolbyMobileModule.so.1 $ADSP/DolbyMobileModule.so.1
-#    $CP_PRFX $MORG/hammer/DolbySurroundModule.so.1 $ADSP/DolbySurroundModule.so.1
-#    if [ ! -f "$VLIB/libhwdaphal.so" ]; then
-#	  $CP_PRFX $SAU/lib/libhwdaphal.so $VLIB/libhwdaphal.so
-#    fi	
-  fi  
+  fi  	
   if $APTX; then
     unity_prop_copy $INSTALLER/common/propsaptx.prop
     if [ ! -f "$ACDB/adsp_avs_config.acdb" ]; then
