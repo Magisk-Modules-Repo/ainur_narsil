@@ -1,4 +1,4 @@
-# Hexagon DTS script by UltraM8
+# QC Hexagon DTS script by UltraM8 & Zackptg5
 set_metadata() {
   file="$1"
   if [ -e "$file" ]; then
@@ -28,5 +28,9 @@ set_metadata /data/misc/dts/effect21 uid 0 gid 0 mode 0644 capabilities 0x0 sela
 set_metadata /data/misc/dts/effect24 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
 set_metadata /data/misc/dts/effect25 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
 set_metadata /data/misc/dts/effect33 uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
-set_sepolicy audioserver dts_data_file dir open,getattr,search,read,execute,associate
-set_sepolicy mediaserver dts_data_file dir open,getattr,search,read,execute,associate
+if [ "$SEINJECT" != "/sbin/sepolicy-inject" ]; then
+  $SEINJECT --live "allow { audioserver mediaserver } dts_data_file dir { read execute open search getattr associate }"
+else
+  $SEINJECT -s audioserver -t dts_data_file -c dir -p open,getattr,search,read,execute,associate -l
+  $SEINJECT -s mediaserver -t dts_data_file -c dir -p open,getattr,search,read,execute,associate -l
+fi

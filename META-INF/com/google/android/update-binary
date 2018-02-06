@@ -18,19 +18,22 @@ $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMO
 TMPDIR=/dev/tmp
 INSTALLER=$TMPDIR/install
 
+# MAGISK PATHS
+MAGISKBIN=/data/adb/magisk
+MOUNTPATH=$TMPDIR/magisk_img
+$BOOTMODE && IMG=/data/adb/magisk_merge.img
+
+# OTHER VARIABLES
+ZIP=$3
+MAGISK=true
+DYNAMICOREO=false
+
 # DEFAULT PERMISSIONS
 umask 022
 
 # INITIAL CLEANUP
 rm -rf $TMPDIR 2>/dev/null
 mkdir -p $INSTALLER
-
-ZIP=$3
-# GET INSTALL/UNINSTALL ACTION FROM ZIP NAME
-case $(basename $ZIP) in
-  *uninstall*|*Uninstall*|*UNINSTALL*) INSTALL=false;;
-  *) INSTALL=true;;
-esac
 
 # GET OUTFD
 OUTFD=$2
@@ -49,356 +52,9 @@ if [ "$?" -eq "0" ]; then
   done
 fi
 
-##########################################################################################
-# FUNCTIONS
-##########################################################################################
-
+# NEED THIS LOADED BEFORE UTIL_FUNCTIONS
 ui_print() {
   $BOOTMODE && echo "$1" || echo -e "ui_print $1\nui_print" >> /proc/self/fd/$OUTFD
-}
-
-resolve_link() {
-  RESOLVED="$1"
-  while RESOLVE=`readlink $RESOLVED`; do
-    RESOLVED=$RESOLVE
-  done
-  echo $RESOLVED
-}
-
-is_mounted() {
-  TARGET="`resolve_link $1`"
-  cat /proc/mounts | grep " $TARGET " >/dev/null
-  return $?
-}
-
-find_boot_image() {
-  BOOTIMAGE=
-  if [ ! -z $SLOT ]; then
-    BOOTIMAGE=`find /dev/block -iname boot$SLOT | head -n 1` 2>/dev/null
-  fi
-  if [ -z "$BOOTIMAGE" ]; then
-    # The slot info is incorrect...
-    SLOT=
-    for BLOCK in boot_a kern-a android_boot kernel boot lnx bootimg; do
-      BOOTIMAGE=`find /dev/block -iname $BLOCK | head -n 1` 2>/dev/null
-      [ ! -z $BOOTIMAGE ] && break
-    done
-  fi
-  # Recovery fallback
-  if [ -z "$BOOTIMAGE" ]; then
-    for FSTAB in /etc/*fstab*; do
-      BOOTIMAGE=`grep -v '#' $FSTAB | grep -E '/boot[^a-zA-Z]' | grep -oE '/dev/[a-zA-Z0-9_./-]*'`
-      [ ! -z $BOOTIMAGE ] && break
-    done
-  fi
-  [ ! -z "$BOOTIMAGE" ] && BOOTIMAGE=`resolve_link $BOOTIMAGE`
-}
-
-
-find_dtbo_image() {
-  DTBOIMAGE=`find /dev/block -iname dtbo$SLOT | head -n 1` 2>/dev/null
-  [ ! -z $DTBOIMAGE ] && DTBOIMAGE=`resolve_link $DTBOIMAGE`
-}
-
-mount_partitions_system() {
-  # Check A/B slot
-  SLOT=`getprop ro.boot.slot_suffix`
-  if [ -z $SLOT ]; then
-    SLOT=_`getprop ro.boot.slot`
-    [ $SLOT = "_" ] && SLOT=
-  fi
-  # Check the boot image to make sure the slot actually make sense
-  find_boot_image
-  find_dtbo_image
-  [ -z $SLOT ] || ui_print "- A/B partition detected, current slot: $SLOT"
-  ui_print "- Mounting /system, /vendor"
-  REALSYS=/system
-  is_mounted /system || [ -f /system/build.prop ] || mount -o rw /system 2>/dev/null
-  if ! is_mounted /system && ! [ -f /system/build.prop ]; then
-    SYSTEMBLOCK=`find /dev/block -iname system$SLOT | head -n 1`
-    mount -t ext4 -o rw $SYSTEMBLOCK /system
-    REALSYS=$SYSTEMBLOCK
-  fi
-  is_mounted /system || [ -f /system/build.prop ] || abort "! Cannot mount /system"
-  cat /proc/mounts | grep -E '/dev/root|/system_root' >/dev/null && SKIP_INITRAMFS=true || SKIP_INITRAMFS=false
-  if [ -f /system/init.rc ]; then
-    SKIP_INITRAMFS=true
-    mkdir /system_root 2>/dev/null
-    mount --move /system /system_root
-    mount -o bind /system_root/system /system
-    ROOT=/system_root
-    REALSYS=/system_root/system
-  fi
-  $SKIP_INITRAMFS && ui_print "- Device skip_initramfs detected"
-  if [ -L /system/vendor ]; then
-    # Seperate /vendor partition
-    VEN=/vendor
-    is_mounted /vendor || mount -o rw /vendor 2>/dev/null
-    if ! is_mounted /vendor; then
-      VENDORBLOCK=`find /dev/block -iname vendor$SLOT | head -n 1`
-      mount -t ext4 -o rw $VENDORBLOCK /vendor
-    fi
-    is_mounted /vendor || abort "! Cannot mount /vendor"
-  else
-    VEN=/system/vendor
-  fi
-}
-
-grep_prop() {
-  REGEX="s/^$1=//p"
-  shift
-  FILES=$@
-  [ -z "$FILES" ] && FILES='/system/build.prop'
-  sed -n "$REGEX" $FILES 2>/dev/null | head -n 1
-}
-
-api_level_arch_detect_mod() {
-  API=`grep_prop ro.build.version.sdk`
-  ABI=`grep_prop ro.product.cpu.abi | cut -c-3`
-  ABI2=`grep_prop ro.product.cpu.abi2 | cut -c-3`
-  ABILONG=`grep_prop ro.product.cpu.abi`
-  MIUIVER=`grep_prop ro.miui.ui.version.name`
-  ARCH=arm
-  DRVARCH=NEON
-  IS64BIT=false
-  if [ "$ABI" = "x86" ]; then ARCH=x86; DRVARCH=X86; fi;
-  if [ "$ABI2" = "x86" ]; then ARCH=x86; DRVARCH=X86; fi;
-  if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm64; IS64BIT=true; fi;
-  if [ "$ABILONG" = "x86_64" ]; then ARCH=x64; IS64BIT=true; DRVARCH=X86; fi;
-}
-
-set_perm() {
-  chown $2:$3 $1 || exit 1
-  chmod $4 $1 || exit 1
-  [ -z $5 ] && chcon 'u:object_r:system_file:s0' $1 || chcon $5 $1
-}
-
-set_perm_recursive() {
-  find $1 -type d 2>/dev/null | while read dir; do
-    set_perm $dir $2 $3 $4 $6
-  done
-  find $1 -type f -o -type l 2>/dev/null | while read file; do
-    set_perm $file $2 $3 $5 $6
-  done
-}
-
-mktouch() {
-  mkdir -p ${1%/*} 2>/dev/null
-  [ -z $2 ] && touch $1 || echo $2 > $1
-  chmod 644 $1
-}
-
-unmount_partitions() {
-  test "$supersuimg" -o -d /su && umount /su
-  umount -l /system_root 2>/dev/null
-  umount -l /system 2>/dev/null
-  umount -l /vendor 2>/dev/null
-}
-
-abort() {
-  ui_print "$1"
-  unmount_partitions
-  exit 1
-}
-
-supersuimg_mount() {
-  supersuimg=$(ls /cache/su.img /data/su.img 2>/dev/null)
-  if [ "$supersuimg" ]; then
-    if ! is_mounted /su; then
-      ui_print "   Mounting /su..."
-      test ! -e /su && mkdir /su
-      mount -t ext4 -o rw,noatime $supersuimg /su 2>/dev/null
-      for i in 0 1 2 3 4 5 6 7; do
-        is_mounted /su && break
-        loop=/dev/block/loop$i
-        mknod $loop b 7 $i
-        losetup $loop $supersuimg
-        mount -t ext4 -o loop $loop /su 2>/dev/null
-      done
-    fi
-  fi
-}
-
-require_new_magisk() {
-  ui_print "*******************************"
-  ui_print " Please install Magisk v15.0+! "
-  ui_print "*******************************"
-  exit 1
-}
-
-require_new_api() {
-  ui_print "***********************************"
-  ui_print "!   Your system API of $API isn't"
-  if [ "$1" == "minimum" ]; then
-    ui_print "! higher than the $1 API of $MINAPI"
-    ui_print "! Please upgrade to a newer version"
-    ui_print "!  of android with at least API $MINAPI"
-  else
-    ui_print "!   lower than the $1 API of $MAXAPI"
-    ui_print "! Please downgrade to an older version"
-    ui_print "!    of android with at most API $MAXAPI"
-  fi
-  ui_print "***********************************"
-  exit 1
-}
-
-action_complete() {
-  if ! $MAGISK; then
-    ui_print "   Unmounting partitions..."
-    unmount_partitions
-  fi
-  ui_print " "
-  if $INSTALL; then ui_print "    --------- INSTALLATION SUCCESSFUL ---------"; else ui_print "    --------- RESTORATION SUCCESSFUL ---------"; fi
-  ui_print " "
-  if $AUDMODLIB; then TMP="AML/Unity"; else TMP="Unity"; fi
-  if $INSTALL; then ui_print "    $TMP Installer by ahrion & zackptg5 @ XDA"; else ui_print "    $TMP Uninstaller by ahrion & zackptg5 @ XDA"; fi
-}
-
-device_check() { 
-  if [ "$(grep_prop ro.product.device)" == "$1" ] || [ "$(grep_prop ro.build.product)" == "$1" ]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-sys_wipe_ch() {
-  TPARTMOD=false
-  cat $INFO | {
-  while read LINE; do
-    test "$1" == "$(eval echo $LINE)" && { TPARTMOD=true; sed -i "/$1/d" $INFO; }
-  done
-  if ! $TPARTMOD && [ -f "$1" ] && [ ! -f "$1.bak" ]; then
-    mv -f "$1" "$1.bak"
-    echo "$1.bak" >> $INFO
-  else
-    rm -f "$1"
-  fi
-  }
-}
-
-sys_wipefol_ch() {
-  if [ -d "$1" ] && [ ! -f "$1.tar" ]; then
-    tar -cf "$1.tar" "$1"
-    if [ ! -f $INFO ]; then echo "$1.tar" >> $INFO; else test ! "$(grep "$1.tar" $INFO)" && echo "$1.tar" >> $INFO; fi
-  else
-    rm -rf "$1"
-  fi
-}
-
-wipe_ch() {
-  case $1 in
-    FOL*) if [ "$(echo "$1" | cut -c 4-9)" == "/data/" ]; then TYPE="foldata"; else TYPE="fol"; fi; FILE=$(echo "$1" | cut -c4-);;
-    /data/*) TYPE="data"; FILE=$1;;
-    APP*) TYPE="app"; FILE=$(echo "$1" | cut -c4-);;
-    *) TYPE="file"; FILE=$1;;
-  esac
-  case $TYPE in
-    "foldata") sys_wipefol_ch $FILE;;
-    "fol") $MAGISK && mktouch $FILE/.replace || sys_wipefol_ch $FILE;;
-    "data") sys_wipe_ch $FILE;;
-    "app") if $OLDAPP; then
-             if [ -f "/system/app/$FILE.apk" ]; then $WPAPP_PRFX $UNITY/system/app/$FILE.apk; else test -f "/system/app/$FILE/$FILE.apk" && $WPAPP_PRFX $UNITY/system/app/$FILE/$FILE.apk; fi
-           else
-             test -f "/system/priv-app/$FILE/$FILE.apk" && $WPAPP_PRFX $UNITY/system/priv-app/$FILE/$FILE.apk
-           fi
-           $OREONEW && { test -f $UNITY$VEN/app/$FILE/$FILE.apk && $WPAPP_PRFX $UNITY$VEN/app/$FILE/$FILE.apk; };;
-    "file") $MAGISK && mktouch $FILE || sys_wipe_ch $FILE;;
-  esac
-}
-
-cp_ch() {
-  case $2 in
-    $MOUNTPATH/audmodlib*) CP=$2;;
-    */system/*|*/vendor/*) CP=$UNITY$2;;
-    *) CP=$2;;
-  esac
-  mkdir -p "${CP%/*}"
-  chmod 0755 "${CP%/*}"
-  cp -af "$1" "$CP"
-  if [ -z $3 ]; then chmod 0644 "$CP"; else chmod "$3" "$CP"; fi
-}
-
-cp_ch_bak() {
-  if ! $MAGISK; then
-    if [ -f "$2" ] && [ ! -f "$2.bak" ]; then
-      cp -f "$2" "$2.bak"
-      echo "$2.bak" >> $INFO
-    fi
-    test ! "$(grep "$2" $INFO)" && echo "$2" >> $INFO
-  fi
-  cp_ch $1 $2 $3
-}
-
-sys_rm_ch() {
-  if [ -f "$1.bak" ]; then
-    mv -f "$1.bak" "$1"
-  elif [ -f "$1.tar" ]; then
-    tar -xf "$1.tar" -C "${1%/*}"
-  else
-    rm -f "$1"
-  fi
-  if [ ! "$(ls -A "${1%/*}")" ]; then
-    rm -rf ${1%/*}
-  fi
-}
-
-patch_script() {
-  sed -i "s|<MAGISK>|$MAGISK|" $1
-  sed -i "s|<VEN>|$VEN|" $1
-  sed -i "s|<LIBDIR>|$LIBDIR|" $1
-  sed -i "s|<CFGS>|$(echo $CFGS)|" $1
-  sed -i "s|<CFGSXML>|$(echo $CFGSXML)|" $1
-  sed -i "s|<POLS>|$(echo $POLS)|" $1
-  sed -i "s|<POLSXML>|$(echo $POLSXML)|" $1
-  sed -i "s|<MIXS>|$(echo $MIXS)|" $1
-  if $OLDAPP; then sed -i "s|<SOURCE>|system_app|" $1; else sed -i "s|<SOURCE>|priv_app|" $1; fi
-  if $MAGISK; then
-    sed -i "/<ROOT>/d" $1
-    sed -i "s|<SYS>|/system|" $1
-    sed -i "s|<SHEBANG>|#!/system/bin/sh|" $1
-    sed -i "s|<SEINJECT>|magiskpolicy|" $1
-    if $AUDMODLIB; then sed -i "s|<AMLPATH>|$AMLPATH|" $1; else sed -i "/<AMLPATH>/d" $1; fi
-    sed -i "s|$MOUNTPATH|/sbin/.core/img|g" $1                                   
-  else
-    if [ ! -z $ROOT ]; then sed -i "s|<ROOT>|$ROOT|" $1; else sed -i "/<ROOT>/d" $1; fi
-    sed -i "s|<SYS>|$REALSYS|" $1
-    sed -i "s|<SHEBANG>|$SHEBANG|" $1
-    sed -i "s|<SEINJECT>|$SEINJECT|" $1
-    sed -i "/<AMLPATH>/d" $1
-    sed -i "s|$MOUNTPATH||g" $1
-  fi
-}
-
-add_to_info() {
-  test ! "$(grep "$1" $2)" && echo "$1" >> $2
-}
-
-custom_app_install() {
-  if $OREONEW; then
-    $CP_PRFX $INSTALLER/custom/$1/$1.apk $VEN/app/$1/$1.apk
-  else
-    if $OLDAPP; then $CP_PRFX $INSTALLER/custom/$1/$1.apk /system/app/$1.apk; else $CP_PRFX $INSTALLER/custom/$1/$1.apk /system/priv-app/$1/$1.apk; fi
-  fi
-}
-
-info_uninstall() {
-  if [ -f $1 ]; then
-    test "$1" != "$AMLINFO" && ui_print "   Removing/restoring files..."
-    cat $1 | while read LINE; do
-      sys_rm_ch $LINE
-    done
-    rm -f $1
-  else
-    if $MAGISK; then ui_print "   Removing/restoring files..."; else test "$1" != "$AMLINFO" && abort "   ! Mod not detected !"; fi
-  fi
-}
-
-remove_aml() {
-  ui_print " "
-  ui_print "   ! No more audmodlib modules detected !"
-  ui_print "   ! Removing Audio Modification Library !"
-  if $MAGISK; then rm -rf $AMLPATH; rm -rf /sbin/.core/img/audmodlib; else rm -f /system/addon.d/audmodlib.sh; info_uninstall $AMLINFO; fi
 }
 
 ##########################################################################################
@@ -412,12 +68,15 @@ unzip -o "$ZIP" -d $INSTALLER 2>/dev/null
 
 [ ! -f $INSTALLER/config.sh ] && { ui_print "! Unable to extract zip file !"; exit 1; }
 
-test "$(grep_prop id $INSTALLER/module.prop)" == "AMLTemplate" && { ui_print "! AML Template is not a separate module !"; ui_print "! AML is already included in all modules that use it !"; ui_print "! This template is for devs only !"; exit 1; }
+# LOAD FUNCTIONS
+. $INSTALLER/common/unityfiles/util_functions.sh
+
+[ "$(grep_prop id $INSTALLER/module.prop)" == "UnityTemplate" ] && { ui_print "! Unity Template is not a separate module !"; abort "! This template is for devs only !"; }
 
 # INSERT MODULE INFO INTO CONFIG.SH
 for TMP in version name author; do
   NEW=$(grep_prop $TMP $INSTALLER/module.prop)
-  test "$TMP" == "author" && NEW="by ${NEW}"
+  [ "$TMP" == "author" ] && NEW="by ${NEW}"
   CHARS=$((${#NEW}-$(echo "$NEW" | tr -cd "©®™" | wc -m)))
   SPACES=""
   if [ $CHARS -le 41 ]; then
@@ -437,565 +96,245 @@ print_modname
 ui_print "- Mounting /data, /cache"
 is_mounted /data || mount /data || is_mounted /cache || mount /cache || { ui_print "! Unable to mount partitions"; exit 1; }
 
-pre_install() {
-  # USE VENDOR IF OREO OR NEWER
-  if [ $API -ge 26 ]; then LIBPATCH="\\\/vendor"; LIBDIR=$VEN ;OREONEW=true; else LIBPATCH="\\\/system"; LIBDIR=/system; OREONEW=false; fi
-  
-  # REMOVE COMMENTS FROM USER INPUT FILES AND ADD PROPER VARIABLES
-  for TMP in $INSTALLER/common/unity-files-wipe.sh $INSTALLER/common/aml-patches.sh $INSTALLER/common/aml-patches-remove.sh $INSTALLER/common/aml-patches-wipe.sh $INSTALLER/common/unity-uservariables.sh $INSTALLER/common/unity-customrules $INSTALLER/common/post-fs-data.sh $INSTALLER/common/service.sh $INSTALLER/common/*.prop; do
-    if [ "$TMP" == "$INSTALLER/common/unity-customrules" ]; then
-      NUM=1; while true; do
-        if [ -f $TMP$NUM.sh ]; then
-          sed -i "s|\$LIBPATCH|$LIBPATCH|g" $TMP$NUM.sh
-          NUM=$((NUM+1))
-        else
-          NUMOFCUSTRULES=$(($NUM-1)); break;
-        fi
-      done
-    else
-      if [ -f $TMP ]; then
-        sed -i "s|\$LIBPATCH|$LIBPATCH|g" $TMP
-      else
-        ui_print "   !$TMP missing!"; ui_print "   !Copy it back to above and try again!"; exit 1;
-      fi
-    fi
-  done
-  
-  # UNIVERSAL VARIABLES
-  CP_NBPRFX="cp_ch"
-  CP_PRFX="cp_ch_bak"
-  WP_PRFX="wipe_ch"
-  SYS=/system
-  
-  # IMPORT USER VARIABLES
-  source $INSTALLER/common/unity-uservariables.sh
-
-  # SET MODID, MODPATH, AMLPATH, and AUDMODLIB variables
-  test -z $MODID && MODID=`grep_prop id $INSTALLER/module.prop`
-  MODPATH=$MOUNTPATH/$MODID
-  AMLPATH=$MOUNTPATH/audmodlib
-  if [ -z $AUDMODLIB ]; then AUDMODLIB=false; else AUDMODLIB=true; fi
-
-  # MAKE MODID SERVICE AND POST-FS-DATA SCRIPTS
-  cp -f $INSTALLER/common/unity-audmodlib/modid.sh $INSTALLER/common/unity-audmodlib/$MODID-post-fs-data.sh
-  mv -f $INSTALLER/common/unity-audmodlib/modid.sh $INSTALLER/common/unity-audmodlib/$MODID-service.sh
-
-  # INSERT MODID AND CUSTOM USER SCRIPT INTO MOD SCRIPT
-  sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/post-fs-data.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unity-audmodlib/$MODID-post-fs-data.sh
-  sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/service.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unity-audmodlib/$MODID-service.sh
-}
-
-common_install() {
-  # FILE LOCATIONS
-  CFGS="${CFGS} $(find -L /system -type f -name "*audio_effects*.conf")"
-  CFGSXML="${CFGSXML} $(find -L /system -type f -name "*audio_effects*.xml")"
-  POLS="${POLS} $(find -L /system -type f -name "*audio*policy*.conf")"
-  POLSXML="${POLSXML} $(find -L /system -type f -name "*audio_policy*.xml")"
-  MIXS="${MIXS} $(find -L /system -type f -name "*mixer_paths*.xml")"
-}
-
-magisk_install() {
-  VEN=/system/vendor
-  # PREP FILES & VARIABLES
-  pre_install
-  MAGISK=true
-  UNITY="$MODPATH"
-  WPAPP_PRFX="mktouch"
-  AMLSCRIPT="$AMLPATH/post-fs-data.sh"
-  if $BOOTMODE; then
-    INFO="/sbin/.core/img/$MODID/$MODID-files"
-    MOD_VER="/sbin/.core/img/$MODID/module.prop"
-    AML_VER="/sbin/.core/img/audmodlib/module.prop"
-    PROPFILE="/sbin/.core/img/$MODID/system.prop"
-    CONFPROPS="/sbin/.core/img/$MODID/$MODID-conflictingprops.txt"
-  else
-    INFO="$MODPATH/$MODID-files"
-    MOD_VER="$MODPATH/module.prop"
-    AML_VER="$AMLPATH/module.prop"
-    PROPFILE="$MODPATH/system.prop"
-    CONFPROPS="$MODPATH/$MODID-conflictingprops.txt"
-  fi
-  common_install
-}
-
-system_install() {
-  # MOUNT PARTITIONS
-  mount_partitions_system
-  ui_print "- System install detected"
-  # DETECT VERSION AND ARCHITECTURE
-  api_level_arch_detect_mod
-  # PREP FILES & VARIABLES
-  pre_install
-  # DETERMINE SYSTEM BOOT SCRIPT TYPE
+script_type() {
   supersuimg_mount
-  SHEBANG="#!/system/bin/sh"
-  SH=/system/etc/init.d
-  SEINJECT=/sbin/sepolicy-inject
-  ROOTTYPE="other root or rootless"
+  SHEBANG="#!/system/bin/sh"; ROOTTYPE="other root or rootless"; MODPATH=/system/etc/init.d; SEINJECT=/sbin/sepolicy-inject
   if [ "$supersuimg" ] || [ -d /su ]; then
-    SHEBANG="#!/su/bin/sush"
-    SH=/su/su.d
-    SEINJECT=/su/bin/supolicy
-    ROOTTYPE="systemless SuperSU"
+    SHEBANG="#!/su/bin/sush"; ROOTTYPE="systemless SuperSU"; MODPATH=/su/su.d; SEINJECT=supolicy
   elif [ -e "$(find /data /cache -name supersu_is_here | head -n1)" ]; then
-    SHEBANG="#!/su/bin/sush"
-    SH=$(dirname `find /data /cache -name supersu_is_here | head -n1`)/su.d
-    SEINJECT=$(dirname `find /data /cache -name supersu_is_here | head -n1`)/bin/supolicy
-    ROOTTYPE="bindsbin SuperSU"
+    SHEBANG="#!/su/bin/sush"; ROOTTYPE="systemless SuperSU"
+    MODPATH=$(dirname `find /data /cache -name supersu_is_here | head -n1`)/su.d
+    SEINJECT=supolicy
   elif [ -d /system/su ] || [ -f /system/xbin/daemonsu ] || [ -f /system/xbin/sugote ]; then
-    SH=/system/su.d
-    SEINJECT=/system/xbin/supolicy
-    ROOTTYPE="system SuperSU"
+    MODPATH=/system/su.d; SEINJECT=supolicy; ROOTTYPE="system SuperSU"
   elif [ -f /system/xbin/su ]; then
     if [ "$(grep "SuperSU" /system/xbin/su)" ]; then
-      SH=/system/su.d
-      SEINJECT=/system/xbin/supolicy
-      ROOTTYPE="system SuperSU"
+      MODPATH=/system/su.d; ROOTTYPE="system SuperSU"; SEINJECT=supolicy
     else
       ROOTTYPE="LineageOS SU"
     fi
   fi
-  # SYSTEM ONLY VARIABLES
-  MAGISK=false
-  UNITY=""
-  WPAPP_PRFX="sys_wipe_ch"
-  AMLPATH=""
-  PROPFILE="$SH/$MODID-props"
-  AMLSCRIPT="$SH/audmodlib-post-fs-data"
-  MOD_VER="/system/etc/$MODID-module.prop"
-  AML_VER="/system/etc/audmodlib-module.prop"
-  if [ -d /system/addon.d ]; then
-    INFO=/system/addon.d/$MODID-files
-    AMLINFO=/system/addon.d/audmodlib-files
-  else
-    INFO=/system/etc/$MODID-files
-    AMLINFO=/system/etc/audmodlib-files
-  fi
-  CONFPROPS="$(dirname `readlink -f $ZIP`)/$MODID-conflictingprops.txt"
-  common_install
 }
 
-# UNITY PROP INSTALL
-unity_prop_copy() {
-  sed -i "/#/d" $1
-  if $MAGISK; then
-    REGEX="s/(.*)=(.*)/\1/"
-    sed -i -e "s/setprop //g" -e "s/ /=/g" $1
-    if $BOOTMODE; then SH="/sbin/.core/img $MOUNTPATH"; else SH=$MOUNTPATH; fi
-    FILE=system.prop
-  else
-    REGEX="s/setprop (.*) (.*)/\1/"
-    FILE="*props"
-  fi
-  if [ "$(cat $1)" ]; then
-    test ! -f $PROPFILE && if $MAGISK; then mktouch $PROPFILE; else mktouch $PROPFILE "$SHEBANG"; fi
-    for TMP in $(find $SH -type f -name $FILE); do
-      cat $1 | while read PROP; do
-        TPROP=$(echo $PROP | sed -r "$REGEX")
-        PRESENT=false
-        cat $TMP | { 
-          while read OLDPROP; do
-            TOLDPROP=$(echo $OLDPROP | sed -r "$REGEX")
-            test "$TPROP" == "$TOLDPROP" && PRESENT=true
-          done
-          if ! $PRESENT; then
-            test ! "$(grep "$PROP" $PROPFILE)" && echo "$PROP" >> $PROPFILE
-          elif [ "$TMP" != "$PROPFILE" ]; then
-            test "$(grep "^$PROP" $PROPFILE)" && sed -i "/$PROP/d" $PROPFILE
-            test ! "$(grep "#$PROP" $PROPFILE)" && echo "#$PROP" >> $PROPFILE
-            test ! -f $CONFPROPS && { mktouch $CONFPROPS; ui_print " "; ui_print "   ! Conflicting props found !"; 
-            ui_print "   ! Conflicting props will be commented out !"; ui_print "   ! Check the conflicting props file at"; 
-            ui_print "   ! $(echo $CONFPROPS | sed "s|$MODPATH|/sbin/.core/img/$MODID|") !"; ui_print " "; }
-            echo "FOUND IN: $(echo $TMP | sed "s|$MOUNTPATH|/sbin/.core/img|")" >> $CONFPROPS
-            echo "- PROP: $TPROP" >> $CONFPROPS
-          fi
-        }
-      done
-    done
-  $MAGISK || chmod 0700 $PROPFILE
-  fi
-}
-
-# AUDIO MODIFICATION LIBRARY
-aml_mod() {
-  ### CREATE AUDIO MODIFICATION LIBRARY ###
-  if $INSTALL; then ui_print " "; ui_print "- Installing Audio Modification Library -"; else ui_print "   Removing $MODID from Audio Modification Library"; fi
-
-  # CREATE FILE CONTAINING LIST OF ALL INSTALLED MOD FILES
-  ! $MAGISK && [ ! -f $AMLINFO ] && mktouch $AMLINFO
-  
-  for FILE in ${CFGS} ${CFGSXML} ${POLS} ${POLSXML} ${MIXS}; do
-    $MAGISK || { add_to_info $FILE $AMLINFO; add_to_info $FILE.bak $AMLINFO; }
-    if [ ! -f $AMLPATH$FILE.bak ]; then
-      if [ -f $FILE.bak ]; then $CP_NBPRFX $FILE.bak $AMLPATH$FILE.bak; else $CP_NBPRFX $FILE $AMLPATH$FILE.bak; fi
-    fi
-    test ! -f $AMLPATH$FILE && $CP_NBPRFX $FILE $AMLPATH$FILE
-  done
-  # Create vendor audio_effects.conf if missing
-  if [ -f /system/etc/audio_effects.conf ] && [ ! -f $VEN/etc/audio_effects.conf ]; then
-    $MAGISK || { add_to_info $VEN/etc/audio_effects.conf $AMLINFO; add_to_info $VEN/etc/audio_effects.conf.bak $AMLINFO; }
-    if [ -f /system/etc/audio_effects.conf.bak ]; then $CP_NBPRFX /system/etc/audio_effects.conf.bak $AMLPATH$VEN/etc/audio_effects.conf.bak; else $CP_NBPRFX /system/etc/audio_effects.conf $AMLPATH$VEN/etc/audio_effects.conf.bak; fi
-    $CP_NBPRFX /system/etc/audio_effects.conf $AMLPATH$VEN/etc/audio_effects.conf
-  fi
-  
-  if $INSTALL && [ ! -f $AMLSCRIPT ]; then
-    $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlib-post-fs-data.sh $AMLSCRIPT 0755
-    patch_script $AMLSCRIPT
-  fi
-  if $MAGISK; then
-    $BOOTMODE && [ -f /sbin/.core/img/audmodlib/post-fs-data.sh ] && $CP_NBPRFX /sbin/.core/img/audmodlib/post-fs-data.sh $AMLSCRIPT 0755
-    $BOOTMODE && ! $INSTALL && { $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlibmodule.prop $AMLPATH/module.prop; mktouch /sbin/.core/img/audmodlib/update; mktouch $AMLPATH/auto_mount; }
-  elif ! $MAGISK && $INSTALL; then
-    add_to_info $AMLSCRIPT $AMLINFO
-  fi
-  
-  if [ -f $AML_VER ]; then
-    if $INSTALL && [ $(grep_prop versionCode $INSTALLER/common/unity-audmodlib/audmodlibmodule.prop) -gt $(grep_prop versionCode $AML_VER) ]; then
-      ui_print "   ! Old version of AML detected !"
-      ui_print "     Upgrading AML..."
-      sed -i -e '/^# MOD PATCHES/,/^$/!d' -e '/^# MOD PATCHES/d' -e '/^$/d' $AMLSCRIPT
-      sed -i "/^# MOD PATCHES/ r $AMLSCRIPT" $INSTALLER/common/unity-audmodlib/audmodlib-post-fs-data.sh
-      patch_script $INSTALLER/common/unity-audmodlib/audmodlib-post-fs-data.sh
-      $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlib-post-fs-data.sh $AMLSCRIPT
-    fi
-  fi
-  ! $MAGISK && $INSTALL && { $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlibmodule.prop $AML_VER; add_to_info $AML_VER $AMLINFO; }
-
-  $INSTALL && aml_mod_patch
-}
-
-# AML FILE PATCHER
-aml_mod_patch() {
-  #### PATCHING FILES ####
+# INSTALL
+unity_install() {
   ui_print " "
-  ui_print "- Patching necessary files -"
+  ui_print "- Installing"
 
-  # PATCH AUDMODLIB-SERVICES SCRIPT
-  if $MAGISK; then
-    sed -i "/^#$MODID/,/fi #$MODID/d" $AMLSCRIPT
-    sed -i 's/^/  /' $INSTALLER/common/aml-patches-remove.sh
-    sed -i -e "/^# MOD PATCHES/ a\  MODIDS=\"\${MODIDS} $MODID\"" -e "/^# MOD PATCHES/ r $INSTALLER/common/aml-patches-remove.sh" -e "/^# MOD PATCHES/ a\TEMP$MODID" $AMLSCRIPT
-    sed -i -e "/TEMP$MODID/ a\fi #$MODID" -e "/TEMP$MODID/d" $AMLSCRIPT
-    sed -i -e "/^# MOD PATCHES/ a\#$MODID" -e "/^# MOD PATCHES/ a\if [ ! -d \"/sbin/.core/img/$MODID\" ]; then" $AMLSCRIPT
-  else
-    sed -i "/^# MOD PATCHES/ a\#$MODID" $AMLSCRIPT
-  fi
-
-  # REMOVE LIBRARIES & EFFECTS
-  ui_print "   Removing library & effect lines..."
-  source $INSTALLER/common/aml-patches-wipe.sh
-  source $INSTALLER/common/aml-patches-remove.sh
+  # MAKE INFO FILE
+  rm -f $INFO
+  mktouch $INFO
+    
+  # RUN USER INSTALL SCRIPT
+  . $INSTALLER/common/install.sh
   
-  for FILE in /system/etc/audio_effects.conf $VEN/etc/audio_effects.conf; do
-    if [ -f $FILE ] && [ ! "$(grep '^ *# *music_helper {' $AMLPATH$FILE)" ] && [ "$(grep '^ *music_helper {' $AMLPATH$FILE)" ]; then
-      sed -i "/effects {/,/^}/ {/music_helper {/,/}/ s/^/#/g}" $AMLPATH$FILE
-    fi
-  done
-  for FILE in /system/etc/audio_effects.xml $VEN/etc/audio_effects.xml; do
-    if [ -f $FILE ] && [ ! "$(grep '^ *<\!--<stream type=\"music\">' $AMLPATH$FILE)" ] && [ "$(grep '^ *<stream type=\"music\">' $AMLPATH$FILE)" ]; then
-      sed -i "/^ *<postprocess>$/,/<\/postprocess>/ {/<stream type=\"music\">/,/<\/stream>/ s/<stream type=\"music\">/<\!--<stream type=\"music\">/; s/<\/stream>/<\/stream>-->/}" $AMLPATH$FILE
-    fi
-  done
-  
-  source $INSTALLER/common/aml-patches.sh
-
-  NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
-    test "$(grep "TIMEOFEXEC=2" $INSTALLER/common/unity-customrules$NUM.sh)" && source $INSTALLER/common/unity-customrules$NUM.sh
-    NUM=$((NUM+1))
-  done
-}
-
-# UNITY FILE/FOLDER COPY
-unity_mod_copy() {
-  ui_print " "
-  ui_print "- Copying files/folders -"
-
   # INSTALL SCRIPTS
   if $MAGISK; then
     ui_print "   Installing scripts for MagiskSU..."
-    # HANDLE REPLACE FOLDERS
-    for TARGET in $REPLACE; do
-      mktouch $MODPATH$TARGET/.replace
-      $AUDMODLIB && mktouch $AMLPATH$TARGET/.replace
-    done
-
     # AUTO MOUNT
     $AUTOMOUNT && mktouch $MODPATH/auto_mount
-    $AUDMODLIB && mktouch $AMLPATH/auto_mount
-
-    # REMOVE OLD AML FILES IF IN BOOTMODE
-    $BOOTMODE && $AUDMODLIB && { rm -rf /sbin/.core/img/audmodlib; mkdir -p /sbin/.core/img/audmodlib; }
-
-    # MODULE INFO
-    $CP_NBPRFX $INSTALLER/module.prop $MODPATH/module.prop
-    $AUDMODLIB && $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlibmodule.prop $AMLPATH/module.prop
+    # UPDATE INFO FOR MAGISK MANAGER
     if $BOOTMODE; then
-      # UPDATE INFO FOR MAGISK MANAGER
       mktouch /sbin/.core/img/$MODID/update
-      $CP_NBPRFX $INSTALLER/module.prop /sbin/.core/img/$MODID/module.prop
-      $AUDMODLIB && { mktouch /sbin/.core/img/audmodlib/update; $CP_NBPRFX $INSTALLER/common/unity-audmodlib/audmodlibmodule.prop /sbin/.core/img/audmodlib/module.prop; }
-    fi
-  
-    #INSTALL POST-FS-DATA MODE SCRIPTS
-    $POSTFSDATA && { $CP_NBPRFX $INSTALLER/common/unity-audmodlib/$MODID-post-fs-data.sh $MODPATH/post-fs-data.sh; patch_script $MODPATH/post-fs-data.sh; }
-
-    # SERVICE MODE SCRIPTS
-    $LATESTARTSERVICE && { $CP_NBPRFX $INSTALLER/common/unity-audmodlib/$MODID-service.sh $MODPATH/service.sh; patch_script $MODPATH/service.sh; }
+      cp_ch_nb $INSTALLER/module.prop $MODPATH/module.prop
+    fi 
   else
     ui_print "   Installing scripts for $ROOTTYPE..."
-    test "$ROOTTYPE" == "LineageOS SU" -o "$ROOTTYPE" == "other root or rootless" && { ui_print " "; ui_print "   ! This root method has no boot script support !"; ui_print "   ! You will need to add init.d support !"; ui_print " "; }
-
-    # COPY MODULE.PROP FILE FOR VERSION CHECKING
-    $CP_NBPRFX $INSTALLER/module.prop $MOD_VER
-    add_to_info $MOD_VER $INFO
-
-    # INSTALL POST-FS-DATA MODE SCRIPTS
-    if $POSTFSDATA; then
-      $CP_NBPRFX $INSTALLER/common/unity-audmodlib/$MODID-post-fs-data.sh $SH/$MODID-post-fs-data 0700
-      add_to_info $SH/$MODID-post-fs-data $INFO
-      patch_script $SH/$MODID-post-fs-data
-    fi
-    
-    # INSTALL SERVICE MODE SCRIPTS
-    if $LATESTARTSERVICE; then
-      $CP_NBPRFX $INSTALLER/common/unity-audmodlib/$MODID-service.sh $SH/$MODID-service 0700
-      add_to_info $SH/$MODID-service $INFO
-      patch_script $SH/$MODID-service
-    fi
-
+    [ "$ROOTTYPE" == "LineageOS SU" -o "$ROOTTYPE" == "other root or rootless" ] && { ui_print " "; ui_print "   ! This root method has no boot script support !"; ui_print "   ! You will need to add init.d support !"; ui_print " "; }
     # INSTALL ROM BACKUP SCRIPT
     if [ -d /system/addon.d ]; then
       ui_print "   Installing addon.d backup script..."
-      # INSERT MODID INTO ADDON.D SCRIPT
-      sed -i "s/<MODID>/$MODID/" $INSTALLER/system/addon.d/modid.sh
-      $CP_NBPRFX $INSTALLER/system/addon.d/modid.sh /system/addon.d/$MODID.sh 0755
-      $AUDMODLIB && $CP_NBPRFX $INSTALLER/system/addon.d/audmodlib.sh /system/addon.d/audmodlib.sh 0755
+      sed -i "s/<MODID>/$MODID/" $INSTALLER/common/unityfiles/addon.sh
+      cp_ch_nb $INSTALLER/common/unityfiles/addon.sh /system/addon.d/$MODID.sh 0755
     else
       ui_print "   ! Addon.d not detected. Backup script not installed..."
     fi
   fi
-
-  # ADD BUILDPROPS
-  test -s $INSTALLER/common/system.prop && { ui_print "   Adding build.props..."; unity_prop_copy $INSTALLER/common/system.prop; }
-  ! $MAGISK && [ -f "$SH/$MODID-props" ] && add_to_info $SH/$MODID-props $INFO
   
-  # INSTALL APPS & LIBRARIES
+  # HANDLE REPLACE FOLDERS
+  for TARGET in $REPLACE; do
+    if $MAGISK; then mktouch $MODPATH$TARGET/.replace; else rm -rf $TARGET; fi
+  done
+  
+  # PROP FILES - add prop function for system installs
+  $PROPFILE && prop_process $INSTALLER/common/system.prop
+  
+  # MODULE INFO
+  cp_ch_nb $INSTALLER/module.prop $MOD_VER
+  
+  #INSTALL POST-FS-DATA MODE SCRIPTS
+  $POSTFSDATA && install_script $INSTALLER/common/post-fs-data.sh
+  
+  # SERVICE MODE SCRIPTS
+  $LATESTARTSERVICE && install_script $INSTALLER/common/service.sh
+   
+  # INSTALL FILES
   ui_print "   Installing files for $ARCH SDK $API device..."
-  
-  # PROCESS FOLDERS AND FILES
-  find -L $INSTALLER/system -type f -print > $INSTALLER/tfiles
-  rm -f $INSTALLER/data/placeholder
-  find $INSTALLER/data -type f -print >> $INSTALLER/tfiles
-  sed -i -e '/addon.d/ d' -e 's/&/\\&/g' -e "s|$INSTALLER||g" $INSTALLER/tfiles
-  $IS64BIT || sed -i '/lib64/ d' $INSTALLER/tfiles
-  
-  cat $INSTALLER/tfiles | while read LINE; do
-    if $OREONEW; then
-      case $LINE in
-        /system/app/*|/system/lib*) LINE2=$(echo $LINE | sed "s|/system/|$VEN/|");;
-        *) LINE2=$LINE;;
+  rm -f $INSTALLER/system/placeholder
+  $IS64BIT || rm -rf $INSTALLER/system/lib64 $INSTALLER/system/vendor/lib64
+  for FILE in $(find $INSTALLER/system -type f | sed "s|$INSTALLER||"); do
+    if $DYNAMICOREO && [ $API -ge 26 ]; then
+      case $FILE in
+        /system/app/*|/system/lib*) FILE2=$(echo $FILE | sed "s|/system/|$VEN/|");;
+        *) FILE2=$FILE;;
       esac
     else
-      $OLDAPP && LINE2=$(echo $LINE | sed 's|/system/app/.*/|/system/app/|') || LINE2=$(echo $LINE | sed 's|/system/app/|/system/priv-app/|')
+      if $OLDAPP; then FILE2=$(echo $FILE | sed 's|/system/app/.*/|/system/app/|'); else FILE2=$(echo $FILE | sed 's|/system/app/|/system/priv-app/|'); fi
     fi
-    $CP_PRFX $INSTALLER$LINE $LINE2
+    cp_ch $INSTALLER$FILE $UNITY$FILE2
   done
-
-  NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
-    test "$(grep "TIMEOFEXEC=3" $INSTALLER/common/unity-customrules$NUM.sh)" && source $INSTALLER/common/unity-customrules$NUM.sh
-    NUM=$((NUM+1))
-  done
-  
-  # COPY PROP FILE & CONF FILEmTO MAGISK_MERGE FOR BOOTMODE
-  $BOOTMODE && { test -f $PROPFILE && $CP_NBPRFX $PROPFILE $MODPATH/system.prop; test -f $CONFPROPS && $CP_NBPRFX $CONFPROPS $MODPATH/$MODID-conflictingprops.txt; }
   
   # REMOVE INFO FILE IF NOT NEEDED
   $MAGISK && [ ! -s $INFO ] && rm -f $INFO
-}
-
-# UNITY UNINSTALLER
-unity_uninstall() {
-  #### CLEANING UP ####
+  
+  # SET PERMISSIONS
   ui_print " "
-  ui_print "- Cleaning up previous installations -"
-
-  # REMOVE FILES
-  info_uninstall $INFO
-  
-  # RESTORE CONFIGS, LIBRARIES, & EFFECTS
-  $AUDMODLIB && source $INSTALLER/common/aml-patches-remove.sh
-  
-  if $MAGISK; then
-    rm -rf $MODPATH
-    rm -rf /sbin/.core/img/$MODID
-    $AUDMODLIB && if [ -f /sbin/.core/img/audmodlib/post-fs-data.sh ]; then sed -i "/^#$MODID/,/fi #$MODID/d" /sbin/.core/img/audmodlib/post-fs-data.sh; else sed -i "/^#$MODID/,/fi #$MODID/d" $AMLSCRIPT; fi
-    # Use magisk_merge for aml during bootmode uninstall
-    $AUDMODLIB && if $BOOTMODE; then aml_mod; else ui_print "   Removing $MODID from Audio Modification Library"; fi
-    # Remove AML if no modules are installed
-    $AUDMODLIB && { if [ -f "/sbin/.core/img/audmodlib/post-fs-data.sh" ]; then
-      test ! "$(sed -n '/^# MOD PATCHES/{n;p}' /sbin/.core/img/audmodlib/post-fs-data.sh)" && remove_aml
-    else
-      test ! "$(sed -n '/^# MOD PATCHES/{n;p}' $AMLSCRIPT)" && remove_aml
-    fi; }
-  else
-    $AUDMODLIB && sed -i "/#$MODID/d" $AMLSCRIPT
-    rm -f /system/addon.d/$MODID.sh
-    # Remove AML if no modules are installed
-    $AUDMODLIB && { test ! "$(sed -n '/^# MOD PATCHES/{n;p}' $AMLSCRIPT)" && remove_aml; }
-  fi
-
-  NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
-    test "$(grep "TIMEOFEXEC=4" $INSTALLER/common/unity-customrules$NUM.sh)" && source $INSTALLER/common/unity-customrules$NUM.sh
-    NUM=$((NUM+1))
-  done
+  ui_print "- Setting Permissions"
+  set_permissions
 }
 
-# MAIN UNITY FUNCTION
-standard_procedure() {
-  # CHECK FOR MIN & MAX API VERSION
-  test -z $MINAPI || { test $API -ge $MINAPI || require_new_api 'minimum'; }
-  test -z $MAXAPI || { test $API -le $MAXAPI || require_new_api 'maximum'; }
+# UNINSTALL
+unity_uninstall() {
+  ui_print " "
+  ui_print "- Uninstalling"
   
-  # PREPARE (UN)INSTALL
-  if [ -d /system/priv-app ]; then OLDAPP=false; else OLDAPP=true; fi
-
-  # DON'T INSTALL IF INSTALLED AML VER IS NEWER THAN ONE IN ZIP
-  if $AUDMODLIB && [ -f "$AML_VER" ]; then
-    if [ $(grep_prop versionCode $AML_VER) -gt $(grep_prop versionCode $INSTALLER/common/unity-audmodlib/audmodlibmodule.prop) ]; then
-      ui_print " "
-      ui_print "   ! Module contains older version of audmodlib !"
-      ui_print "   ! than is currently installed ! "
-      abort "   ! Upgrade this module to latest audmodlib !"
-    elif [ $(grep_prop versionCode $AML_VER) -lt 9 ]; then
-      ui_print " "
-      ui_print "   ! AML older than v2.3 detected !"
-      ui_print "   ! upgrade process only supported on v2.3+ ! "
-      ui_print "   ! Uninstall all aml modules first !"
-      abort "   ! Then install this module !"
-    fi
+  # REMOVE FILES
+  if [ -f $INFO ]; then
+    while read LINE; do
+      if [ "$(echo -n $LINE | tail -c 4)" == ".bak" ]; then
+        continue
+      elif [ -f "$LINE.bak" ]; then
+        mv -f $LINE.bak $LINE
+      else
+        rm -f $LINE
+        [ "$(ls $(dirname $LINE))" ] || rm -rf $(dirname $LINE)
+      fi
+    done < $INFO
+    rm -f $INFO
+  else
+    $MAGISK || abort "   ! Mod not detected !"
   fi
   
-  # DETERMINE IF MOD IS ALREADY INSTALLED. IF SAME VERSION IS INSTALLED, UNINSTALL
-  if [ -f "$MOD_VER" ]; then
-    if [ $(grep_prop versionCode $MOD_VER) -ge $(grep_prop versionCode $INSTALLER/module.prop) ]; then
-      ui_print " "
-      ui_print "   ! Current or newer version detected. Uninstalling!"
-      UPGRADE=false
-    else
-      ui_print " "
-      ui_print "   ! Older version detected. Removing..."
-      UPGRADE=true
-    fi
-    INSTALL=false
-  else
-    UPGRADE=false
-  fi
-
-  if $INSTALL; then
-    # MAKE INFO FILE
-    $MAGISK || rm -f $CONFPROPS
-    test ! -f "$INFO" && mktouch $INFO
-    
-    # RUN CUSTOMFULES1
-    NUM=1; while [ $NUM -le $NUMOFCUSTRULES ]; do
-      test "$(grep "TIMEOFEXEC=1" $INSTALLER/common/unity-customrules$NUM.sh)" && source $INSTALLER/common/unity-customrules$NUM.sh
-      NUM=$((NUM+1))
-    done
-    
-    # WIPE FILES/FOLDERS
-    cat $INSTALLER/common/unity-files-wipe.sh | while read LINE; do
-      wipe_ch $LINE
-    done
-
-    # PATCH FILES
-    $AUDMODLIB && aml_mod
-
-    # COPY FILES
-    unity_mod_copy
-
-    # COMPLETING INSTALL
-    ui_print " "
-    ui_print "- Setting Permissions"
-    if $MAGISK; then
-      $AUDMODLIB && set_perm_recursive $AMLPATH 0 0 0755 0644
-      set_permissions
-      set_perm_recursive $AMLPATH/system/xbin 0 0 0755 0755
-    else
-      set_permissions
-      action_complete
-      exit 0
-    fi
-  else
-    # UNINSTALL
-    unity_uninstall
-
-    if $UPGRADE; then
-      INSTALL=true
-      ui_print " "
-      ui_print "! Uninstall completed, beginning install !"
-      standard_procedure
-    else
-      # COMPLETING UNINSTALL
-      ui_print " "
-      ui_print "- Completing uninstall -"
-      $MAGISK || { action_complete; exit 0; }
-    fi
-  fi
+  $MAGISK && rm -rf $MODPATH /sbin/.core/img/$MODID
+  
+  # RUN USER INSTALL SCRIPT
+  . $INSTALLER/common/uninstall.sh
+  
+  ui_print " "
+  ui_print "- Completing uninstall -"
 }
 
 ##########################################################################################
 # (UN)INSTALL
 ##########################################################################################
 
-# MAGISK PATHS
-MAGISKBIN=/data/adb/magisk
-MOUNTPATH=$TMPDIR/magisk_img
-$BOOTMODE && IMG=/data/adb/magisk_merge.img
-
 # CHECK FOR OLD MAGISK, DETERMINE IF SYSTEM INSTALL OR MAGISK INSTALL, CHECK MAGISK VERSION (IF APPLICABLE)
+MINMAGISK=$(grep_prop minMagisk $INSTALLER/module.prop)
 if [ ! -d $MAGISKBIN ] && [ ! -d /data/magisk ]; then
-  system_install
-  standard_procedure
+  MAGISK=false
+  ui_print "- System install detected"
 elif [ ! -f $MAGISKBIN/util_functions.sh ]; then
   require_new_magisk
 else
   . $MAGISKBIN/util_functions.sh
-  [ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $(grep_prop minMagisk $INSTALLER/module.prop) ] || require_new_magisk
+  [ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MINMAGISK ] || require_new_magisk
+  ui_print "- Magisk install detected"
 fi
 
-# MOUNT PARTITIONS
+# MOUNT PARTITIONS AND DETECT VERSION/ARCHITECTURE
 mount_partitions
-ui_print "- Magisk install detected"
+api_level_arch_detect
 
-# DETECT VERSION AND ARCHITECTURE
-api_level_arch_detect_mod
+if $MAGISK; then
+  # SETUP BUSYBOX AND BINARIES
+  $BOOTMODE && boot_actions || recovery_actions
+  # GET THE VARIABLE REQSIZEM
+  request_zip_size_check "$ZIP"
+  # THIS FUNCTION WILL MOUNT $IMG TO $MOUNTPATH, AND RESIZE THE IMAGE BASED ON $REQSIZEM
+  mount_magisk_img
+fi
 
-# SETUP BUSYBOX AND BINARIES
-$BOOTMODE && boot_actions || recovery_actions
+# CHECK FOR MIN & MAX API VERSION
+[ -z $MINAPI ] || { [ $API -lt $MINAPI ] && require_new_api 'minimum'; }
+[ -z $MAXAPI ] || { [ $API -gt $MAXAPI ] && require_new_api 'maximum'; }
 
-# Get the variable reqSizeM
-request_zip_size_check "$ZIP"
+# SET MODID and MODPATH variables
+[ -z $MODID ] && MODID=`grep_prop id $INSTALLER/module.prop`
+MODPATH=$MOUNTPATH/$MODID
 
-# THIS FUNCTION WILL MOUNT $IMG TO $MOUNTPATH, AND RESIZE THE IMAGE BASED ON $REQSIZEM
-mount_magisk_img
+# INSERT MODID AND CUSTOM USER SCRIPT INTO MOD SCRIPT
+cp -f $INSTALLER/common/unityfiles/modid.sh $INSTALLER/common/unityfiles/post-fs-data.sh
+mv -f $INSTALLER/common/unityfiles/modid.sh $INSTALLER/common/unityfiles/service.sh
+sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/post-fs-data.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unityfiles/post-fs-data.sh
+sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/service.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unityfiles/service.sh
+mv -f $INSTALLER/common/unityfiles/post-fs-data.sh $INSTALLER/common/post-fs-data.sh
+mv -f $INSTALLER/common/unityfiles/service.sh $INSTALLER/common/service.sh
 
-# ACTUAL (UN)INSTALL
-magisk_install
-standard_procedure
+# UNIVERSAL VARIABLES
+SYS=/system
+if [ -d /system/priv-app ]; then OLDAPP=false; else OLDAPP=true; fi
 
-# UNMOUNT MAGISK IMAGE AND SHRINK IF POSSIBLE
-unmount_magisk_img
+# SET MAGISK/SYSTEM SPECIFIC VARIABLES
+if $MAGISK; then
+  VEN=/system/vendor
+  UNITY="$MODPATH"
+  PROP=$MODPATH/system.prop
+  if $BOOTMODE; then
+    INFO="/sbin/.core/img/$MODID/$MODID-files"
+    MOD_VER="/sbin/.core/img/$MODID/module.prop"
+    OLD_AML_VER="/sbin/.core/img/audmodlib/module.prop"
+  else
+    INFO="$MODPATH/$MODID-files"
+    MOD_VER="$MODPATH/module.prop"
+    OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
+  fi
+else
+  # DETERMINE SYSTEM BOOT SCRIPT TYPE
+  script_type
+  UNITY=""
+  MOD_VER="/system/etc/$MODID-module.prop"
+  OLD_AML_VER="/system/etc/audmodlib-module.prop"
+  PROP=$MODPATH/$MODID-props.sh
+  if [ -d /system/addon.d ]; then
+    INFO=/system/addon.d/$MODID-files
+  else
+    INFO=/system/etc/$MODID-files
+  fi
+fi
 
-$BOOTMODE || recovery_cleanup
-rm -rf $TMPDIR
+# USE VENDOR IF OREO OR NEWER
+if $DYNAMICOREO && [ $API -ge 26 ]; then 
+  LIBPATCH="\/vendor"; LIBDIR=$VEN;
+else 
+  LIBPATCH="\/system"; LIBDIR=/system;
+fi
 
-action_complete
+# ADD BLANK LINE TO END OF ALL COMMON FILES IF NOT ALREADY PRESENT
+for FILE in $INSTALLER/common/*.sh $INSTALLER/common/*.prop; do
+  [ "$(tail -1 $FILE)" ] && echo "" >> $FILE
+done
 
-# PLEASE LEAVE THIS MESSAGE IN YOUR FLASHABLE ZIP FOR CREDITS :)
-ui_print " "
-ui_print "    *******************************************"
-ui_print "    *      Powered by Magisk (@topjohnwu)     *"
-ui_print "    *******************************************"
-ui_print " "
+# REMOVE OLD AML & MODS
+[ -f "$OLD_AML_VER" ] && remove_old_aml
 
-exit 0
+# LOAD USER VARS/FUNCTIONS
+unity_custom
+
+# DETERMINE MOD INSTALLATION STATUS
+if [ -f "$MOD_VER" ]; then
+  if [ $(grep_prop versionCode $MOD_VER) -ge $(grep_prop versionCode $INSTALLER/module.prop) ]; then
+    ui_print " "
+    ui_print "   ! Current or newer version detected!"
+    unity_uninstall
+  else
+    ui_print " "
+    ui_print "   ! Older version detected! Upgrading..."
+    unity_uninstall
+    unity_install
+  fi
+else
+  unity_install
+fi
+
+# COMPLETE (UN)INSTALL
+cleanup
