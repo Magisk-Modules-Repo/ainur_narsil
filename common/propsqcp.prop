@@ -1,39 +1,39 @@
-setprop af.fast_track_multiplier 1 
-setprop persist.audio.native.44.1kHz true 
-setprop persist.audio.native.48kHz true 
-setprop persist.audio.native.96kHz true 
-setprop persist.audio.native.192kHz true 
-setprop persist.audio.hifi.int_codec true 
-setprop persist.audio.hifi.volume 1 
-setprop persist.audio.format.24bit true 
-setprop persist.audio.hp true 
-setprop persist.audio.lowlatency.rec true 
-setprop audio.offload.pcm.enable true 
-setprop audio.offload.buffer.size.kb 1024 
-setprop audio.offload.pcm.24bit.enable true 
-setprop audio.offload.pcm.16bit.enable false 
-setprop audio.offload.pcm.32bit.enable true 
-setprop audio.offload.multiple.enabled true 
-setprop audio.playback.mch.downsample false 
-setprop audio.high.resolution.enable true 
-setprop audio.adm.buffering.ms 2 
-setprop audio.heap.size.multiplier 9 
-setprop use.dts_eagle true 
-setprop hpx_send_params 1 
-# 
-# Ultram8's hex props 
-# 
-setprop audio.native.dsd.buffer.size.kb 320 
-setprop audio.nat.codec.enabled 1 
-setprop fastrpc.perf.adsp 1 
-setprop fastrpc.perf.freq 1000 
-setprop audio_hw_if 1 
-setprop af.thread.throttle 0 
-setprop ro.audio.max_fast_tracks 8 
-setprop audio.hwacceffects.needed true 
-setprop eagle_dsec_islicensevalid 1 
-setprop DTS_EAGLE_PLATFORM_SUPPORT true 
-setprop DTS_NEW_PARAM_READY 1 
-setprop EagleLicense 1 
-setprop HD_stream_only 1 
-setprop effect.reverb.pcm 1 
+af.fast_track_multiplier=1
+persist.audio.native.44.1kHz=true
+persist.audio.native.48kHz=true
+persist.audio.native.96kHz=true
+persist.audio.native.192kHz=true
+persist.audio.hifi.int_codec=true
+persist.audio.hifi.volume=1
+persist.audio.format.24bit=true
+persist.audio.hp=true
+persist.audio.lowlatency.rec=true
+audio.offload.pcm.enable=true
+audio.offload.buffer.size.kb=1024
+audio.offload.pcm.24bit.enable=true
+audio.offload.pcm.16bit.enable=false
+audio.offload.pcm.32bit.enable=true
+audio.offload.multiple.enabled=true
+audio.playback.mch.downsample=false
+audio.high.resolution.enable=true
+audio.adm.buffering.ms=2
+audio.heap.size.multiplier=9
+use.dts_eagle=true
+hpx_send_params=1
+#
+# Ultram8's hex props
+#
+audio.native.dsd.buffer.size.kb=320
+audio.nat.codec.enabled=1
+fastrpc.perf.adsp=1
+fastrpc.perf.freq=1000
+audio_hw_if=1
+af.thread.throttle=0
+ro.audio.max_fast_tracks=8
+audio.hwacceffects.needed=true
+eagle_dsec_islicensevalid=1
+DTS_EAGLE_PLATFORM_SUPPORT=true
+DTS_NEW_PARAM_READY=1
+EagleLicense=1
+HD_stream_only=1
+effect.reverb.pcm=1
