@@ -1,11 +1,9 @@
 patch_mixer_toplevel() {
- if [ "$1" != "updateonly" ] && [ "$(grep "<ctl name=\"$1\" value=\".*\" />" $MODPATH/$NAME)" ]; then
-   sed -i "0,/<ctl name=\"$1\" value=\".*\" \/>/ s/\(<ctl name=\"$1\" value=\"\).*\(\" \/>\)/\1$2\2/" $MODPATH/$NAME
- elif [ "$1" != "updateonly" ]; then
-   sed -i "/<mixer>/ a\    <ctl name=\"$1\" value=\"$2\" \/>" $MODPATH/$NAME
- else
-   sed -i "/<mixer>/ a\    <ctl name=\"$2\" value=\"$3\" \/>" $MODPATH/$NAME
- fi
+  if [ "$(grep "<ctl name=\"$1\" value=\".*\" />" $MODPATH/$NAME)" ]; then
+    sed -i "0,/<ctl name=\"$1\" value=\".*\" \/>/ s/\(<ctl name=\"$1\" value=\"\).*\(\" \/>\)/\1$2\2/" $MODPATH/$NAME
+  elif [ -z $3 ]; then
+    sed -i "/<mixer>/ a\    <ctl name=\"$1\" value=\"$2\" \/><!--$MODID-->" $MODPATH/$NAME
+  fi
 }
 QCP=
 AP=
@@ -41,7 +39,7 @@ for FILE in ${FILES}; do
   case $NAME in
   *audio_effects*) $ASP && patch_cfgs $MODPATH/$NAME audiosphere audiosphere $LIBDIR/libasphere.so 184e62ab-2d19-4364-9d1b-c0a40733866c
                    $SHB && patch_cfgs $MODPATH/$NAME shoebox shoebox $LIBDIR/libshoebox.so 1eab784c-1a36-4b2a-b7fc-e34c44cab89e 
-                   $FMAS || break
+                   $FMAS || continue
                    case $NAME in
                      "system/etc"*) ;;
                      *) patch_cfgs $MODPATH/$NAME libraryonly fmas $LIBDIR/libfmas.so
@@ -86,103 +84,103 @@ for FILE in ${FILES}; do
                                                sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"compress_offload\"/,/<\/mixPort>/ s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/}" $MODPATH/system/etc/audio_policy_configuration.xml;;
   *mixer_paths*.xml) if [ "$QCP" ]; then
                        if [ "$BIT" ]; then
-                         patch_mixer_toplevel "SLIM_0_RX Format" "$BIT" $MODPATH/$NAME
-                         patch_mixer_toplevel "SLIM_5_RX Format" "$BIT" $MODPATH/$NAME
-                         [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT" $MODPATH/$NAME
-                         patch_mixer_toplevel "USB_AUDIO_RX Format" "$BIT" $MODPATH/$NAME
-                         patch_mixer_toplevel "HDMI_RX Bit Format" "$BIT" $MODPATH/$NAME
+                         patch_mixer_toplevel "SLIM_0_RX Format" "$BIT"
+                         patch_mixer_toplevel "SLIM_5_RX Format" "$BIT"
+                         [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT"
+                         patch_mixer_toplevel "USB_AUDIO_RX Format" "$BIT"
+                         patch_mixer_toplevel "HDMI_RX Bit Format" "$BIT" 
                        fi
                        if [ "$IMPEDANCE" ]; then
-                         patch_mixer_toplevel "HPHR Impedance" "$IMPEDANCE" $MODPATH/$NAME
-                         patch_mixer_toplevel "HPHL Impedance" "$IMPEDANCE" $MODPATH/$NAME
+                         patch_mixer_toplevel "HPHR Impedance" "$IMPEDANCE"
+                         patch_mixer_toplevel "HPHL Impedance" "$IMPEDANCE"
                        fi
                        if [ "$RESAMPLE" ]; then
-                         patch_mixer_toplevel "SLIM_0_RX SampleRate" "$RESAMPLE" $MODPATH/$NAME
-                         patch_mixer_toplevel "SLIM_5_RX SampleRate" "$RESAMPLE" $MODPATH/$NAME
-                         [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE" $MODPATH/$NAME
-                         patch_mixer_toplevel "USB_AUDIO_RX SampleRate" "$RESAMPLE" $MODPATH/$NAME
-                         patch_mixer_toplevel "HDMI_RX SampleRate" "$RESAMPLE" $MODPATH/$NAME  
+                         patch_mixer_toplevel "SLIM_0_RX SampleRate" "$RESAMPLE"
+                         patch_mixer_toplevel "SLIM_5_RX SampleRate" "$RESAMPLE"
+                         [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE"
+                         patch_mixer_toplevel "USB_AUDIO_RX SampleRate" "$RESAMPLE"
+                         patch_mixer_toplevel "HDMI_RX SampleRate" "$RESAMPLE"  
                        fi
                        if [ "$BTRESAMPLE" ]; then
-                         patch_mixer_toplevel "BT SampleRate" "$BTRESAMPLE" $MODPATH/$NAME
+                         patch_mixer_toplevel "BT SampleRate" "$BTRESAMPLE"
                        fi
                        if [ "$AX7" ]; then
-                         patch_mixer_toplevel "AKM HIFI Switch Sel" "ak4490" $MODPATH/$NAME "updateonly"
-                         patch_mixer_toplevel "Smart PA Init Switch" "On" $MODPATH/$NAME 
-                         patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" $MODPATH/$NAME 
-                         patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" $MODPATH/$NAME 
+                         patch_mixer_toplevel "AKM HIFI Switch Sel" "ak4490" "updateonly"
+                         patch_mixer_toplevel "Smart PA Init Switch" "On" 
+                         patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" 
+                         patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" 
                        fi
                        if [ "$LX3" ]; then
-                         patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $MODPATH/$NAME
-                         patch_mixer_toplevel "ESS_HEADPHONE Off" "On" $MODPATH/$NAME
+                         patch_mixer_toplevel "Es9018 CLK Divider" "DIV4"
+                         patch_mixer_toplevel "ESS_HEADPHONE Off" "On"
                        fi
                        if [ "$X9" ]; then
-                         patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $MODPATH/$NAME
-                         patch_mixer_toplevel "Es9018 Hifi Switch" "1" $MODPATH/$NAME
+                         patch_mixer_toplevel "Es9018 CLK Divider" "DIV4"
+                         patch_mixer_toplevel "Es9018 Hifi Switch" "1"
                        fi   
                        if [ "$Z9" ] || [ "$Z9M" ]; then
-                         patch_mixer_toplevel "HP Out Volume" "22" $MODPATH/$NAME
-                         patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" $MODPATH/$NAME
-                         patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" $MODPATH/$NAME
+                         patch_mixer_toplevel "HP Out Volume" "22"
+                         patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88"
+                         patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88"
                        fi
                        if [ "$Z11" ]; then
-                         patch_mixer_toplevel "AK4376 DAC Digital Filter Mode" "Slow Roll-Off" $MODPATH/$NAME
-                         patch_mixer_toplevel "AK4376 HPL Power-down Resistor" "Hi-Z" $MODPATH/$NAME
-                         patch_mixer_toplevel "AK4376 HPR Power-down Resistor" "Hi-Z" $MODPATH/$NAME
-                         patch_mixer_toplevel "AK4376 HP-Amp Analog Volume" "15" $MODPATH/$NAME
+                         patch_mixer_toplevel "AK4376 DAC Digital Filter Mode" "Slow Roll-Off"
+                         patch_mixer_toplevel "AK4376 HPL Power-down Resistor" "Hi-Z"
+                         patch_mixer_toplevel "AK4376 HPR Power-down Resistor" "Hi-Z"
+                         patch_mixer_toplevel "AK4376 HP-Amp Analog Volume" "15"
                        fi
                        if [ "$V20" ] || [ "$V30" ] || [ "$G6" ]; then
-                         patch_mixer_toplevel "Es9018 AVC Volume" "14" $MODPATH/$NAME
-                         patch_mixer_toplevel "Es9018 HEADSET TYPE" "1" $MODPATH/$NAME
-                         patch_mixer_toplevel "Es9018 State" "Hifi" $MODPATH/$NAME
-                         patch_mixer_toplevel "HIFI Custom Filter" "6" $MODPATH/$NAME
+                         patch_mixer_toplevel "Es9018 AVC Volume" "14"
+                         patch_mixer_toplevel "Es9018 HEADSET TYPE" "1"
+                         patch_mixer_toplevel "Es9018 State" "Hifi"
+                         patch_mixer_toplevel "HIFI Custom Filter" "6"
                        fi  
                        if [ -f "/system/etc/TAS2557_A.ftcfg" ]; then 
-                         patch_mixer_toplevel "HTC_AS20_VOL Index" "Eleven" $MODPATH/$NAME
+                         patch_mixer_toplevel "HTC_AS20_VOL Index" "Eleven"
                        fi 
                        if [ "$QC8996" ] || [ "$QC8998" ]; then 
-                         patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn" $MODPATH/$NAME
-                         patch_mixer_toplevel "VBoost Volt" "8.6V" $MODPATH/$NAME
+                         patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn"
+                         patch_mixer_toplevel "VBoost Volt" "8.6V"
                        fi
-                       patch_mixer_toplevel "Set Custom Stereo OnOff" "Off" $MODPATH/$NAME
+                       patch_mixer_toplevel "Set Custom Stereo OnOff" "Off"
                        if $APTX; then  
-                         patch_mixer_toplevel "APTX Dec License" "21" $MODPATH/$NAME
+                         patch_mixer_toplevel "APTX Dec License" "21"
                        fi
-                       patch_mixer_toplevel "Set HPX OnOff" "1" $MODPATH/$NAME
-                       patch_mixer_toplevel "Set HPX ActiveBe" "1" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 9 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 13 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 17 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 21 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS" $MODPATH/$NAME
-                       patch_mixer_toplevel "DS2 OnOff" "Off" $MODPATH/$NAME	
-                       patch_mixer_toplevel "Codec Wideband" "1" $MODPATH/$NAME
-                       patch_mixer_toplevel "HPH Type" "1" $MODPATH/$NAME
+                       patch_mixer_toplevel "Set HPX OnOff" "1"
+                       patch_mixer_toplevel "Set HPX ActiveBe" "1"
+                       patch_mixer_toplevel "PCM_Dev Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 9 Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 13 Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 17 Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 21 Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS"
+                       patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS"
+                       patch_mixer_toplevel "DS2 OnOff" "Off"	
+                       patch_mixer_toplevel "Codec Wideband" "1"
+                       patch_mixer_toplevel "HPH Type" "1"
                        if $ASP; then
-                         patch_mixer_toplevel "Audiosphere Enable" "On" $MODPATH/$NAME
-                         patch_mixer_toplevel "MSM ASphere Set Param" "1" $MODPATH/$NAME
-                       fi   
+                         patch_mixer_toplevel "Audiosphere Enable" "On"
+                         patch_mixer_toplevel "MSM ASphere Set Param" "1"
+                      fi   
                        if [ "$M9" ] || [ "$M8" ] || [ "$M10" ]; then
-                         patch_mixer_toplevel "TFA9895 Profile" "hq" $MODPATH/$NAME
-                         patch_mixer_toplevel "TFA9895 Playback Volume" "255" $MODPATH/$NAME
-                         patch_mixer_toplevel "SmartPA Switch" "1" $MODPATH/$NAME
+                         patch_mixer_toplevel "TFA9895 Profile" "hq"
+                         patch_mixer_toplevel "TFA9895 Playback Volume" "255"
+                         patch_mixer_toplevel "SmartPA Switch" "1"
                        fi	 
-                       patch_mixer_toplevel "TAS2552 Volume" "125" $MODPATH/$NAME "updateonly"
+                       patch_mixer_toplevel "TAS2552 Volume" "125" "updateonly"
                        if [ -f "/system/etc/TAS2557_A.ftcfg" ]; then
-                         patch_mixer_toplevel "TAS2557 Volume" "30" $MODPATH/$NAME
+                         patch_mixer_toplevel "TAS2557 Volume" "30"
                        fi 
-                       patch_mixer_toplevel "SRS Trumedia" "1" $MODPATH/$NAME
-                       patch_mixer_toplevel "SRS Trumedia HDMI" "1" $MODPATH/$NAME
-                       patch_mixer_toplevel "SRS Trumedia I2S" "1" $MODPATH/$NAME
-                       patch_mixer_toplevel "SRS Trumedia MI2S" "1" $MODPATH/$NAME       
-                       patch_mixer_toplevel "HiFi Function" "On" $MODPATH/$NAME 
+                       patch_mixer_toplevel "SRS Trumedia" "1"
+                       patch_mixer_toplevel "SRS Trumedia HDMI" "1"
+                       patch_mixer_toplevel "SRS Trumedia I2S" "1"
+                       patch_mixer_toplevel "SRS Trumedia MI2S" "1"       
+                       patch_mixer_toplevel "HiFi Function" "On" 
                        if $COMP; then
                          sed -i "/<ctl name=\"COMP*[0-9] Switch\"/p" $MODPATH/$NAME
                          sed -i "/<ctl name=\"COMP*[0-9] Switch\"/ { s/\(.*\)value=\".*\" \/>/\1value=\"0\" \/><!--$MODID-->/; n; s/\( *\)\(.*\)/\1<!--$MODID\2$MODID-->/}" $MODPATH/$NAME
-                       fi 
+                       fi
                      fi;;
   esac
 done

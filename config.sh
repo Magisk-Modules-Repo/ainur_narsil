@@ -49,7 +49,6 @@ unity_custom() {
   CFGS="${CFGS} $(find -L /system -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
   POLS="${POLS} $(find -L /system -type f -name "*audio*policy*.conf" -o -name "*audio_policy*.xml")"
   MIXS="${MIXS} $(find -L /system -type f -name "*mixer_paths*.xml")"
-  if $BOOTMODE; then AUO=/storage/emulated/0/sauron_useroptions; else AUO=/data/media/0/sauron_useroptions; fi
   SAU=$INSTALLER/custom
   MAIAR=$SAU/manwe/maiar
   VALAR=$SAU/manwe/valar
@@ -114,20 +113,20 @@ unity_custom() {
   LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
   OP5=$(grep -E "ro.build.product=OnePlus5|ro.build.product=OnePlus5T" $SYS/build.prop)
   X9=$(grep "ro.product.model=X900*" $SYS/build.prop)
-  get_uo() {
-    eval "$1=$(grep_prop "$2" $AUO)"
-    if [ -z $(eval echo \$$1) ]; then
-      eval "$1=false"
-    else
-      case $(eval echo \$$1) in
-        "true"|"True"|"TRUE") eval "$1=true";;
-        *) eval "$1=false";;
-      esac
-    fi
-    if [ ! -z $3 ]; then
-      test -z \$$3 && eval "$1=false"
-    fi
-  }
+}
+get_uo() {
+  eval "$1=$(grep_prop "$2" $AUO)"
+  if [ -z $(eval echo \$$1) ]; then
+    eval "$1=false"
+  else
+    case $(eval echo \$$1) in
+      "true"|"True"|"TRUE") eval "$1=true";;
+      *) eval "$1=false";;
+    esac
+  fi
+  if [ ! -z $3 ]; then
+    test -z \$$3 && eval "$1=false"
+  fi
 }
 
 ##########################################################################################

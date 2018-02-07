@@ -199,7 +199,9 @@ unity_uninstall() {
   ui_print "- Uninstalling"
   
   # REMOVE FILES
-  if [ -f $INFO ]; then
+  FILE=$INFO
+  $BOOTMODE && [ -f /sbin/.core/img/$MODID/$MODID-files ] && FILE=/sbin/.core/img/$MODID/$MODID-files
+  if [ -f $FILE ]; then
     while read LINE; do
       if [ "$(echo -n $LINE | tail -c 4)" == ".bak" ]; then
         continue
@@ -209,8 +211,8 @@ unity_uninstall() {
         rm -f $LINE
         [ "$(ls $(dirname $LINE))" ] || rm -rf $(dirname $LINE)
       fi
-    done < $INFO
-    rm -f $INFO
+    done < $FILE
+    rm -f $FILE
   else
     $MAGISK || abort "   ! Mod not detected !"
   fi
@@ -272,6 +274,7 @@ mv -f $INSTALLER/common/unityfiles/service.sh $INSTALLER/common/service.sh
 
 # UNIVERSAL VARIABLES
 SYS=/system
+INFO="$MODPATH/$MODID-files"
 if [ -d /system/priv-app ]; then OLDAPP=false; else OLDAPP=true; fi
 
 # SET MAGISK/SYSTEM SPECIFIC VARIABLES
@@ -280,11 +283,9 @@ if $MAGISK; then
   UNITY="$MODPATH"
   PROP=$MODPATH/system.prop
   if $BOOTMODE; then
-    INFO="/sbin/.core/img/$MODID/$MODID-files"
     MOD_VER="/sbin/.core/img/$MODID/module.prop"
     OLD_AML_VER="/sbin/.core/img/audmodlib/module.prop"
   else
-    INFO="$MODPATH/$MODID-files"
     MOD_VER="$MODPATH/module.prop"
     OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
   fi

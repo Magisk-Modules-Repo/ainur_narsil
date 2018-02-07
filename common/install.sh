@@ -1,3 +1,4 @@
+if $BOOTMODE; then AUO=/storage/emulated/0/sauron_useroptions; else AUO=/data/media/0/sauron_useroptions; fi
 ui_print " "
 ui_print "- Sauron User Options -"
 if [ ! -f $AUO ]; then
@@ -225,6 +226,11 @@ patch_audpol() {
 }
 
 ui_print "   Patching audio_effects configs"
+# Create vendor audio_effects.conf if missing
+if $MAGISK && [ -f $ORIGDIR/system/etc/audio_effects.conf ] && [ ! -f $ORIGDIR/system/vendor/etc/audio_effects.conf ] && [ ! -f $ORIGDIR/system/vendor/etc/audio_effects.xml ]; then
+  cp_ch $ORIGDIR/system/etc/audio_effects.conf $UNITY/system/vendor/etc/audio_effects.conf
+  CFGS="${CFGS} /system/vendor/etc/audio_effects.conf"
+fi
 for FILE in ${CFGS}; do
   $MAGISK && cp_ch $ORIGDIR$FILE $UNITY$FILE
   case $FILE in
@@ -456,9 +462,9 @@ if $MAGISK; then
   # Add aml script variables
   add_var() {
     if [ "$(eval echo \$$1)" ]; then
-      sed -i "s|$1=|$1=$(eval echo \$$1)|" $INSTALLER/common/aml.sh
+      sed -i "s|^$1=$|$1=$(eval echo \$$1)|" $INSTALLER/common/aml.sh
     else
-      sed -i "/$1=/d" $INSTALLER/common/aml.sh
+      sed -i "/^$1=$/d" $INSTALLER/common/aml.sh
     fi
   }
   add_var "QCP"
