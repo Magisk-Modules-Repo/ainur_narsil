@@ -1,2 +1,6 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Declare files that will always have LF line endings on checkout.
+*.sh text eol=lf
+*.prop text eol=lf
+*.md text eol=lf
+META-INF/** text eol=lf
+sauron_useroptions text eol=lf

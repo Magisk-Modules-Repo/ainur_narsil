@@ -25,7 +25,6 @@ mount_partitions() {
   if ! is_mounted /system && ! [ -f /system/build.prop ]; then
     SYSTEMBLOCK=`find /dev/block -iname system$SLOT | head -n 1`
     mount -t ext4 -o rw $SYSTEMBLOCK /system
-    REALSYS=$SYSTEMBLOCK
   fi
   is_mounted /system || [ -f /system/build.prop ] || abort "! Cannot mount /system"
   cat /proc/mounts | grep -E '/dev/root|/system_root' >/dev/null && SKIP_INITRAMFS=true || SKIP_INITRAMFS=false
@@ -41,6 +40,7 @@ mount_partitions() {
   if [ -L /system/vendor ]; then
     # Seperate /vendor partition
     VEN=/vendor
+    REALVEN=/vendor
     is_mounted /vendor || mount -o rw /vendor 2>/dev/null
     if ! is_mounted /vendor; then
       VENDORBLOCK=`find /dev/block -iname vendor$SLOT | head -n 1`
@@ -49,6 +49,7 @@ mount_partitions() {
     is_mounted /vendor || abort "! Cannot mount /vendor"
   else
     VEN=/system/vendor
+    REALVEN=$REALSYS/vendor
   fi
 }
 
@@ -276,17 +277,18 @@ install_script() {
 
 patch_script() {
   sed -i "s|<MAGISK>|$MAGISK|" $1
-  sed -i "s|<VEN>|$VEN|" $1
   sed -i "s|<LIBDIR>|$LIBDIR|" $1
   if $MAGISK; then
     sed -i "s|<ROOT>|\"\"|" $1
     sed -i "s|<SYS>|/system|" $1
+    sed -i "s|<VEN>|$VEN|" $1
     sed -i "s|<SHEBANG>|#!/system/bin/sh|" $1
     sed -i "s|<SEINJECT>|magiskpolicy|" $1
     sed -i "s|\$MOUNTPATH|/sbin/.core/img|g" $1                                   
   else
     if [ ! -z $ROOT ]; then sed -i "s|<ROOT>|$ROOT|" $1; else sed -i "s|<ROOT>|\"\"|" $1; fi
     sed -i "s|<SYS>|$REALSYS|" $1
+    sed -i "s|<VEN>|$REALVEN|" $1
     sed -i "s|<SHEBANG>|$SHEBANG|" $1
     sed -i "s|<SEINJECT>|$SEINJECT|" $1
     sed -i "s|\$MOUNTPATH||g" $1
