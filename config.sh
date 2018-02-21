@@ -46,12 +46,19 @@ DYNAMICOREO=true
 # Custom Variables - Keep everything within this function
 unity_custom() {
   if $MAGISK && $BOOTMODE; then ORIGDIR="/sbin/.core/mirror"; else ORIGDIR=""; fi
-  CFGS="${CFGS} $(find -L /system -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
-  POLS="${POLS} $(find -L /system -type f -name "*audio*policy*.conf" -o -name "*audio_policy*.xml")"
-  MIXS="${MIXS} $(find -L /system -type f -name "*mixer_paths*.xml")"
+  if $BOOTMODE; then
+    CFGS="$(find /system /vendor -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" | sed "s|^/vendor|/system/vendor|g")"
+    POLS="$(find /system /vendor -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml" | sed "s|^/vendor|/system/vendor|g")"
+    MIXS="$(find /system /vendor -type f -name "*mixer_paths*.xml" | sed "s|^/vendor|/system/vendor|g")"
+  else  
+    CFGS="$(find -L /system -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
+    POLS="$(find -L /system -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
+    MIXS="$(find -L /system -type f -name "*mixer_paths*.xml")"
+  fi
   SAU=$INSTALLER/custom
   MAIAR=$SAU/manwe/maiar
   VALAR=$SAU/manwe/valar
+  NAZ=$SAU/nazgul
   MORG=$SAU/morgoth
   ETC=$SYS/etc
   BIN=$SYS/bin
@@ -67,17 +74,6 @@ unity_custom() {
   VETC=$VEN/etc
   HW=$LIB/hw
   SUD=$SYS/su.d
-  DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
-  if [ -z $DSPBLOCK ]; then
-    ADSP=$VEN/lib/rfsa/adsp
-    ADSP2=$UNITY$ADSP
-  else
-    ADSP=/dsp
-    ADSP2=$ADSP
-    mkdir /dsp
-    if is_mounted /dsp; then mount -o remount,rw /dsp; else mount -o rw $DSPBLOCK /dsp; fi
-    is_mounted /dsp || abort "! Cannot mount /dsp"
-  fi
   ACDB=$ETC/acdbdata
   AMPA=$ETC/TAS2557_A.ftcfg
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
@@ -113,6 +109,17 @@ unity_custom() {
   LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
   OP5=$(grep -E "ro.build.product=OnePlus5|ro.build.product=OnePlus5T" $SYS/build.prop)
   X9=$(grep "ro.product.model=X900*" $SYS/build.prop)
+  [ "$QCP" ] && DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
+  if [ -z $DSPBLOCK ]; then
+    ADSP=$VEN/lib/rfsa/adsp
+    ADSP2=$UNITY$ADSP
+  else
+    ADSP=/dsp
+    ADSP2=$ADSP
+    mkdir /dsp
+    if is_mounted /dsp; then mount -o remount,rw /dsp; else mount -o rw $DSPBLOCK /dsp; fi
+    is_mounted /dsp || abort "! Cannot mount /dsp"
+  fi
 }
 get_uo() {
   eval "$1=$(grep_prop "$2" $AUO)"

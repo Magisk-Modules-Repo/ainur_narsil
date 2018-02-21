@@ -1,7 +1,8 @@
 change_module() {
   if [ "$1" ]; then
     for FILE in $1; do
-      echo "$2" $FILE
+      chmod 666 $FILE
+      echo "$2" > $FILE
       chmod 444 $FILE
     done
   fi
@@ -24,7 +25,7 @@ BTS=$(find $ROOT/sys/devices/virtual/switch/beats/state)
 change_module "$BTS" "1"
 
 # Reset dts effects each boot
-for EFFECT in /data/misc/dts/effect*;
+for EFFECT in /data/misc/dts/effect*; do
   cp -f /data/misc/dts/origeffect.bak $EFFECT
 done
 

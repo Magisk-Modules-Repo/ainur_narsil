@@ -33,13 +33,23 @@ if [ "$QCP" ]; then
 fi
 
 ## Install logic by UltraM8 @XDA DO NOT MODIFY
+cp_ch $NAZ/libaudiopreprocessing.so $INSTALLER$SFX/libaudiopreprocessing.so
+cp_ch $NAZ/libbundlewrapper.so $INSTALLER$SFX/libbundlewrapper.so
+cp_ch $NAZ/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
+if [ -d "$LIB64" ]; then
+   cp_ch $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
+   cp_ch $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
+   cp_ch $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
+fi
+
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
   [ $API -ge 26 ] && prop_process $INSTALLER/common/propsqcporeo.prop
-  cp_ch $SAU/lib/libreverbwrapper.so $UNITY$SFX/libreverbwrapper.so
-  cp_ch $SAU/lib/libdownmix1.so $UNITY$SFX/libreverbwrapper.so
+  cp_ch $SAU/lib/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
+  cp_ch $SAU/lib/libdownmix1.so $INSTALLER$SFX/libdownmix.so
   if [ -d "$LIB64" ]; then
-    cp_ch $SAU/lib/libreverbwrapper1.so $UNITY$SFX64/libreverbwrapper.so
+    cp_ch $SAU/lib/libreverbwrapper1.so $INSTALLER$SFX64/libreverbwrapper.so
+	cp_ch $SAU/lib/libdownmix4.so $INSTALLER$SFX64/libdownmix.so
   fi
   cp_ch $VALAR/lib/soundfx/libqcbassboost.so $UNITY$VSFX/libqcbassboost.so
   cp_ch $VALAR/lib/soundfx/libqcreverb.so $UNITY$VSFX/libqcreverb.so
@@ -122,6 +132,7 @@ if [ "$QCP" ]; then
     cp_ch $SAU/data/effect24 /data/misc/dts/effect24
     cp_ch $SAU/data/effect25 /data/misc/dts/effect25
     cp_ch $SAU/data/effect33 /data/misc/dts/effect33
+    cp_ch_nb $SAU/data/origeffect.bak /data/misc/dts/origeffect.bak
   fi
   if $ASP; then
     sed -i -r "s/audio.pp.asphere.enabled(.?)false/audio.pp.asphere.enabled\1true/" $INSTALLER/common/system.prop
@@ -164,15 +175,21 @@ fi
 
 if [ "$MTK" ]; then
   prop_process $INSTALLER/common/propsmtk.prop
+  cp_ch $NAZ/libdownmix.so $INSTALLER$SFX/libdownmix.so
+  cp_ch $NAZ/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
+  if [ -d "$LIB64" ]; then
+    cp_ch $NAZ/libdownmix2.so $INSTALLER$SFX64/libdownmix.so
+    cp_ch $NAZ/libreverbwrapper2.so $INSTALLER$SFX64/libreverbwrapper.so
+  fi
 fi
 
 if [ "$EXY" ]; then
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $INSTALLER/common/system.prop
-  cp_ch $SAU/lib/libdownmix2.so $UNITY$SFX/libdownmix.so
-  cp_ch $SAU/lib/libreverbwrapper2.so $UNITY$SFX/libreverbwrapper.so
+  cp_ch $SAU/lib/libdownmix2.so $INSTALLER$SFX/libdownmix.so
+  cp_ch $SAU/lib/libreverbwrapper2.so $INSTALLER$SFX/libreverbwrapper.so
   if [ -d "$LIB64" ]; then
-    cp_ch $SAU/lib/libreverbwrapper3.so $UNITY$SFX64/libreverbwrapper.so
-    cp_ch $SAU/lib/libdownmix3.so $UNITY$SFX/libdownmix.so  
+    cp_ch $SAU/lib/libreverbwrapper3.so $INSTALLER$SFX64/libreverbwrapper.so
+    cp_ch $SAU/lib/libdownmix3.so $INSTALLER$SFX64/libdownmix.so  
   fi
 fi
 
@@ -226,13 +243,12 @@ patch_audpol() {
 }
 
 ui_print "   Patching audio_effects configs"
-# Create vendor audio_effects.conf if missing
-if $MAGISK && [ -f $ORIGDIR/system/etc/audio_effects.conf ] && [ ! -f $ORIGDIR/system/vendor/etc/audio_effects.conf ] && [ ! -f $ORIGDIR/system/vendor/etc/audio_effects.xml ]; then
-  cp_ch $ORIGDIR/system/etc/audio_effects.conf $UNITY/system/vendor/etc/audio_effects.conf
-  CFGS="${CFGS} /system/vendor/etc/audio_effects.conf"
-fi
 for FILE in ${CFGS}; do
-  $MAGISK && cp_ch $ORIGDIR$FILE $UNITY$FILE
+  if $MAGISK; then
+    cp_ch $ORIGDIR$FILE $UNITY$FILE
+  else
+    [ ! -f $ORIGDIR$FILE.bak ] && cp_ch $ORIGDIR$FILE $UNITY$FILE.bak
+  fi
   case $FILE in
     *.conf) if $ASP; then
               sed -i "/audiosphere {/,/} /d" $UNITY$FILE
@@ -273,7 +289,11 @@ done
 ##                    POLICY CONFIGS EDITS BY ULTRAM8                           ##
 ui_print "   Patching audio policy"
 if $AP && [ -f $SYS/etc/audio_policy.conf ]; then
-  $MAGISK && cp_ch $ORIGDIR$SYS/etc/audio_policy.conf $UNITY$SYS/etc/audio_policy.conf
+  if $MAGISK; then
+    cp_ch $ORIGDIR$SYS/etc/audio_policy.conf $UNITY$SYS/etc/audio_policy.conf
+  else
+    [ ! -f $ORIGDIR$SYS/etc/audio_policy.conf.bak ] && cp_ch $ORIGDIR$SYS/etc/audio_policy.conf $UNITY$SYS/etc/audio_policy.conf.bak
+  fi
   for AUD in "direct_pcm" "direct" "raw" "multichannel" "compress_offload" "high_res_audio"; do
     if [ "$AUD" != "compress_offload" ]; then
       backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_8_24_BIT" $UNITY$SYS/etc/audio_policy.conf
@@ -285,7 +305,11 @@ if $AP && [ -f $SYS/etc/audio_policy.conf ]; then
   done
 fi
 if $OAP && [ -f $VEN/etc/audio_output_policy.conf ]; then
-  $MAGISK && cp_ch $ORIGDIR$VEN/etc/audio_output_policy.conf $UNITY$VEN/etc/audio_output_policy.conf
+  if $MAGISK; then
+    cp_ch $ORIGDIR$VEN/etc/audio_output_policy.conf $UNITY$VEN/etc/audio_output_policy.conf
+  else
+    [ ! -f $ORIGDIR$VEN/etc/audio_output_policy.conf.bak ] && cp_ch $ORIGDIR$VEN/etc/audio_output_policy.conf $UNITY$VEN/etc/audio_output_policy.conf.bak
+  fi
   for AUD in "default" "direct" "proaudio" "direct_pcm" "direct_pcm_24" "raw" "compress_offload_16" "compress_offload_24" "compress_offload_HD"; do
     if [[ "$AUD" != "compress_offload"* ]]; then
       backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT" $UNITY$VEN/etc/audio_output_policy.conf
@@ -302,7 +326,11 @@ if $OAP && [ -f $VEN/etc/audio_output_policy.conf ]; then
   done
 fi
 if $AP && [ -f $SYS/etc/audio_policy_configuration.xml ]; then
-  $MAGISK && cp_ch $ORIGDIR$SYS/etc/audio_policy_configuration.xml $UNITY$SYS/etc/audio_policy_configuration.xml
+  if $MAGISK; then
+    cp_ch $ORIGDIR$SYS/etc/audio_policy_configuration.xml $UNITY$SYS/etc/audio_policy_configuration.xml
+  else
+    [ ! -f $ORIGDIR$SYS/etc/audio_policy_configuration.xml.bak ] && cp_ch $ORIGDIR$SYS/etc/audio_policy_configuration.xml $UNITY$SYS/etc/audio_policy_configuration.xml.bak
+  fi
   ui_print "   Patching audio policy configuration"
   patch_audpol "primary output" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
   patch_audpol "raw" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
@@ -319,7 +347,11 @@ fi
 ui_print "   Patching mixer"
 if [ "$QCP" ]; then
   for MIX in ${MIXS}; do
-    $MAGISK && cp_ch $ORIGDIR$MIX $UNITY$MIX
+    if $MAGISK; then
+      cp_ch $ORIGDIR$MIX $UNITY$MIX
+    else
+      [ ! -f $ORIGDIR$MIX.bak ] && cp_ch $ORIGDIR$MIX $UNITY$MIX.bak
+    fi
     ## MAIN DAC patches
     # BETA FEATURES
     if [ "$BIT" ]; then

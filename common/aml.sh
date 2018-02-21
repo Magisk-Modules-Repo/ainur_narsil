@@ -2,7 +2,7 @@ patch_mixer_toplevel() {
   if [ "$(grep "<ctl name=\"$1\" value=\".*\" />" $MODPATH/$NAME)" ]; then
     sed -i "0,/<ctl name=\"$1\" value=\".*\" \/>/ s/\(<ctl name=\"$1\" value=\"\).*\(\" \/>\)/\1$2\2/" $MODPATH/$NAME
   elif [ -z $3 ]; then
-    sed -i "/<mixer>/ a\    <ctl name=\"$1\" value=\"$2\" \/><!--$MODID-->" $MODPATH/$NAME
+    sed -i "/<mixer>/ a\    <ctl name=\"$1\" value=\"$2\" \/>" $MODPATH/$NAME
   fi
 }
 QCP=
@@ -156,7 +156,7 @@ for FILE in ${FILES}; do
                        patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS"
                        patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS"
                        patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS"
-                       patch_mixer_toplevel "DS2 OnOff" "Off"	
+                       patch_mixer_toplevel "DS2 OnOff" "Off"
                        patch_mixer_toplevel "Codec Wideband" "1"
                        patch_mixer_toplevel "HPH Type" "1"
                        if $ASP; then
@@ -178,8 +178,7 @@ for FILE in ${FILES}; do
                        patch_mixer_toplevel "SRS Trumedia MI2S" "1"       
                        patch_mixer_toplevel "HiFi Function" "On" 
                        if $COMP; then
-                         sed -i "/<ctl name=\"COMP*[0-9] Switch\"/p" $MODPATH/$NAME
-                         sed -i "/<ctl name=\"COMP*[0-9] Switch\"/ { s/\(.*\)value=\".*\" \/>/\1value=\"0\" \/><!--$MODID-->/; n; s/\( *\)\(.*\)/\1<!--$MODID\2$MODID-->/}" $MODPATH/$NAME
+                         sed -i "/<ctl name=\"COMP*[0-9] Switch\"/ s/\(.*\)value=\".*\" \/>/\1value=\"0\" \/>/" $MODPATH/$NAME
                        fi
                      fi;;
   esac
