@@ -46,6 +46,12 @@ qc.install.asp=
 qc.install.shoebox=
 
 #
+# Install Reverbwrapper drivers that can apply effect to PCM conversion streams
+# ! UNSTABLE ! might cause bootloops
+# Can be set true or false
+qc.install.pcm_reverb=
+
+#
 # Install Aptx/HD dirvers & HW offloadable cappi modules & props
 # Needs further improvements
 # Can be set true or false

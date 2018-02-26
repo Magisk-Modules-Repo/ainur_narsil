@@ -16,6 +16,7 @@ $MAGISK || sed -i "/^EOF/ i\\$AUO" $INSTALLER/common/unityfiles/addon.sh
 get_uo "AP" "audpol"
 get_uo "FMAS" "install.fmas"
 get_uo "SHB" "qc.install.shoebox" "QCP"
+get_uo "RPCM" "qc.install.pcm_reverb" "QCP"
 get_uo "OAP" "qc.out.audpol" "QCP"
 get_uo "ASP" "qc.install.asp" "QCP"
 get_uo "APTX" "qc.install.aptx" "QCP"
@@ -33,93 +34,102 @@ if [ "$QCP" ]; then
 fi
 
 ## Install logic by UltraM8 @XDA DO NOT MODIFY
-cp_ch $NAZ/libaudiopreprocessing.so $INSTALLER$SFX/libaudiopreprocessing.so
-cp_ch $NAZ/libbundlewrapper.so $INSTALLER$SFX/libbundlewrapper.so
-cp_ch $NAZ/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
-if [ -d "$LIB64" ]; then
-   cp_ch $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
-   cp_ch $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
-   cp_ch $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
-fi
+mkdir -p $INSTALLER$ACDB $INSTALLER$BIN $INSTALLER$ETC/firmware $INSTALLER$ETC/permissions $INSTALLER$ETC/settings $INSTALLER$ETC/tfa $INSTALLER$SYS/framework $INSTALLER$LIB/modules $INSTALLER$SFX $INSTALLER$SFX64 $INSTALLER$VSFX $INSTALLER$VSFX64
+cp -f $NAZ/libaudiopreprocessing.so $INSTALLER$SFX/libaudiopreprocessing.so
+cp -f $NAZ/libbundlewrapper.so $INSTALLER$SFX/libbundlewrapper.so
+cp -f $NAZ/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
+cp -f $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
+cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
+cp -f $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
   [ $API -ge 26 ] && prop_process $INSTALLER/common/propsqcporeo.prop
-  cp_ch $SAU/lib/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
-  cp_ch $SAU/lib/libdownmix1.so $INSTALLER$SFX/libdownmix.so
-  if [ -d "$LIB64" ]; then
-    cp_ch $SAU/lib/libreverbwrapper1.so $INSTALLER$SFX64/libreverbwrapper.so
-	cp_ch $SAU/lib/libdownmix4.so $INSTALLER$SFX64/libdownmix.so
+  cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
+  cp -f $SAU/lib/libdownmix5.so $INSTALLER$SFX/libdownmix.so
+  cp -f $SAU/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
+  cp -f $SAU/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
+  cp -f $SAU/lib/libreverbwrapper6.so $INSTALLER$SFX64/libreverbwrapper.so
+  if $RPCM; then
+    cp -f $SAU/lib/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
+    cp -f $SAU/lib/libreverbwrapper1.so $INSTALLER$SFX64/libreverbwrapper.so
+    mkdir -p /data/mediaserver/audio_dump
+    cp -f $SAU/lib/libaudioutils.so $INSTALLER$LIB/libaudioutils.so
+    cp -f $SAU/lib/libaudioutils2.so $INSTALLER$LIB64/libaudioutils.so
   fi
-  cp_ch $VALAR/lib/soundfx/libqcbassboost.so $UNITY$VSFX/libqcbassboost.so
-  cp_ch $VALAR/lib/soundfx/libqcreverb.so $UNITY$VSFX/libqcreverb.so
-  cp_ch $VALAR/lib/soundfx/libqcvirt.so $UNITY$VSFX/libqcvirt.so
-  cp_ch $MORG/modules/mpq-adapter.ko $UNITY$LIB/modules/mpq-adapter.ko
-  cp_ch $MORG/modules/mpq-dmx-hw-plugin.ko $UNITY$LIB/modules/mpq-dmx-hw-plugin.ko
+  cp -f $SAU/lib/libdownmix6.so $INSTALLER$SFX64/libdownmix.so
+  if [ $API -ge 26 ]; then
+    cp -f $SAU/lib/libdownmix1.so $INSTALLER$SFX/libdownmix.so
+    cp -f $SAU/lib/libdownmix4.so $INSTALLER$SFX64/libdownmix.so
+  fi
+  cp -f $VALAR/lib/soundfx/libqcbassboost.so $INSTALLER$VSFX/libqcbassboost.so
+  cp -f $VALAR/lib/soundfx/libqcreverb.so $INSTALLER$VSFX/libqcreverb.so
+  cp -f $VALAR/lib/soundfx/libqcvirt.so $INSTALLER$VSFX/libqcvirt.so
+  cp -f $MORG/modules/mpq-adapter.ko $INSTALLER$LIB/modules/mpq-adapter.ko
+  cp -f $MORG/modules/mpq-dmx-hw-plugin.ko $INSTALLER$LIB/modules/mpq-dmx-hw-plugin.ko
   if [ ! -f "$ADSP/libc++.so.1" ] && [ ! -f "$ADSP/libc++abi.so.1" ]; then
     cp_ch $MORG/hammer/libc++.so.1 $ADSP2/libc++.so.1
     cp_ch $MORG/hammer/libc++abi.so.1 $ADSP2/libc++abi.so.1  
   fi
-  if [ -d "$VLIB64" ]; then
-    cp_ch $MAIAR/lib/soundfx/libqcbassboost.so $UNITY$VSFX64/libqcbassboost.so
-    cp_ch $MAIAR/lib/soundfx/libqcreverb.so $UNITY$VSFX64/libqcreverb.so
-    cp_ch $MAIAR/lib/soundfx/libqcvirt.so $UNITY$VSFX64/libqcvirt.so
-  fi 
+  cp -f $MAIAR/lib/soundfx/libqcbassboost.so $INSTALLER$VSFX64/libqcbassboost.so
+  cp -f $MAIAR/lib/soundfx/libqcreverb.so $INSTALLER$VSFX64/libqcreverb.so
+  cp -f $MAIAR/lib/soundfx/libqcvirt.so $INSTALLER$VSFX64/libqcvirt.so
   if [ -f "$SYS/etc/htc_audio_effects.conf" ]; then
     prop_process $INSTALLER/common/propshtc.prop
-    cp_ch $SAU/files/default_vol_level.conf $UNITY$ETC/default_vol_level.conf
-    cp_ch $SAU/files/TFA_default_vol_level.conf $UNITY$ETC/TFA_default_vol_level.conf
-    cp_ch $SAU/files/NOTFA_default_vol_level.conf $UNITY$ETC/NOTFA_default_vol_level.conf
-    cp_ch $SAU/files/libhtcacoustic.so $UNITY$LIB/libhtcacoustic.so 
+    cp -f $SAU/files/default_vol_level.conf $INSTALLER$ETC/default_vol_level.conf
+    cp -f $SAU/files/TFA_default_vol_level.conf $INSTALLER$ETC/TFA_default_vol_level.conf
+    cp -f $SAU/files/NOTFA_default_vol_level.conf $INSTALLER$ETC/NOTFA_default_vol_level.conf
+    cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so 
   fi  
   if [ "$M10" ] || [ "$BOLT" ]; then
-    cp_ch $SAU/lib/libaudio-ftm.so $UNITY$LIB/libaudio-ftm.so 
-    cp_ch $SAU/lib/libaudio-ftm2.so $UNITY$LIB64/libaudio-ftm.so    
+    cp -f $SAU/lib/libaudio-ftm.so $INSTALLER$LIB/libaudio-ftm.so 
+    cp -f $SAU/lib/libaudio-ftm2.so $INSTALLER$LIB64/libaudio-ftm.so    
   fi
   if [ "$M9" ]; then
     prop_process $INSTALLER/common/propsresample.prop
-    cp_ch $SAU/files/tfa/playback.drc $UNITY$ETC/tfa/playback.drc
-    cp_ch $SAU/files/tfa/playback.eq $UNITY$ETC/tfa/playback.eq
-    cp_ch $SAU/files/tfa/playback.preset $UNITY$ETC/tfa/playback.preset
-    cp_ch $SAU/files/tfa/playback_l.drc $UNITY$ETC/tfa/playback_l.drc
-    cp_ch $SAU/files/tfa/playback_l.eq $UNITY$ETC/tfa/playback_l.eq
-    cp_ch $SAU/files/tfa/playback_l.preset $UNITY$ETC/tfa/playback_l.preset
-    cp_ch $SAU/files/tfa/tfa9895.patch $UNITY$ETC/tfa/tfa9895.patch
-    cp_ch $SAU/files/tfa/tfa9895MFG.patch $UNITY$ETC/tfa/tfa9895MFG.patch
-    cp_ch $SAU/files/libtfa9895.so $UNITY$LIB/libtfa9895.so
-    cp_ch $SAU/files/libtfa98952.so $UNITY$LIB64/libtfa9895.so
+    cp -f $SAU/files/tfa/playback.drc $INSTALLER$ETC/tfa/playback.drc
+    cp -f $SAU/files/tfa/playback.eq $INSTALLER$ETC/tfa/playback.eq
+    cp -f $SAU/files/tfa/playback.preset $INSTALLER$ETC/tfa/playback.preset
+    cp -f $SAU/files/tfa/playback_l.drc $INSTALLER$ETC/tfa/playback_l.drc
+    cp -f $SAU/files/tfa/playback_l.eq $INSTALLER$ETC/tfa/playback_l.eq
+    cp -f $SAU/files/tfa/playback_l.preset $INSTALLER$ETC/tfa/playback_l.preset
+    cp -f $SAU/files/tfa/tfa9895.patch $INSTALLER$ETC/tfa/tfa9895.patch
+    cp -f $SAU/files/tfa/tfa9895MFG.patch $INSTALLER$ETC/tfa/tfa9895MFG.patch
+    cp -f $SAU/files/libtfa9895.so $INSTALLER$LIB/libtfa9895.so
+    cp -f $SAU/files/libtfa98952.so $INSTALLER$LIB64/libtfa9895.so
     if [ $API -ge 24 ]; then
-      cp_ch $VALAR/libqcompostprocbundle.so $UNITY$SFX/libqcompostprocbundle.so
-      cp_ch $MAIAR/libqcompostprocbundle.so $UNITY$SFX64/libqcompostprocbundle.so
+      cp -f $VALAR/libqcompostprocbundle.so $INSTALLER$SFX/libqcompostprocbundle.so
+      cp -f $MAIAR/libqcompostprocbundle.so $INSTALLER$SFX64/libqcompostprocbundle.so
     fi
   fi  
   if [ "$M8" ]; then
-    cp_ch $SAU/files/audio/tfa9887_feature.config $UNITY$ETC/audio/tfa9887_feature.config
-    cp_ch $SAU/files/libtfa9887.so $UNITY$LIB/libtfa9887.so
+    mkdir -p $INSTALLER$ETC/audio
+    cp -f $SAU/files/audio/tfa9887_feature.config $INSTALLER$ETC/audio/tfa9887_feature.config
+    cp -f $SAU/files/libtfa9887.so $INSTALLER$LIB/libtfa9887.so
   fi  
-  if [ -f "$AMPA" ]; then
+  if [ -f "$SYS/etc/TAS2557_A.ftcfg" ]; then
     prop_process $INSTALLER/common/propsresample.prop
-    cp_ch $SAU/files/TAS2557_A.ftcfg $UNITY$ETC/TAS2557_A.ftcfg
-    cp_ch $SAU/files/TAS2557_B.ftcfg $UNITY$ETC/TAS2557_B.ftcfg
-    cp_ch $SAU/files/fw/tas2557s_uCDSP_PG21.bin $UNITY$ETC/firmware/tas2557s_uCDSP_PG21.bin
+    cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
+    cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg
+    cp -f $SAU/files/fw/tas2557s_uCDSP_PG21.bin $INSTALLER$ETC/firmware/tas2557s_uCDSP_PG21.bin
     if [ -f "U11P" ]; then
-      cp_ch $SAU/files/fw/tas2557s_uCDSP_24bit.bin $UNITY$VETC/firmware/tas2557s_uCDSP_24bit.bin	
-      cp_ch $SAU/files/fw/tas2557s_uCDSP.bin $UNITY$VETC/firmware/tas2557s_uCDSP.bin
+      cp -f $SAU/files/fw/tas2557s_uCDSP_24bit.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP_24bit.bin	
+      cp -f $SAU/files/fw/tas2557s_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin
     fi
-    cp_ch $SAU/files/bin/ti_audio_s $UNITY$BIN/ti_audio_s
+    cp -f $SAU/files/bin/ti_audio_s $INSTALLER$BIN/ti_audio_s
   fi
   if [ "$OP5" ]; then
-    cp_ch $SAU/files/settings/90_Sambo.parms $UNITY$ETC/settings/90_Sambo.parms
-    cp_ch $SAU/files/settings/coldboot.patch $UNITY$ETC/settings/coldboot.patch
-    cp_ch $SAU/files/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.eq $UNITY$ETC/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.eq
-    cp_ch $SAU/files/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.preset $UNITY$ETC/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.preset	
-    cp_ch $SAU/files/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.eq $UNITY$ETC/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.eq
-    cp_ch $SAU/files/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.preset $UNITY$ETC/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.preset	
-    cp_ch $SAU/files/settings/SPK_Knowles_bottom0417.speaker $UNITY$ETC/settings/SPK_Knowles_bottom0417.speaker
-    cp_ch $SAU/files/settings/TFA9890_N1B12_N1C3_v3.config $UNITY$ETC/settings/TFA9890_N1B12_N1C3_v3.config
-    cp_ch $SAU/files/settings/TFA9890_N1C3_2_1_1.patch $UNITY$ETC/settings/TFA9890_N1C3_2_1_1.patch	
-    cp_ch $SAU/files/libtfa9890.so $UNITY$LIB/libtfa9890.so	
-    cp_ch $SAU/files/libtfa98902.so $UNITY$LIB64/libtfa9890.so
+    cp -f $SAU/files/settings/90_Sambo.parms $INSTALLER$ETC/settings/90_Sambo.parms
+    cp -f $SAU/files/settings/coldboot.patch $INSTALLER$ETC/settings/coldboot.patch
+    cp -f $SAU/files/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.eq $INSTALLER$ETC/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.eq
+    cp -f $SAU/files/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.preset $INSTALLER$ETC/settings/HQ_knowles_bottom0417_0_0_SPK_Knowles_bottom0417.preset	
+    cp -f $SAU/files/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.eq $INSTALLER$ETC/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.eq
+    cp -f $SAU/files/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.preset $INSTALLER$ETC/settings/Speech_BYD_DOWN_0_0_HQ_BYD_S4_1222.preset	
+    cp -f $SAU/files/settings/SPK_Knowles_bottom0417.speaker $INSTALLER$ETC/settings/SPK_Knowles_bottom0417.speaker
+    cp -f $SAU/files/settings/TFA9890_N1B12_N1C3_v3.config $INSTALLER$ETC/settings/TFA9890_N1B12_N1C3_v3.config
+    cp -f $SAU/files/settings/TFA9890_N1C3_2_1_1.patch $INSTALLER$ETC/settings/TFA9890_N1C3_2_1_1.patch	
+    cp -f $SAU/files/libtfa9890.so $INSTALLER$LIB/libtfa9890.so	
+    cp -f $SAU/files/libtfa98902.so $INSTALLER$LIB64/libtfa9890.so
   fi  
   if [ ! -f "$HWDTS" ]; then
     cp_ch $MORG/hammer/DTS_HPX_MODULE.so.1 $ADSP2/DTS_HPX_MODULE.so.1
@@ -137,60 +147,56 @@ if [ "$QCP" ]; then
   if $ASP; then
     sed -i -r "s/audio.pp.asphere.enabled(.?)false/audio.pp.asphere.enabled\1true/" $INSTALLER/common/system.prop
     [ $API -ge 26 ] && echo "vendor.audio.pp.asphere.enabled=1" >> $INSTALLER/common/system.prop
-    cp_ch $SAU/audiosphere/audiosphere.jar $UNITY$SYS/framework/audiosphere.jar
-    cp_ch $SAU/audiosphere/audiosphere.xml $UNITY$SYS/etc/permissions/audiosphere.xml
-    cp_ch $SAU/audiosphere/libasphere.so $UNITY$SFX/libasphere.so
-    cp_ch $SAU/audiosphere/libasphere2.so $UNITY$SFX64/libasphere.so
+    cp -f $SAU/audiosphere/audiosphere.jar $INSTALLER$SYS/framework/audiosphere.jar
+    cp -f $SAU/audiosphere/audiosphere.xml $INSTALLER$SYS/etc/permissions/audiosphere.xml
+    cp -f $SAU/audiosphere/libasphere.so $INSTALLER$SFX/libasphere.so
+    cp -f $SAU/audiosphere/libasphere2.so $INSTALLER$SFX64/libasphere.so
     cp_ch $MORG/hammer/AudioSphereModule.so.1 $ADSP2/AudioSphereModule.so.1  
-    if [ ! -f "$VLIB/libqtigef.so" ]; then
-      cp_ch $SAU/lib/libqtigef.so $UNITY$VLIB/libqtigef.so
-      cp_ch $SAU/lib/libqtigef2.so $UNITY$VLIB64/libqtigef.so 
+    if [ ! -f "$VEN/lib/libqtigef.so" ]; then
+      cp -f $SAU/lib/libqtigef.so $INSTALLER$VLIB/libqtigef.so
+      cp -f $SAU/lib/libqtigef2.so $INSTALLER$VLIB64/libqtigef.so 
     fi   
   fi
   if $SHB; then
-    cp_ch $SAU/lib/libshoebox.so $UNITY$SFX/libshoebox.so
-    cp_ch $SAU/lib/libshoebox2.so $UNITY$SFX64/libshoebox.so
-    if [ ! -f "$VLIB/libqtigef.so" ]; then
-      cp_ch $SAU/lib/libqtigef.so $UNITY$VLIB/libqtigef.so
-      cp_ch $SAU/lib/libqtigef2.so $UNITY$VLIB64/libqtigef.so 
+    cp -f $SAU/lib/libshoebox.so $INSTALLER$SFX/libshoebox.so
+    cp -f $SAU/lib/libshoebox2.so $INSTALLER$SFX64/libshoebox.so
+    if [ ! -f "$VEN/lib/libqtigef.so" ]; then
+      cp -f $SAU/lib/libqtigef.so $INSTALLER$VLIB/libqtigef.so
+      cp -f $SAU/lib/libqtigef2.so $INSTALLER$VLIB64/libqtigef.so 
     fi  
   fi
   if $APTX; then
     prop_process $INSTALLER/common/propsaptx.prop
-    if [ ! -f "$ACDB/adsp_avs_config.acdb" ]; then
-      cp_ch $MORG/hammer/adsp_avs_config.acdb $UNITY$ACDB/adsp_avs_config.acdb
+    if [ ! -f "$SYS/etc/acdbdata/adsp_avs_config.acdb" ]; then
+      cp -f $MORG/hammer/adsp_avs_config.acdb $INSTALLER$ACDB/adsp_avs_config.acdb
     fi
     cp_ch $MORG/hammer/capi_v2_aptX_Classic.so $ADSP2/capi_v2_aptX_Classic.so
     cp_ch $MORG/hammer/capi_v2_aptX_HD.so $ADSP2/capi_v2_aptX_HD.so   
     if [ $API -ge 25 ]; then  
-      [ -f "$VLIB/libaptX-1.0.0-rel-Android21-ARMv7A.so" -o -f "$LIB/libaptX-1.0.0-rel-Android21-ARMv7A.so" ] && cp_ch $SAU/lib/libaptX-1.0.0-rel-Android21-ARMv7A.so $UNITY$LIB/libaptX-1.0.0-rel-Android21-ARMv7A.so
-      [ -f "$VLIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so" -o -f "$LIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so" ] && cp_ch $SAU/lib/libaptXHD-1.0.0-rel-Android21-ARMv7A.so $UNITY$LIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so
-      [ -f "$VLIB/libaptXScheduler.so" -o -f "$LIB/libaptXScheduler.so" ] && cp_ch $SAU/lib/libaptXScheduler.so $UNITY$LIB/libaptXScheduler.so
-      [ -f "$VLIB/libbt-aptX-ARM-4.2.2.so" -o -f "$LIB/libbt-aptX-ARM-4.2.2.so" ] && cp_ch $SAU/lib/libbt-aptX-ARM-4.2.2.so $UNITY$LIB/libbt-aptX-ARM-4.2.2.so
-      [ -f "$VLIB/libbt-codec_aptx.so" -o -f "$LIB/libbt-codec_aptx.so" ] && cp_ch $SAU/lib/libbt-codec_aptx.so $UNITY$LIB/libbt-codec_aptx.so
-      [ -f "$VLIB/libbt-codec_aptxhd.so" -o -f "$LIB/libbt-codec_aptxhd.so" ] && cp_ch $SAU/lib/libbt-codec_aptxhd.so $UNITY$LIB/libbt-codec_aptxhd.so  
+      [ -f "$VLIB/libaptX-1.0.0-rel-Android21-ARMv7A.so" -o -f "$LIB/libaptX-1.0.0-rel-Android21-ARMv7A.so" ] && cp -f $SAU/lib/libaptX-1.0.0-rel-Android21-ARMv7A.so $INSTALLER$LIB/libaptX-1.0.0-rel-Android21-ARMv7A.so
+      [ -f "$VLIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so" -o -f "$LIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so" ] && cp -f $SAU/lib/libaptXHD-1.0.0-rel-Android21-ARMv7A.so $INSTALLER$LIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so
+      [ -f "$VLIB/libaptXScheduler.so" -o -f "$LIB/libaptXScheduler.so" ] && cp -f $SAU/lib/libaptXScheduler.so $INSTALLER$LIB/libaptXScheduler.so
+      [ -f "$VLIB/libbt-aptX-ARM-4.2.2.so" -o -f "$LIB/libbt-aptX-ARM-4.2.2.so" ] && cp -f $SAU/lib/libbt-aptX-ARM-4.2.2.so $INSTALLER$LIB/libbt-aptX-ARM-4.2.2.so
+      [ -f "$VLIB/libbt-codec_aptx.so" -o -f "$LIB/libbt-codec_aptx.so" ] && cp -f $SAU/lib/libbt-codec_aptx.so $INSTALLER$LIB/libbt-codec_aptx.so
+      [ -f "$VLIB/libbt-codec_aptxhd.so" -o -f "$LIB/libbt-codec_aptxhd.so" ] && cp -f $SAU/lib/libbt-codec_aptxhd.so $INSTALLER$LIB/libbt-codec_aptxhd.so  
     fi
   fi  
 fi
 
 if [ "$MTK" ]; then
   prop_process $INSTALLER/common/propsmtk.prop
-  cp_ch $NAZ/libdownmix.so $INSTALLER$SFX/libdownmix.so
-  cp_ch $NAZ/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
-  if [ -d "$LIB64" ]; then
-    cp_ch $NAZ/libdownmix2.so $INSTALLER$SFX64/libdownmix.so
-    cp_ch $NAZ/libreverbwrapper2.so $INSTALLER$SFX64/libreverbwrapper.so
-  fi
+  cp -f $NAZ/libdownmix.so $INSTALLER$SFX/libdownmix.so
+  cp -f $NAZ/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
+  cp -f $NAZ/libdownmix2.so $INSTALLER$SFX64/libdownmix.so
+  cp -f $NAZ/libreverbwrapper2.so $INSTALLER$SFX64/libreverbwrapper.so
 fi
 
 if [ "$EXY" ]; then
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $INSTALLER/common/system.prop
-  cp_ch $SAU/lib/libdownmix2.so $INSTALLER$SFX/libdownmix.so
-  cp_ch $SAU/lib/libreverbwrapper2.so $INSTALLER$SFX/libreverbwrapper.so
-  if [ -d "$LIB64" ]; then
-    cp_ch $SAU/lib/libreverbwrapper3.so $INSTALLER$SFX64/libreverbwrapper.so
-    cp_ch $SAU/lib/libdownmix3.so $INSTALLER$SFX64/libdownmix.so  
-  fi
+  cp -f $SAU/lib/libdownmix2.so $INSTALLER$SFX/libdownmix.so
+  cp -f $SAU/lib/libreverbwrapper2.so $INSTALLER$SFX/libreverbwrapper.so
+  cp -f $SAU/lib/libreverbwrapper3.so $INSTALLER$SFX64/libreverbwrapper.so
+  cp -f $SAU/lib/libdownmix3.so $INSTALLER$SFX64/libdownmix.so  
 fi
 
 if [ "$MIUI" ]; then
@@ -201,7 +207,7 @@ fi
 
 if $FMAS; then
   prop_process $INSTALLER/common/propfmas.prop
-  cp_ch $SAU/lib/libfmas.so $UNITY$SFX/libfmas.so
+  cp -f $SAU/lib/libfmas.so $INSTALLER$SFX/libfmas.so
 fi
 
 if [ "$AX7" ] || [ "$V20" ] || [ "$G6" ] || [ "$Z9" ] || [ "$Z9M" ] || [ "$Z11" ] || [ "$LX3" ] || [ "$X9" ]; then

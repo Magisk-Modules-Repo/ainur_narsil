@@ -184,6 +184,11 @@ unity_install() {
     cp_ch $INSTALLER$FILE $UNITY$FILE2
   done
   
+  # ADD BLANK LINE TO END OF ALL PROP/SCRIPT FILES IF NOT ALREADY PRESENT
+  for FILE in $MODPATH/*.sh $MODPATH/*.prop; do
+    [ -f $FILE ] && { [ "$(tail -1 $FILE)" ] && echo "" >> $FILE; }
+  done
+  
   # REMOVE INFO FILE IF NOT NEEDED
   $MAGISK && [ ! -s $INFO ] && rm -f $INFO
   
