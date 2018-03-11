@@ -38,17 +38,19 @@ mkdir -p $INSTALLER$ACDB $INSTALLER$BIN $INSTALLER$ETC/firmware $INSTALLER$ETC/p
 cp -f $NAZ/libaudiopreprocessing.so $INSTALLER$SFX/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper.so $INSTALLER$SFX/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
+cp -f $NAZ/libldnhncr.so $INSTALLER$SFX/libldnhncr.so
 cp -f $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
+if [ $API -ge 26 ]; then
+cp -f $NAZ/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
+fi
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
   [ $API -ge 26 ] && prop_process $INSTALLER/common/propsqcporeo.prop
   cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
   cp -f $SAU/lib/libdownmix5.so $INSTALLER$SFX/libdownmix.so
-  cp -f $SAU/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
-  cp -f $SAU/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
   cp -f $SAU/lib/libreverbwrapper6.so $INSTALLER$SFX64/libreverbwrapper.so
   if $RPCM; then
     cp -f $SAU/lib/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
@@ -56,6 +58,8 @@ if [ "$QCP" ]; then
     mkdir -p /data/mediaserver/audio_dump
     cp -f $SAU/lib/libaudioutils.so $INSTALLER$LIB/libaudioutils.so
     cp -f $SAU/lib/libaudioutils2.so $INSTALLER$LIB64/libaudioutils.so
+    cp -f $SAU/lib/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
+    cp -f $SAU/lib/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
   fi
   cp -f $SAU/lib/libdownmix6.so $INSTALLER$SFX64/libdownmix.so
   if [ $API -ge 26 ]; then
@@ -67,6 +71,7 @@ if [ "$QCP" ]; then
   cp -f $VALAR/lib/soundfx/libqcvirt.so $INSTALLER$VSFX/libqcvirt.so
   cp -f $MORG/modules/mpq-adapter.ko $INSTALLER$LIB/modules/mpq-adapter.ko
   cp -f $MORG/modules/mpq-dmx-hw-plugin.ko $INSTALLER$LIB/modules/mpq-dmx-hw-plugin.ko
+  cp_ch $MORG/hammer/libAudienceAZA.so $ADSP2/libAudienceAZA.so
   if [ ! -f "$ADSP/libc++.so.1" ] && [ ! -f "$ADSP/libc++abi.so.1" ]; then
     cp_ch $MORG/hammer/libc++.so.1 $ADSP2/libc++.so.1
     cp_ch $MORG/hammer/libc++abi.so.1 $ADSP2/libc++abi.so.1  
@@ -79,11 +84,16 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/default_vol_level.conf $INSTALLER$ETC/default_vol_level.conf
     cp -f $SAU/files/TFA_default_vol_level.conf $INSTALLER$ETC/TFA_default_vol_level.conf
     cp -f $SAU/files/NOTFA_default_vol_level.conf $INSTALLER$ETC/NOTFA_default_vol_level.conf
-    cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so 
+	if [ ! -f "$NX9" ]; then
+	  cp -f $SAU/files/RT5501 $INSTALLER$ETC/RT5501
+	  cp -f $SAU/files/RT5506 $INSTALLER$ETC/RT5506
+      cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so
+      cp -f $SAU/files/libhtcacoustic2.so $INSTALLER$LIB64/libhtcacoustic.so
+    fi	
   fi  
   if [ "$M10" ] || [ "$BOLT" ]; then
     cp -f $SAU/lib/libaudio-ftm.so $INSTALLER$LIB/libaudio-ftm.so 
-    cp -f $SAU/lib/libaudio-ftm2.so $INSTALLER$LIB64/libaudio-ftm.so    
+    cp -f $SAU/lib/libaudio-ftm2.so $INSTALLER$LIB64/libaudio-ftm.so 
   fi
   if [ "$M9" ]; then
     prop_process $INSTALLER/common/propsresample.prop
@@ -95,8 +105,24 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/tfa/playback_l.preset $INSTALLER$ETC/tfa/playback_l.preset
     cp -f $SAU/files/tfa/tfa9895.patch $INSTALLER$ETC/tfa/tfa9895.patch
     cp -f $SAU/files/tfa/tfa9895MFG.patch $INSTALLER$ETC/tfa/tfa9895MFG.patch
-    cp -f $SAU/files/libtfa9895.so $INSTALLER$LIB/libtfa9895.so
-    cp -f $SAU/files/libtfa98952.so $INSTALLER$LIB64/libtfa9895.so
+	mkdir -p $INSTALLER/system/vendor/etc/tfa
+    cp -f $SAU/files/tfa2/playback.drc $INSTALLER/system/vendor/etc/tfa/playback.drc
+    cp -f $SAU/files/tfa2/playback.eq $INSTALLER/system/vendor/etc/tfa/playback.eq
+    cp -f $SAU/files/tfa2/playback.preset $INSTALLER/system/vendor/etc/tfa/playback.preset
+    cp -f $SAU/files/tfa2/playback_l.preset $INSTALLER/system/vendor/etc/tfa/playback_l.preset
+    cp -f $SAU/files/tfa2/playback_l.drc $INSTALLER/system/vendor/etc/tfa/playback_l.drc
+    cp -f $SAU/files/tfa2/playback_l.eq $INSTALLER/system/vendor/etc/tfa/playback_l.eq
+    cp -f $SAU/files/tfa2/playbackMFG.config $INSTALLER/system/vendor/etc/tfa/playbackMFG.config
+    cp -f $SAU/files/tfa2/playbackMFG.drc $INSTALLER/system/vendor/etc/tfa/playbackMFG.drc
+    cp -f $SAU/files/tfa2/playbackMFG.eq $INSTALLER/system/vendor/etc/tfa/playbackMFG.eq
+    cp -f $SAU/files/tfa2/playbackMFG.preset $INSTALLER/system/vendor/etc/tfa/playbackMFG.preset
+    cp -f $SAU/files/tfa2/playbackMFG_l.config $INSTALLER/system/vendor/etc/tfa/playbackMFG_l.config
+    cp -f $SAU/files/tfa2/playbackMFG_l.eq $INSTALLER/system/vendor/etc/tfa/playbackMFG_l.eq
+    cp -f $SAU/files/tfa2/playbackMFG_l.preset $INSTALLER/system/vendor/etc/tfa/playback_l.eq
+    cp -f $SAU/files/tfa2/playback_l.preset $INSTALLER/system/vendor/etc/tfa/playbackMFG_l.preset
+    cp -f $SAU/files/tfa2/tfa9895.config $INSTALLER/system/vendor/etc/tfa/tfa9895.config
+    cp -f $SAU/files/tfa2/tfa9895.patch $INSTALLER/system/vendor/etc/tfa/tfa9895.patch
+    cp -f $SAU/files/tfa2/tfa9895MFG.patch $INSTALLER/system/vendor/etc/tfa/tfa9895MFG.patch	 	
     if [ $API -ge 24 ]; then
       cp -f $VALAR/libqcompostprocbundle.so $INSTALLER$SFX/libqcompostprocbundle.so
       cp -f $MAIAR/libqcompostprocbundle.so $INSTALLER$SFX64/libqcompostprocbundle.so
@@ -130,7 +156,24 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/settings/TFA9890_N1C3_2_1_1.patch $INSTALLER$ETC/settings/TFA9890_N1C3_2_1_1.patch	
     cp -f $SAU/files/libtfa9890.so $INSTALLER$LIB/libtfa9890.so	
     cp -f $SAU/files/libtfa98902.so $INSTALLER$LIB64/libtfa9890.so
-  fi  
+  fi
+  if [ "$P2XL" ] || [ "$P2" ]; then
+    cp -f $SAU/files/bin/ti_audio_s $INSTALLER$BIN/ti_audio_s
+	cp -f $INSTALLER$VETC/firmware/tas2557s_PG21_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_PG21_uCDSP.bin.bak
+	cp -f $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin.bak
+	cp -f $INSTALLER$VETC/firmware/tas2557_cal.bin $INSTALLER$VETC/firmware/tas2557_cal.bin.bak
+    cp -f $SAU/files/fw/tas2557s_uCDSP_PG21.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP_PG21.bin
+    cp -f $SAU/files/fw/tas2557s_uCDSP_24bit.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP_24bit.bin	
+    cp -f $SAU/files/fw/tas2557s_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin
+    cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
+    cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg
+    if 	[ "$P2" ]; then
+	cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
+	fi
+  fi
+  if [ "$P1XL" ] || [ "$P1" ]; then
+  	cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
+  fi
   if [ ! -f "$HWDTS" ]; then
     cp_ch $MORG/hammer/DTS_HPX_MODULE.so.1 $ADSP2/DTS_HPX_MODULE.so.1
     cp_ch $MORG/hammer/SrsTruMediaModule.so.1 $ADSP2/SrsTruMediaModule.so.1
@@ -180,6 +223,15 @@ if [ "$QCP" ]; then
       [ -f "$VLIB/libbt-codec_aptx.so" -o -f "$LIB/libbt-codec_aptx.so" ] && cp -f $SAU/lib/libbt-codec_aptx.so $INSTALLER$LIB/libbt-codec_aptx.so
       [ -f "$VLIB/libbt-codec_aptxhd.so" -o -f "$LIB/libbt-codec_aptxhd.so" ] && cp -f $SAU/lib/libbt-codec_aptxhd.so $INSTALLER$LIB/libbt-codec_aptxhd.so  
     fi
+	#Oreo+ Aptx/HD by Lazerl0rd
+    if [ $API -ge 26 ]; then 
+      cp -f $SAU/lib/libldacBT_enc.so $INSTALLER$LIB/libldacBT_enc.so
+      cp -f $SAU/lib/libldacBT_enc64.so $INSTALLER$LIB64/libldacBT_enc.so
+      cp -f $SAU/lib/libaptXHD_encoder.so $INSTALLER$LIB/libaptXHD_encoder.so
+      cp -f $SAU/lib/libaptXHD_encoder64.so $INSTALLER$LIB64/libaptXHD_encoder.so
+      cp -f $SAU/lib/libaptX_encoder.so $INSTALLER$LIB/libaptX_encoder.so
+      cp -f $SAU/lib/libaptX_encoder64.so $INSTALLER$LIB64/libaptX_encoder.so
+    fi	
   fi  
 fi
 
@@ -208,6 +260,7 @@ fi
 if $FMAS; then
   prop_process $INSTALLER/common/propfmas.prop
   cp -f $SAU/lib/libfmas.so $INSTALLER$SFX/libfmas.so
+  cp -f $SAU/files/fmas_eq.dat $INSTALLER$ETC/fmas_eq.dat
 fi
 
 if [ "$AX7" ] || [ "$V20" ] || [ "$G6" ] || [ "$Z9" ] || [ "$Z9M" ] || [ "$Z11" ] || [ "$LX3" ] || [ "$X9" ]; then
@@ -250,11 +303,7 @@ patch_audpol() {
 
 ui_print "   Patching audio_effects configs"
 for FILE in ${CFGS}; do
-  if $MAGISK; then
-    cp_ch $ORIGDIR$FILE $UNITY$FILE
-  else
-    [ ! -f $ORIGDIR$FILE.bak ] && cp_ch $ORIGDIR$FILE $UNITY$FILE.bak
-  fi
+  cp_ch $ORIGDIR$FILE $UNITY$FILE
   case $FILE in
     *.conf) if $ASP; then
               sed -i "/audiosphere {/,/} /d" $UNITY$FILE
@@ -294,58 +343,50 @@ done
 
 ##                    POLICY CONFIGS EDITS BY ULTRAM8                           ##
 ui_print "   Patching audio policy"
-if $AP && [ -f $SYS/etc/audio_policy.conf ]; then
-  if $MAGISK; then
-    cp_ch $ORIGDIR$SYS/etc/audio_policy.conf $UNITY$SYS/etc/audio_policy.conf
-  else
-    [ ! -f $ORIGDIR$SYS/etc/audio_policy.conf.bak ] && cp_ch $ORIGDIR$SYS/etc/audio_policy.conf $UNITY$SYS/etc/audio_policy.conf.bak
-  fi
-  for AUD in "direct_pcm" "direct" "raw" "multichannel" "compress_offload" "high_res_audio"; do
-    if [ "$AUD" != "compress_offload" ]; then
-      backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_8_24_BIT" $UNITY$SYS/etc/audio_policy.conf
-    fi
-    if [ "$AUD" == "direct_pcm" ] || [ "$AUD" == "direct" ] || [ "$AUD" == "raw" ]; then
-      backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $UNITY$SYS/etc/audio_policy.conf
-    fi
-    backup_and_patch "$AUD" "sampling_rates" "sampling_rates 8000\|11025\|16000\|22050\|32000\|44100\|48000\|64000\|88200\|96000\|176400\|192000\|352800\|384000" $UNITY$SYS/etc/audio_policy.conf
-  done
-fi
-if $OAP && [ -f $VEN/etc/audio_output_policy.conf ]; then
-  if $MAGISK; then
-    cp_ch $ORIGDIR$VEN/etc/audio_output_policy.conf $UNITY$VEN/etc/audio_output_policy.conf
-  else
-    [ ! -f $ORIGDIR$VEN/etc/audio_output_policy.conf.bak ] && cp_ch $ORIGDIR$VEN/etc/audio_output_policy.conf $UNITY$VEN/etc/audio_output_policy.conf.bak
-  fi
-  for AUD in "default" "direct" "proaudio" "direct_pcm" "direct_pcm_24" "raw" "compress_offload_16" "compress_offload_24" "compress_offload_HD"; do
-    if [[ "$AUD" != "compress_offload"* ]]; then
-      backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT" $UNITY$VEN/etc/audio_output_policy.conf
-    fi
-    if [ "$AUD" == "direct" ]; then
-      if [ "$(grep "compress_offload" $VEN/etc/audio_output_policy.conf)" ]; then
-        backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM\|AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD\|AUDIO_OUTPUT_FLAG_NON_BLOCKING" $UNITY$VEN/etc/audio_output_policy.conf
-      else
-        backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $UNITY$VEN/etc/audio_output_policy.conf
-      fi
-    fi
-    backup_and_patch "$AUD" "sampling_rates" "sampling_rates 44100\|48000\|96000\|176400\|192000\|352800\|384000" $UNITY$VEN/etc/audio_output_policy.conf
-    [ -z $BIT ] || backup_and_patch "$AUD" "bit_width" "bit_width $BIT" $UNITY$VEN/etc/audio_output_policy.conf
-  done
-fi
-if $AP && [ -f $SYS/etc/audio_policy_configuration.xml ]; then
-  if $MAGISK; then
-    cp_ch $ORIGDIR$SYS/etc/audio_policy_configuration.xml $UNITY$SYS/etc/audio_policy_configuration.xml
-  else
-    [ ! -f $ORIGDIR$SYS/etc/audio_policy_configuration.xml.bak ] && cp_ch $ORIGDIR$SYS/etc/audio_policy_configuration.xml $UNITY$SYS/etc/audio_policy_configuration.xml.bak
-  fi
-  ui_print "   Patching audio policy configuration"
-  patch_audpol "primary output" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
-  patch_audpol "raw" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
-  patch_audpol "deep_buffer" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"192000\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
-  patch_audpol "multichannel" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
-  # Use 'channel_masks' for conf files and 'channelMasks' for xml files
-  patch_audpol "direct_pcm" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/; s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
-  patch_audpol "compress_offload" "s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
-fi
+for FILE in ${POLS}; do
+  case $FILE in
+    *audio_policy.conf) if $AP; then
+                          cp_ch $ORIGDIR$FILE $UNITY$FILE
+                          for AUD in "direct_pcm" "direct" "raw" "multichannel" "compress_offload" "high_res_audio"; do
+                            if [ "$AUD" != "compress_offload" ]; then
+                              backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_8_24_BIT" $UNITY$FILE
+                            fi
+                            if [ "$AUD" == "direct_pcm" ] || [ "$AUD" == "direct" ] || [ "$AUD" == "raw" ]; then
+                              backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $UNITY$FILE
+                            fi
+                            backup_and_patch "$AUD" "sampling_rates" "sampling_rates 8000\|11025\|16000\|22050\|32000\|44100\|48000\|64000\|88200\|96000\|176400\|192000\|352800\|384000" $UNITY$FILE
+                          done
+                        fi;;
+    *audio_output_policy.conf) if $OAP; then
+                                 cp_ch $ORIGDIR$FILE $UNITY$FILE
+                                 for AUD in "default" "direct" "proaudio" "direct_pcm" "direct_pcm_24" "raw" "compress_offload_16" "compress_offload_24" "compress_offload_HD"; do
+                                   if [[ "$AUD" != "compress_offload"* ]]; then
+                                     backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT" $UNITY$FILE
+                                   fi
+                                   if [ "$AUD" == "direct" ]; then
+                                     if [ "$(grep "compress_offload" $FILE)" ]; then
+                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM\|AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD\|AUDIO_OUTPUT_FLAG_NON_BLOCKING" $UNITY$FILE
+                                     else
+                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $UNITY$FILE
+                                     fi
+                                   fi
+                                   backup_and_patch "$AUD" "sampling_rates" "sampling_rates 44100\|48000\|96000\|176400\|192000\|352800\|384000" $UNITY$FILE
+                                   [ -z $BIT ] || backup_and_patch "$AUD" "bit_width" "bit_width $BIT" $UNITY$FILE
+                                 done
+                               fi;;
+    *audio_policy_configuration.xml) if $AP; then
+                                       cp_ch $ORIGDIR$FILE $UNITY$FILE
+                                       ui_print "   Patching audio policy configuration"
+                                       patch_audpol "primary output" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/" $UNITY$FILE
+                                       patch_audpol "raw" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
+                                       patch_audpol "deep_buffer" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"192000\"\1/" $UNITY$FILE
+                                       patch_audpol "multichannel" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/" $UNITY$FILE
+                                       # Use 'channel_masks' for conf files and 'channelMasks' for xml files
+                                       patch_audpol "direct_pcm" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/; s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/" $UNITY$FILE
+                                       patch_audpol "compress_offload" "s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/" $UNITY$FILE
+                                     fi;;
+  esac
+done
 
 ##                        MIXER EDITS BY ULTRAM8                             ##
 ##                  SPECIAL DEVICE'S EDITS BY SKREM339                       ##
@@ -353,17 +394,13 @@ fi
 ui_print "   Patching mixer"
 if [ "$QCP" ]; then
   for MIX in ${MIXS}; do
-    if $MAGISK; then
-      cp_ch $ORIGDIR$MIX $UNITY$MIX
-    else
-      [ ! -f $ORIGDIR$MIX.bak ] && cp_ch $ORIGDIR$MIX $UNITY$MIX.bak
-    fi
+    cp_ch $ORIGDIR$MIX $UNITY$MIX
     ## MAIN DAC patches
     # BETA FEATURES
     if [ "$BIT" ]; then
       patch_mixer_toplevel "SLIM_0_RX Format" "$BIT" $UNITY$MIX
       patch_mixer_toplevel "SLIM_5_RX Format" "$BIT" $UNITY$MIX
-      [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT" $UNITY$MIX
+      [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT" $UNITY$MIX
       patch_mixer_toplevel "USB_AUDIO_RX Format" "$BIT" $UNITY$MIX
       patch_mixer_toplevel "HDMI_RX Bit Format" "$BIT" $UNITY$MIX 
     fi
@@ -374,7 +411,7 @@ if [ "$QCP" ]; then
     if [ "$RESAMPLE" ]; then
       patch_mixer_toplevel "SLIM_0_RX SampleRate" "$RESAMPLE" $UNITY$MIX
       patch_mixer_toplevel "SLIM_5_RX SampleRate" "$RESAMPLE" $UNITY$MIX
-      [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE" $UNITY$MIX
+      [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE" $UNITY$MIX
       patch_mixer_toplevel "USB_AUDIO_RX SampleRate" "$RESAMPLE" $UNITY$MIX
       patch_mixer_toplevel "HDMI_RX SampleRate" "$RESAMPLE" $UNITY$MIX  
     fi
@@ -382,11 +419,7 @@ if [ "$QCP" ]; then
       patch_mixer_toplevel "BT SampleRate" "$BTRESAMPLE" $UNITY$MIX
     fi
     if [ "$AX7" ]; then
-      ###  v v v  Special Axon7 AKM patches by SKREM339  v v v
-      patch_mixer_toplevel "AKM HIFI Switch Sel" "ak4490" $UNITY$MIX "updateonly"
       patch_mixer_toplevel "Smart PA Init Switch" "On" $UNITY$MIX 
-      patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" $UNITY$MIX 
-      patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" $UNITY$MIX 
     fi
     ###  ^ ^ ^  Special Axon7 AKM patches by SKREM339  ^ ^ ^  ###
     if [ "$LX3" ]; then
@@ -450,7 +483,8 @@ if [ "$QCP" ]; then
     # Codec Bandwith Expansion ##
     # HPH Type
     patch_mixer_toplevel "HPH Type" "1" $UNITY$MIX
-    # HPH Type ##
+	patch_mixer_toplevel "RX HPH Mode" "CLS_H_HIFI" $UNITY$MIX
+    # HPH Type ##	
     # Audiosphere Enable    
     if $ASP; then
       patch_mixer_toplevel "Audiosphere Enable" "On" $UNITY$MIX

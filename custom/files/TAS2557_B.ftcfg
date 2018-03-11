@@ -38,7 +38,7 @@ PPC3_DEV_NONLIN_PER       = 1.5     ; Device Non-linearity (%)
 PPC3_DELTA_T_LIMIT        = 78      ; Delta Thermal Limit (C)
 PPC3_PIG                  = 1       ; Refer to documentation
 PPC3_RE_ALPHA             = 0.0033  ; Temperature coefficient alpha (1/K)
-FS_RATE                   = 48000   ; TAS2557-B Sample Rate
+FS_RATE                   = 44100   ; TAS2557-B Sample Rate
 
 ; Calibration parameters locations (Book,Page,Offset,CoeffLength)
 umg_SsmKEGCye             =  0x8c,0x2d,0x64,0x01

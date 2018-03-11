@@ -63,17 +63,21 @@ unity_custom() {
   ETC=$SYS/etc
   BIN=$SYS/bin
   XBIN=$SYS/xbin
-  LIB=$LIBDIR/lib
-  LIB64=$LIBDIR/lib64
+  if [ $API -ge 26 ]; then
+    LIB=$SYS/vendor/lib
+    LIB64=$SYS/vendor/lib64
+  else
+    LIB=$SYS/lib
+    LIB64=$SYS/lib64
+  fi
   SFX=$LIB/soundfx
   SFX64=$LIB64/soundfx
-  VLIB=$VEN/lib
-  VLIB64=$VEN/lib64
+  VLIB=$SYS/vendor/lib
+  VLIB64=$SYS/vendor/lib64
   VSFX=$VLIB/soundfx
   VSFX64=$VLIB64/soundfx
-  VETC=$VEN/etc
+  VETC=$SYS/vendor/etc
   HW=$LIB/hw
-  SUD=$SYS/su.d
   ACDB=$ETC/acdbdata
   AMPA=$ETC/TAS2557_A.ftcfg
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
@@ -109,6 +113,11 @@ unity_custom() {
   LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
   OP5=$(grep -E "ro.build.product=OnePlus5|ro.build.product=OnePlus5T" $SYS/build.prop)
   X9=$(grep "ro.product.model=X900*" $SYS/build.prop)
+  P2XL=$(grep "ro.product.vendor.name=taimen|ro.product.vendor.device=taimen" $SYS/build.prop)
+  P2=$(grep "ro.product.vendor.device=walleye|ro.product.vendor.name=walleye" $SYS/build.prop)
+  P1XL=$(grep "ro.product.vendor.device=marlin|ro.product.vendor.name=marlin" $SYS/build.prop)
+  P1=$(grep "ro.product.vendor.device=sailfish|ro.product.vendor.name=sailfish" $SYS/build.prop)
+  NX9=$(grep "ro.product.name=volantis*|ro.product.board=flounder*" $SYS/build.prop)
   [ "$QCP" ] && DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
   if [ -z $DSPBLOCK ]; then
     ADSP=$VEN/lib/rfsa/adsp
@@ -147,7 +156,7 @@ print_modname() {
   ui_print "                                               "
   ui_print "                    A I N U R                  " 
   ui_print "                   S A U R O N                 " 
-  ui_print "                    M K  II.I                  " 
+  ui_print "                    M K II.II                  " 
   ui_print "                                               "
   ui_print "          by: UltraM8, Zackptg5, Ahrion,       "
   ui_print "              James34602, LazerL0rd            "

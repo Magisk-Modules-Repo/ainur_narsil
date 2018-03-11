@@ -11,5 +11,4 @@ persist.dev.pm.dyn_samplingrate=1
 lpa.decode=false
 lpa.use-stagefright=false
 lpa.releaselock=false
-#alsa.mixer.playback.master=DAC1
-ro.lenovo.hifi_support=true
+

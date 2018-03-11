@@ -20,6 +20,7 @@
 # Replaces &/or extends standard processing effects
 install.fmas=
 
+
 # /System Audio policy configration patching 
 # (if you experience any unusual behavior with glitching sound, or complete sound loss - you may wanna set this back to false)
 audpol=
@@ -52,8 +53,8 @@ qc.install.shoebox=
 qc.install.pcm_reverb=
 
 #
-# Install Aptx/HD dirvers & HW offloadable cappi modules & props
-# Needs further improvements
+# Install Aptx/HD dirvers & HW offloadable cappi modules, props & Oreo+ ldac & aptx by LazerL0rd
+# Still needs further testing by you guys
 # Can be set true or false
 qc.install.aptx=
 
