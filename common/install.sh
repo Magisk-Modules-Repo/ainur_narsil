@@ -342,7 +342,7 @@ for FILE in ${CFGS}; do
 done
 
 ##                    POLICY CONFIGS EDITS BY ULTRAM8                           ##
-ui_print "   Patching audio policy"
+ui_print "   Patching audio policy and audio policy configuration"
 for FILE in ${POLS}; do
   case $FILE in
     *audio_policy.conf) if $AP; then
@@ -376,9 +376,8 @@ for FILE in ${POLS}; do
                                fi;;
     *audio_policy_configuration.xml) if $AP; then
                                        cp_ch $ORIGDIR$FILE $UNITY$FILE
-                                       ui_print "   Patching audio policy configuration"
                                        patch_audpol "primary output" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/" $UNITY$FILE
-                                       patch_audpol "raw" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/" $UNITY$SYS/etc/audio_policy_configuration.xml
+                                       patch_audpol "raw" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/" $UNITY$FILE
                                        patch_audpol "deep_buffer" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"192000\"\1/" $UNITY$FILE
                                        patch_audpol "multichannel" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/" $UNITY$FILE
                                        # Use 'channel_masks' for conf files and 'channelMasks' for xml files
