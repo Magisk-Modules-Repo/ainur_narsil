@@ -10,7 +10,7 @@
 #
 # ! DON'T ASK TO "FIX" ANYTHING IF IT DOESEN'T WORKED FOR YOU!
 #
-# If something isn't working properly/at all (leading to bootloop, or sound loss) 
+# If something isn't working properly at all (leading to bootloop, or sound loss) 
 # you have to find working combination, or don't use UO
 
 
@@ -24,6 +24,7 @@ install.fmas=
 # /System Audio policy configration patching 
 # (if you experience any unusual behavior with glitching sound, or complete sound loss - you may wanna set this back to false)
 audpol=
+
 
 ### ^^^ Universal options ^^^ ###
 
