@@ -22,6 +22,9 @@ rm -f $AUO
 if $MAGISK; then
   rm -f $MOUNTPATH/.core/post-fs-data.d/sauron.sh $MOUNTPATH/.core/post-fs-data.d/sauron-files
 else
+  mv -f $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin.bak $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin
+  mv -f $UNITY$VEN/firmware/tas2557s_uCDSP.bin.bak $UNITY$VEN/firmware/tas2557s_uCDSP.bin
+  mv -f $UNITY$VEN/firmware/tas2557_cal.bin.bak $UNITY$VEN/firmware/tas2557_cal.bin
   for FILE in ${CFGS}; do
     case $FILE in
       *.conf) $ASP && sed -i "/audiosphere { #$MODID/,/} #$MODID/d" $UNITY$FILE

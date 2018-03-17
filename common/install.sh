@@ -34,21 +34,24 @@ if [ "$QCP" ]; then
 fi
 
 ## Install logic by UltraM8 @XDA DO NOT MODIFY
-mkdir -p $INSTALLER$ACDB $INSTALLER$BIN $INSTALLER$ETC/firmware $INSTALLER$ETC/permissions $INSTALLER$ETC/settings $INSTALLER$ETC/tfa $INSTALLER$SYS/framework $INSTALLER$LIB/modules $INSTALLER$SFX $INSTALLER$SFX64 $INSTALLER$VSFX $INSTALLER$VSFX64
+mkdir -p $INSTALLER$ACDB $INSTALLER$BIN $INSTALLER$ETC/audio $INSTALLER$ETC/firmware $INSTALLER$ETC/permissions $INSTALLER$ETC/settings $INSTALLER$ETC/tfa $INSTALLER$SYS/framework $INSTALLER$LIB/modules $INSTALLER$SFX $INSTALLER$SFX64 $INSTALLER$VETC/firmware $INSTALLER$VETC/tfa $INSTALLER$VSFX $INSTALLER$VSFX64
 cp -f $NAZ/libaudiopreprocessing.so $INSTALLER$SFX/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper.so $INSTALLER$SFX/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
-cp -f $NAZ/libldnhncr.so $INSTALLER$SFX/libldnhncr.so
 cp -f $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
 if [ $API -ge 26 ]; then
 cp -f $NAZ/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
+cp -f $NAZ/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
+cp -f $NAZ/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so
 fi
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
-  [ $API -ge 26 ] && prop_process $INSTALLER/common/propsqcporeo.prop
+  if [ $API -ge 26 ] && [ ! "$OP3" ]; then
+    prop_process $INSTALLER/common/propsqcporeo.prop
+  fi
   cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
   cp -f $SAU/lib/libdownmix5.so $INSTALLER$SFX/libdownmix.so
   cp -f $SAU/lib/libreverbwrapper6.so $INSTALLER$SFX64/libreverbwrapper.so
@@ -84,8 +87,7 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/default_vol_level.conf $INSTALLER$ETC/default_vol_level.conf
     cp -f $SAU/files/TFA_default_vol_level.conf $INSTALLER$ETC/TFA_default_vol_level.conf
     cp -f $SAU/files/NOTFA_default_vol_level.conf $INSTALLER$ETC/NOTFA_default_vol_level.conf
-	if [ ! -f "$NX9" ]; then
-	  cp -f $SAU/files/RT5501 $INSTALLER$ETC/RT5501
+	if [ ! "$NX9" ] || [ ! "$M10" ] || [ ! "$BOLT" ] || [ ! -f "$VETC/TAS2557_A.ftcfg" ]; then
 	  cp -f $SAU/files/RT5506 $INSTALLER$ETC/RT5506
       cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so
       cp -f $SAU/files/libhtcacoustic2.so $INSTALLER$LIB64/libhtcacoustic.so
@@ -105,7 +107,6 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/tfa/playback_l.preset $INSTALLER$ETC/tfa/playback_l.preset
     cp -f $SAU/files/tfa/tfa9895.patch $INSTALLER$ETC/tfa/tfa9895.patch
     cp -f $SAU/files/tfa/tfa9895MFG.patch $INSTALLER$ETC/tfa/tfa9895MFG.patch
-	mkdir -p $INSTALLER/system/vendor/etc/tfa
     cp -f $SAU/files/tfa2/playback.drc $INSTALLER/system/vendor/etc/tfa/playback.drc
     cp -f $SAU/files/tfa2/playback.eq $INSTALLER/system/vendor/etc/tfa/playback.eq
     cp -f $SAU/files/tfa2/playback.preset $INSTALLER/system/vendor/etc/tfa/playback.preset
@@ -123,17 +124,12 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/tfa2/tfa9895.config $INSTALLER/system/vendor/etc/tfa/tfa9895.config
     cp -f $SAU/files/tfa2/tfa9895.patch $INSTALLER/system/vendor/etc/tfa/tfa9895.patch
     cp -f $SAU/files/tfa2/tfa9895MFG.patch $INSTALLER/system/vendor/etc/tfa/tfa9895MFG.patch	 	
-    if [ $API -ge 24 ]; then
-      cp -f $VALAR/libqcompostprocbundle.so $INSTALLER$SFX/libqcompostprocbundle.so
-      cp -f $MAIAR/libqcompostprocbundle.so $INSTALLER$SFX64/libqcompostprocbundle.so
-    fi
   fi  
   if [ "$M8" ]; then
-    mkdir -p $INSTALLER$ETC/audio
     cp -f $SAU/files/audio/tfa9887_feature.config $INSTALLER$ETC/audio/tfa9887_feature.config
     cp -f $SAU/files/libtfa9887.so $INSTALLER$LIB/libtfa9887.so
   fi  
-  if [ -f "$SYS/etc/TAS2557_A.ftcfg" ]; then
+  if [ -f "$VETC/TAS2557_A.ftcfg" ]; then
     prop_process $INSTALLER/common/propsresample.prop
     cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
     cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg
@@ -159,17 +155,23 @@ if [ "$QCP" ]; then
   fi
   if [ "$P2XL" ] || [ "$P2" ]; then
     cp -f $SAU/files/bin/ti_audio_s $INSTALLER$BIN/ti_audio_s
-	cp -f $INSTALLER$VETC/firmware/tas2557s_PG21_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_PG21_uCDSP.bin.bak
-	cp -f $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin.bak
-	cp -f $INSTALLER$VETC/firmware/tas2557_cal.bin $INSTALLER$VETC/firmware/tas2557_cal.bin.bak
+    if $MAGISK; then
+      mktouch $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin
+      mktouch $UNITY$VEN/firmware/tas2557s_uCDSP.bin
+      mktouch $UNITY$VEN/firmware/tas2557_cal.bin
+    else
+      mv -f $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin.bak
+      mv -f $UNITY$VEN/firmware/tas2557s_uCDSP.bin $UNITY$VEN/firmware/tas2557s_uCDSP.bin.bak
+      mv -f $UNITY$VEN/firmware/tas2557_cal.bin $UNITY$VEN/firmware/tas2557_cal.bin.bak
+    fi
     cp -f $SAU/files/fw/tas2557s_uCDSP_PG21.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP_PG21.bin
     cp -f $SAU/files/fw/tas2557s_uCDSP_24bit.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP_24bit.bin	
     cp -f $SAU/files/fw/tas2557s_uCDSP.bin $INSTALLER$VETC/firmware/tas2557s_uCDSP.bin
     cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
     cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg
     if 	[ "$P2" ]; then
-	cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
-	fi
+      cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
+    fi
   fi
   if [ "$P1XL" ] || [ "$P1" ]; then
   	cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
@@ -187,6 +189,14 @@ if [ "$QCP" ]; then
     cp_ch $SAU/data/effect33 /data/misc/dts/effect33
     cp_ch_nb $SAU/data/origeffect.bak /data/misc/dts/origeffect.bak
   fi
+  #if [ "$OP3" ]; then
+	#sed -i 's/vendor.audio.offload.track.enable(.?)false/'d $INSTALLER/common/system.prop
+	#sed -i 's/vendor.audio.offload.multiple.enabled(.?)false/'d $INSTALLER/common/system.prop
+	#sed -i 's/vendor.audio.playback.mch.downsample(.?)true/'d $INSTALLER/common/system.prop
+	#sed -i 's/audio.offload.multiaac.enable(.?)false/'d $INSTALLER/common/system.prop
+	#sed -i 's/vendor.audio.tunnel.encode(.?)false/'d $INSTALLER/common/system.prop
+	#sed -i 's/vendor.audio.use.dts_eagle(.?)true/'d $INSTALLER/common/system.prop
+  #fi
   if $ASP; then
     sed -i -r "s/audio.pp.asphere.enabled(.?)false/audio.pp.asphere.enabled\1true/" $INSTALLER/common/system.prop
     [ $API -ge 26 ] && echo "vendor.audio.pp.asphere.enabled=1" >> $INSTALLER/common/system.prop
@@ -225,8 +235,8 @@ if [ "$QCP" ]; then
     fi
 	#Oreo+ Aptx/HD by Lazerl0rd
     if [ $API -ge 26 ]; then 
-      cp -f $SAU/lib/libldacBT_enc.so $INSTALLER$LIB/libldacBT_enc.so
-      cp -f $SAU/lib/libldacBT_enc64.so $INSTALLER$LIB64/libldacBT_enc.so
+      cp -f $SAU/lib/libelda.so $INSTALLER$LIB/libldacBT_enc.so
+      cp -f $SAU/lib/libelda2.so $INSTALLER$LIB64/libldacBT_enc.so
       cp -f $SAU/lib/libaptXHD_encoder.so $INSTALLER$LIB/libaptXHD_encoder.so
       cp -f $SAU/lib/libaptXHD_encoder64.so $INSTALLER$LIB64/libaptXHD_encoder.so
       cp -f $SAU/lib/libaptX_encoder.so $INSTALLER$LIB/libaptX_encoder.so
@@ -260,7 +270,7 @@ fi
 if $FMAS; then
   prop_process $INSTALLER/common/propfmas.prop
   cp -f $SAU/lib/libfmas.so $INSTALLER$SFX/libfmas.so
-  cp -f $SAU/files/fmas_eq.dat $INSTALLER$ETC/fmas_eq.dat
+  #cp -f $SAU/files/fmas_eq.dat $INSTALLER$ETC/fmas_eq.dat
 fi
 
 if [ "$AX7" ] || [ "$V20" ] || [ "$G6" ] || [ "$Z9" ] || [ "$Z9M" ] || [ "$Z11" ] || [ "$LX3" ] || [ "$X9" ]; then
@@ -448,13 +458,12 @@ if [ "$QCP" ]; then
       patch_mixer_toplevel "HIFI Custom Filter" "6" $UNITY$MIX
     fi  
     if [ -f $AMPA ]; then 
-      patch_mixer_toplevel "HTC_AS20_VOL Index" "Eleven" $UNITY$MIX
+      patch_mixer_toplevel "HTC_AS20_VOL Index" "Twelve" $UNITY$MIX
     fi 
     if [ "$QC8996" ] || [ "$QC8998" ]; then 
       patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn" $UNITY$MIX
       patch_mixer_toplevel "VBoost Volt" "8.6V" $UNITY$MIX
-    fi
-    
+    fi    
     ### MAIN DAC patches  ##
     # Custom Stereo
     patch_mixer_toplevel "Set Custom Stereo OnOff" "Off" $UNITY$MIX
@@ -475,14 +484,16 @@ if [ "$QCP" ]; then
     patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS" $UNITY$MIX
     patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS" $UNITY$MIX
     patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "DS2 OnOff" "Off" $UNITY$MIX	
+    if [ ! "$M10" ]; then
+      patch_mixer_toplevel "DS2 OnOff" "Off" $UNITY$MIX
+    fi	
     # APTX Dec License ##
     # Codec Bandwith Expansion
     patch_mixer_toplevel "Codec Wideband" "1" $UNITY$MIX
     # Codec Bandwith Expansion ##
     # HPH Type
     patch_mixer_toplevel "HPH Type" "1" $UNITY$MIX
-	patch_mixer_toplevel "RX HPH Mode" "CLS_H_HIFI" $UNITY$MIX
+    patch_mixer_toplevel "RX HPH Mode" "CLS_H_HIFI" $UNITY$MIX
     # HPH Type ##	
     # Audiosphere Enable    
     if $ASP; then

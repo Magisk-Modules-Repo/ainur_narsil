@@ -175,7 +175,8 @@ unity_install() {
   for FILE in $(find $INSTALLER/system -type f | sed "s|$INSTALLER||"); do
     if $DYNAMICOREO && [ $API -ge 26 ]; then
       case $FILE in
-        /system/app/*|/system/lib*) FILE2=$(echo $FILE | sed "s|/system/|$VEN/|");;
+        /system/app/*) if [ -d $VEN/app ]; then FILE2=$(echo $FILE | sed "s|/system/|$VEN/|"); else FILE2=$(echo $FILE | sed 's|/system/app/|/system/priv-app/|'); fi;;
+        /system/lib*) FILE2=$(echo $FILE | sed "s|/system/|$VEN/|");;
         *) FILE2=$FILE;;
       esac
     else
@@ -271,7 +272,7 @@ MODPATH=$MOUNTPATH/$MODID
 
 # INSERT MODID AND CUSTOM USER SCRIPT INTO MOD SCRIPT
 cp -f $INSTALLER/common/unityfiles/modid.sh $INSTALLER/common/unityfiles/post-fs-data.sh
-mv -f $INSTALLER/common/unityfiles/modid.sh $INSTALLER/common/unityfiles/service.sh
+cp -f $INSTALLER/common/unityfiles/modid.sh $INSTALLER/common/unityfiles/service.sh
 sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/post-fs-data.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unityfiles/post-fs-data.sh
 sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/service.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unityfiles/service.sh
 mv -f $INSTALLER/common/unityfiles/post-fs-data.sh $INSTALLER/common/post-fs-data.sh

@@ -7,6 +7,7 @@ patch_mixer_toplevel() {
 }
 QCP=
 AP=
+PL=
 FMAS=
 SHB=
 OAP=
@@ -105,10 +106,7 @@ for FILE in ${FILES}; do
                            patch_mixer_toplevel "BT SampleRate" "$BTRESAMPLE"
                          fi
                          if [ "$AX7" ]; then
-                           patch_mixer_toplevel "AKM HIFI Switch Sel" "ak4490" "updateonly"
                            patch_mixer_toplevel "Smart PA Init Switch" "On" 
-                           patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" 
-                           patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" 
                          fi
                          if [ "$LX3" ]; then
                            patch_mixer_toplevel "Es9018 CLK Divider" "DIV4"
@@ -156,9 +154,12 @@ for FILE in ${FILES}; do
                          patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS"
                          patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS"
                          patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS"
-                         patch_mixer_toplevel "DS2 OnOff" "Off"
+                         if [ ! "$M10" ]; then
+                           patch_mixer_toplevel "DS2 OnOff" "Off"
+                         fi
                          patch_mixer_toplevel "Codec Wideband" "1"
                          patch_mixer_toplevel "HPH Type" "1"
+                         patch_mixer_toplevel "RX HPH Mode" "CLS_H_HIFI"		 
                          if $ASP; then
                            patch_mixer_toplevel "Audiosphere Enable" "On"
                            patch_mixer_toplevel "MSM ASphere Set Param" "1"

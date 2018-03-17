@@ -210,13 +210,10 @@ cleanup() {
     unmount_partitions
     rm -rf $TMPDIR
   fi
-  if $INSTALL; then UN=""; else UN="Un"; fi
   ui_print " "
-  ui_print "    --------- ${UN}INSTALLATION SUCCESSFUL ---------"
-  ui_print " "
-  ui_print "    ************************************************"
-  ui_print "    * Unity ${UN}Installer by ahrion & zackptg5 @ XDA *"
-  ui_print "    ************************************************"
+  ui_print "    *******************************************"
+  ui_print "    *    Unity by ahrion & zackptg5 @ XDA     *"
+  ui_print "    *******************************************"
   ui_print " "
   exit 0
 }
