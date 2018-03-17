@@ -42,9 +42,9 @@ cp -f $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
 if [ $API -ge 26 ]; then
-cp -f $NAZ/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
-cp -f $NAZ/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
-cp -f $NAZ/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so
+cp -f $SAU/lib/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
+cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
+cp -f $SAU/lib/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so
 fi
 
 if [ "$QCP" ]; then
