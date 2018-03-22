@@ -49,7 +49,7 @@ fi
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
-  if [ $API -ge 26 ] && [ ! "$OP3" ] && [ ! "$OP5" ]; then
+  if [ $API -ge 26 ] && [ ! "$OP3" ] || [ ! "$OP5" ]; then
     prop_process $INSTALLER/common/propsqcporeo.prop
   fi
   cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
