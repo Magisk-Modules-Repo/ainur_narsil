@@ -42,14 +42,14 @@ cp -f $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
 if [ $API -ge 26 ]; then
-cp -f $SAU/lib/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
+cp -f $SAU/lib/libeffectproxy4.so $INSTALLER$SFX/libeffectproxy.so
 cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
 cp -f $SAU/lib/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so
 fi
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
-  if [ $API -ge 26 ] && [ ! "$OP3" ]; then
+  if [ $API -ge 26 ] && [ ! "$OP3" ] && [ ! "$OP5" ]; then
     prop_process $INSTALLER/common/propsqcporeo.prop
   fi
   cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
@@ -82,12 +82,12 @@ if [ "$QCP" ]; then
   cp -f $MAIAR/lib/soundfx/libqcbassboost.so $INSTALLER$VSFX64/libqcbassboost.so
   cp -f $MAIAR/lib/soundfx/libqcreverb.so $INSTALLER$VSFX64/libqcreverb.so
   cp -f $MAIAR/lib/soundfx/libqcvirt.so $INSTALLER$VSFX64/libqcvirt.so
-  if [ -f "$SYS/etc/htc_audio_effects.conf" ]; then
+  if [ -f "$SYS/etc/htc_audio_effects.conf" ] || [ -f "$VEN/etc/htc_audio_effects.conf" ]; then
     prop_process $INSTALLER/common/propshtc.prop
     cp -f $SAU/files/default_vol_level.conf $INSTALLER$ETC/default_vol_level.conf
     cp -f $SAU/files/TFA_default_vol_level.conf $INSTALLER$ETC/TFA_default_vol_level.conf
     cp -f $SAU/files/NOTFA_default_vol_level.conf $INSTALLER$ETC/NOTFA_default_vol_level.conf
-	if [ ! "$NX9" ] || [ ! "$M10" ] || [ ! "$BOLT" ] || [ ! -f "$VETC/TAS2557_A.ftcfg" ]; then
+	if [ ! "$NX9" ] || [ ! "$M10" ] || [ ! "$BOLT" ] || [ ! -f "$VEN/etc/TAS2557_A.ftcfg" ]; then
 	  cp -f $SAU/files/RT5506 $INSTALLER$ETC/RT5506
       cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so
       cp -f $SAU/files/libhtcacoustic2.so $INSTALLER$LIB64/libhtcacoustic.so
@@ -129,7 +129,7 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/audio/tfa9887_feature.config $INSTALLER$ETC/audio/tfa9887_feature.config
     cp -f $SAU/files/libtfa9887.so $INSTALLER$LIB/libtfa9887.so
   fi  
-  if [ -f "$VETC/TAS2557_A.ftcfg" ]; then
+  if [ -f "$VEN/etc/TAS2557_A.ftcfg" ]; then
     prop_process $INSTALLER/common/propsresample.prop
     cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
     cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg
@@ -176,6 +176,16 @@ if [ "$QCP" ]; then
   if [ "$P1XL" ] || [ "$P1" ]; then
   	cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
   fi
+  if [ "$X5P" ]; then
+    if $MAGISK; then
+      mktouch $UNITY$ETC/firmware/tas2557_uCDSP.bin
+    else
+      mv -f $UNITY$ETC/firmware/tas2557_uCDSP.bin $UNITY$VEN/firmware/tas2557_uCDSP.bin.bak
+    fi
+    cp -f $SAU/files/fw/tas2557s_uCDSP.bin $INSTALLER$ETC/firmware/tas2557s_uCDSP.bin
+    cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
+    cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg	
+  fi  
   if [ ! -f "$HWDTS" ]; then
     cp_ch $MORG/hammer/DTS_HPX_MODULE.so.1 $ADSP2/DTS_HPX_MODULE.so.1
     cp_ch $MORG/hammer/SrsTruMediaModule.so.1 $ADSP2/SrsTruMediaModule.so.1
@@ -220,7 +230,7 @@ if [ "$QCP" ]; then
   fi
   if $APTX; then
     prop_process $INSTALLER/common/propsaptx.prop
-    if [ ! -f "$SYS/etc/acdbdata/adsp_avs_config.acdb" ]; then
+    if [ ! -f "$SYS/etc/acdbdata/adsp_avs_config.acdb" ] && [ ! -f "$VEN/etc/acdbdata/adsp_avs_config.acdb" ]; then
       cp -f $MORG/hammer/adsp_avs_config.acdb $INSTALLER$ACDB/adsp_avs_config.acdb
     fi
     cp_ch $MORG/hammer/capi_v2_aptX_Classic.so $ADSP2/capi_v2_aptX_Classic.so
@@ -456,8 +466,11 @@ if [ "$QCP" ]; then
       patch_mixer_toplevel "Es9018 State" "Hifi" $UNITY$MIX
       # patch_mixer_toplevel "Es9018 Master Volume" "1" $UNITY$MIX
       patch_mixer_toplevel "HIFI Custom Filter" "6" $UNITY$MIX
+	  if [ "$V30" ]; then
+	  patch_mixer_toplevel "Es9218 Bypass" "0" $UNITY$MIX
+	  fi
     fi  
-    if [ -f $AMPA ]; then 
+    if [ -f "$AMPA" ]; then 
       patch_mixer_toplevel "HTC_AS20_VOL Index" "Twelve" $UNITY$MIX
     fi 
     if [ "$QC8996" ] || [ "$QC8998" ]; then 

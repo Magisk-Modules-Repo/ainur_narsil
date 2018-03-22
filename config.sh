@@ -61,14 +61,17 @@ unity_custom() {
   NAZ=$SAU/nazgul
   MORG=$SAU/morgoth
   ETC=$SYS/etc
+  VETC=$SYS/vendor/etc
   BIN=$SYS/bin
   XBIN=$SYS/xbin
   if [ $API -ge 26 ]; then
     LIB=$SYS/vendor/lib
     LIB64=$SYS/vendor/lib64
+    ACDB=$VETC/acdbdata
   else
     LIB=$SYS/lib
     LIB64=$SYS/lib64
+    ACDB=$ETC/acdbdata
   fi
   SFX=$LIB/soundfx
   SFX64=$LIB64/soundfx
@@ -76,9 +79,7 @@ unity_custom() {
   VLIB64=$SYS/vendor/lib64
   VSFX=$VLIB/soundfx
   VSFX64=$VLIB64/soundfx
-  VETC=$SYS/vendor/etc
   HW=$LIB/hw
-  ACDB=$ETC/acdbdata
   AMPA=$ETC/TAS2557_A.ftcfg
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
   DTS=/data/misc/dts
@@ -119,6 +120,7 @@ unity_custom() {
   P1=$(grep -E "ro.vendor.product.device=sailfish|ro.vendor.product.name=sailfish" $SYS/build.prop)
   NX9=$(grep -E "ro.product.name=volantis*|ro.product.board=flounder*" $SYS/build.prop)
   OP3=$(grep -E "ro.build.product=OnePlus3*|ro.build.product=oneplus3*|ro.vendor.product.device=oneplus3*|ro.vendor.product.device=OnePlus3*" $SYS/build.prop)
+  X5P=$(grep -E "ro.product.name=vince*|ro.product.device=vince*" $SYS/build.prop)
   [ "$QCP" ] && DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
   if [ -z $DSPBLOCK ]; then
     ADSP=$VEN/lib/rfsa/adsp
