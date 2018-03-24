@@ -4,5 +4,4 @@ vendor.audio.offload.multiaac.enable=true
 vendor.audio.offload.multiple.enabled=true
 vendor.audio.playback.mch.downsample=false
 ro.vendor.audio.sdk.fluencetype=fluencepro
-vendor.audio.use.dts_eagle=true
 vendor.audio.tunnel.encode=false

@@ -47,6 +47,12 @@ cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
 cp -f $SAU/lib/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so
 fi
 
+if [ $API -ge 27 ] && [ "$NEXUS" ] || [ "$TREBLE" ]; then
+cp -f $SAU/lib/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
+cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
+rm -rf $INSTALLER$SFX64/libbundlewrapper.so
+fi
+
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
   if [ $API -ge 26 ] && [ ! "$OP3" ] || [ ! "$OP5" ]; then
@@ -72,8 +78,8 @@ if [ "$QCP" ]; then
   cp -f $VALAR/lib/soundfx/libqcbassboost.so $INSTALLER$VSFX/libqcbassboost.so
   cp -f $VALAR/lib/soundfx/libqcreverb.so $INSTALLER$VSFX/libqcreverb.so
   cp -f $VALAR/lib/soundfx/libqcvirt.so $INSTALLER$VSFX/libqcvirt.so
-  cp -f $MORG/modules/mpq-adapter.ko $INSTALLER$LIB/modules/mpq-adapter.ko
-  cp -f $MORG/modules/mpq-dmx-hw-plugin.ko $INSTALLER$LIB/modules/mpq-dmx-hw-plugin.ko
+  cp -f $MORG/modules/mpq-adapter.ko $INSTALLER/system/lib/modules/mpq-adapter.ko
+  cp -f $MORG/modules/mpq-dmx-hw-plugin.ko $INSTALLER/system/lib/modules/mpq-dmx-hw-plugin.ko
   cp_ch $MORG/hammer/libAudienceAZA.so $ADSP2/libAudienceAZA.so
   if [ ! -f "$ADSP/libc++.so.1" ] && [ ! -f "$ADSP/libc++abi.so.1" ]; then
     cp_ch $MORG/hammer/libc++.so.1 $ADSP2/libc++.so.1
@@ -199,14 +205,6 @@ if [ "$QCP" ]; then
     cp_ch $SAU/data/effect33 /data/misc/dts/effect33
     cp_ch_nb $SAU/data/origeffect.bak /data/misc/dts/origeffect.bak
   fi
-  #if [ "$OP3" ]; then
-	#sed -i 's/vendor.audio.offload.track.enable(.?)false/'d $INSTALLER/common/system.prop
-	#sed -i 's/vendor.audio.offload.multiple.enabled(.?)false/'d $INSTALLER/common/system.prop
-	#sed -i 's/vendor.audio.playback.mch.downsample(.?)true/'d $INSTALLER/common/system.prop
-	#sed -i 's/audio.offload.multiaac.enable(.?)false/'d $INSTALLER/common/system.prop
-	#sed -i 's/vendor.audio.tunnel.encode(.?)false/'d $INSTALLER/common/system.prop
-	#sed -i 's/vendor.audio.use.dts_eagle(.?)true/'d $INSTALLER/common/system.prop
-  #fi
   if $ASP; then
     sed -i -r "s/audio.pp.asphere.enabled(.?)false/audio.pp.asphere.enabled\1true/" $INSTALLER/common/system.prop
     [ $API -ge 26 ] && echo "vendor.audio.pp.asphere.enabled=1" >> $INSTALLER/common/system.prop

@@ -83,6 +83,8 @@ unity_custom() {
   AMPA=$ETC/TAS2557_A.ftcfg
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
   DTS=/data/misc/dts
+  TREBLE=$(grep "ro.treble.enabled=true" $SYS/build.prop)
+  NEXUS=$(grep "ro.product.device=bullhead|ro.product.device=angler" $SYS/build.prop)
   MTK=$(grep "ro.mediatek.version*" $SYS/build.prop)
   QCP=$(grep -E "ro.board.platform=apq*|ro.board.platform=msm*" $SYS/build.prop)
   EXY=$(grep "ro.chipname*" $SYS/build.prop)
@@ -90,7 +92,6 @@ unity_custom() {
   KIR=$(grep "ro.board.platform=hi*" $SYS/build.prop)
   SPEC=$(grep "ro.board.platform=sp*" $SYS/build.prop)
   MIUI=$(grep "ro.miui.ui.version*" $SYS/build.prop)
-  QC8994=$(grep "ro.board.platform=msm8994" $SYS/build.prop)
   QC8996=$(grep "ro.board.platform=msm8996" $SYS/build.prop)
   QC8998=$(grep "ro.board.platform=msm8998" $SYS/build.prop)
   TMSM=$(grep "ro.board.platform=msm" $SYS/build.prop | sed 's/^.*=msm//')

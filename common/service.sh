@@ -40,5 +40,3 @@ if [ "$V20" ] || [ "$V30" ] || [ "$G6" ]; then
  tinymix 'Es9018 State' 'Hifi'
  tinymix 'HIFI Custom Filter' 6
 fi 
-
-killall audioserver
