@@ -13,11 +13,13 @@ fi
 cp_ch_nb $AUO $UNITY$SYS/etc/sauron_useroptions
 AUO=$UNITY$SYS/etc/sauron_useroptions
 $MAGISK || sed -i "/^EOF/ i\\$AUO" $INSTALLER/common/unityfiles/addon.sh
-get_uo "AP" "audpol"
+#get_uo "AP" "audpol"
+AP=false
 get_uo "FMAS" "install.fmas"
 get_uo "SHB" "qc.install.shoebox" "QCP"
 get_uo "RPCM" "qc.install.pcm_reverb" "QCP"
-get_uo "OAP" "qc.out.audpol" "QCP"
+#get_uo "OAP" "qc.out.audpol" "QCP"
+OAP=false
 get_uo "ASP" "qc.install.asp" "QCP"
 get_uo "APTX" "qc.install.aptx" "QCP"
 get_uo "COMP" "qc.remove.compander" "QCP"
@@ -360,7 +362,7 @@ for FILE in ${CFGS}; do
 done
 
 ##                    POLICY CONFIGS EDITS BY ULTRAM8                           ##
-ui_print "   Patching audio policy and audio policy configuration"
+#ui_print "   Patching audio policy and audio policy configuration"
 for FILE in ${POLS}; do
   case $FILE in
     *audio_policy.conf) if $AP; then
@@ -394,13 +396,13 @@ for FILE in ${POLS}; do
                                fi;;
     *audio_policy_configuration.xml) if $AP; then
                                        cp_ch $ORIGDIR$FILE $UNITY$FILE
-                                       patch_audpol "primary output" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/" $UNITY$FILE
-                                       patch_audpol "raw" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/" $UNITY$FILE
-                                       patch_audpol "deep_buffer" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"192000\"\1/" $UNITY$FILE
-                                       patch_audpol "multichannel" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/" $UNITY$FILE
+                                       patch_audpol "primary output" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/" $UNITY$FILE
+                                       patch_audpol "raw" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/" $UNITY$FILE
+                                       patch_audpol "deep_buffer" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"192000\1/" $UNITY$FILE
+                                       patch_audpol "multichannel" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/" $UNITY$FILE
                                        # Use 'channel_masks' for conf files and 'channelMasks' for xml files
-                                       patch_audpol "direct_pcm" "s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/; s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/" $UNITY$FILE
-                                       patch_audpol "compress_offload" "s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/" $UNITY$FILE
+                                       patch_audpol "direct_pcm" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/; s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $UNITY$FILE
+                                       patch_audpol "compress_offload" "s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $UNITY$FILE
                                      fi;;
   esac
 done
@@ -464,10 +466,10 @@ if [ "$QCP" ]; then
       patch_mixer_toplevel "Es9018 State" "Hifi" $UNITY$MIX
       # patch_mixer_toplevel "Es9018 Master Volume" "1" $UNITY$MIX
       patch_mixer_toplevel "HIFI Custom Filter" "6" $UNITY$MIX
-	  if [ "$V30" ]; then
-	  patch_mixer_toplevel "Es9218 Bypass" "0" $UNITY$MIX
-	  fi
-    fi  
+      if [ "$V30" ]; then
+        patch_mixer_toplevel "Es9218 Bypass" "0" $UNITY$MIX
+      fi
+    fi
     if [ -f "$AMPA" ]; then 
       patch_mixer_toplevel "HTC_AS20_VOL Index" "Twelve" $UNITY$MIX
     fi 

@@ -77,17 +77,17 @@ for FILE in ${FILES}; do
                                              [ -z $BIT ] || sed -i "/$AUD {/,/}/ s/bit_width.*/bit_width $BIT/g" $MODPATH/$NAME
                                            done;;            
     *audio_policy_configuration.xml) $AP || break
-                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"primary output\"/,/ ^*<\/mixPort>/ {s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/}}" $MODPATH/$NAME
-                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"raw\"/,/<\/mixPort>/ s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/}" $MODPATH/$NAME
-                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"deep_buffer\"/,/<\/mixPort>/ {s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"192000\"\1/}}" $MODPATH/$NAME
-                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"multichannel\"/,/<\/mixPort>/ {s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\"\1/}}" $MODPATH/$NAME
-                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"direct_pcm\"/,/<\/mixPort>/ {s/format=\".*\"\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\"\1/; s/samplingRates=\".*\"\(.*\)/samplingRates=\"48000,96000,192000\"\1/}}" $MODPATH/$NAME
-                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"compress_offload\"/,/<\/mixPort>/ s/channelMasks=\".*\"\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\"\1/}" $MODPATH/$NAME;;
+                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"primary output\"/,/ ^*<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/}}" $MODPATH/$NAME
+                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"raw\"/,/<\/mixPort>/ s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/}" $MODPATH/$NAME
+                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"deep_buffer\"/,/<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"192000\1/}}" $MODPATH/$NAME
+                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"multichannel\"/,/<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/}}" $MODPATH/$NAME
+                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"direct_pcm\"/,/<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/}}" $MODPATH/$NAME
+                                                 sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"compress_offload\"/,/<\/mixPort>/ s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/}" $MODPATH/$NAME;;
     *mixer_paths*.xml) if [ "$QCP" ]; then
                          if [ "$BIT" ]; then
                            patch_mixer_toplevel "SLIM_0_RX Format" "$BIT"
                            patch_mixer_toplevel "SLIM_5_RX Format" "$BIT"
-                           [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT"
+                           [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT"
                            patch_mixer_toplevel "USB_AUDIO_RX Format" "$BIT"
                            patch_mixer_toplevel "HDMI_RX Bit Format" "$BIT" 
                          fi
@@ -98,7 +98,7 @@ for FILE in ${FILES}; do
                          if [ "$RESAMPLE" ]; then
                            patch_mixer_toplevel "SLIM_0_RX SampleRate" "$RESAMPLE"
                            patch_mixer_toplevel "SLIM_5_RX SampleRate" "$RESAMPLE"
-                           [ ! -z $QC8996 -o ! -z $QC8998 ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE"
+                           [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE"
                            patch_mixer_toplevel "USB_AUDIO_RX SampleRate" "$RESAMPLE"
                            patch_mixer_toplevel "HDMI_RX SampleRate" "$RESAMPLE"  
                          fi
@@ -132,9 +132,12 @@ for FILE in ${FILES}; do
                            patch_mixer_toplevel "Es9018 HEADSET TYPE" "1"
                            patch_mixer_toplevel "Es9018 State" "Hifi"
                            patch_mixer_toplevel "HIFI Custom Filter" "6"
+                           if [ "$V30" ]; then
+                             patch_mixer_toplevel "Es9218 Bypass" "0"
+                           fi
                          fi  
                          if [ -f "/system/etc/TAS2557_A.ftcfg" ]; then 
-                           patch_mixer_toplevel "HTC_AS20_VOL Index" "Eleven"
+                           patch_mixer_toplevel "HTC_AS20_VOL Index" "Twelve"
                          fi 
                          if [ "$QC8996" ] || [ "$QC8998" ]; then 
                            patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn"
@@ -170,7 +173,7 @@ for FILE in ${FILES}; do
                            patch_mixer_toplevel "SmartPA Switch" "1"
                          fi	 
                          patch_mixer_toplevel "TAS2552 Volume" "125" "updateonly"
-                         if [ -f "/system/etc/TAS2557_A.ftcfg" ]; then
+                         if [ -f "/system/etc/TAS2557_A.ftcfg" ] || [ -f "/system/vendor/etc/TAS2557_A.ftcfg" ]; then
                            patch_mixer_toplevel "TAS2557 Volume" "30"
                          fi 
                          patch_mixer_toplevel "SRS Trumedia" "1"

@@ -68,10 +68,12 @@ unity_custom() {
     LIB=$SYS/vendor/lib
     LIB64=$SYS/vendor/lib64
     ACDB=$VETC/acdbdata
+    AMPA=$VETC/TAS2557_A.ftcfg
   else
     LIB=$SYS/lib
     LIB64=$SYS/lib64
     ACDB=$ETC/acdbdata
+    AMPA=$ETC/TAS2557_A.ftcfg
   fi
   SFX=$LIB/soundfx
   SFX64=$LIB64/soundfx
@@ -80,7 +82,6 @@ unity_custom() {
   VSFX=$VLIB/soundfx
   VSFX64=$VLIB64/soundfx
   HW=$LIB/hw
-  AMPA=$ETC/TAS2557_A.ftcfg
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
   DTS=/data/misc/dts
   TREBLE=$(grep "ro.treble.enabled=true" $SYS/build.prop)

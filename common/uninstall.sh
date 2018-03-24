@@ -1,8 +1,10 @@
 AUO=$UNITY$SYS/etc/sauron_useroptions
-get_uo "AP" "audpol"
+#get_uo "AP" "audpol"
+AP=false
 get_uo "FMAS" "install.fmas"
 get_uo "SHB" "qc.install.shoebox" "QCP"
-get_uo "OAP" "qc.out.audpol" "QCP"
+#get_uo "OAP" "qc.out.audpol" "QCP"
+OAP=false
 get_uo "ASP" "qc.install.asp" "QCP"
 get_uo "APTX" "qc.install.aptx" "QCP"
 get_uo "COMP" "qc.remove.compander" "QCP"

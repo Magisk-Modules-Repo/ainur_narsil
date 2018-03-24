@@ -20,22 +20,10 @@
 # Replaces &/or extends standard processing effects
 install.fmas=
 
-
-# /System Audio policy configration patching 
-# (if you experience any unusual behavior with glitching sound, or complete sound loss - you may wanna set this back to false)
-audpol=
-
-
 ### ^^^ Universal options ^^^ ###
 
 
 ##### vv Qualcomm ONLY options vv
-#
-# /Vendor Output Audio policy configration patching 
-# (if you experience any unusual behavior with glitching sound you may wanna unset this back to false)
-# Can be set true or false
-qc.out.audpol=
-
 #
 # Qualcomm 3D audio effect
 # Install Audiosphere SW & HW effect drivers
