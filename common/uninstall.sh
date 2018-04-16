@@ -27,22 +27,23 @@ else
   mv -f $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin.bak $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin
   mv -f $UNITY$VEN/firmware/tas2557s_uCDSP.bin.bak $UNITY$VEN/firmware/tas2557s_uCDSP.bin
   mv -f $UNITY$VEN/firmware/tas2557_cal.bin.bak $UNITY$VEN/firmware/tas2557_cal.bin
-  for FILE in ${CFGS}; do
+  for OFILE in ${CFGS}; do
+    FILE="$UNITY$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
     case $FILE in
-      *.conf) $ASP && sed -i "/audiosphere { #$MODID/,/} #$MODID/d" $UNITY$FILE
-              $SHB && sed -i "/libshoebox { #$MODID/,/} #$MODID/d" $UNITY$FILE
+      *.conf) $ASP && sed -i "/audiosphere { #$MODID/,/} #$MODID/d" $FILE
+              $SHB && sed -i "/libshoebox { #$MODID/,/} #$MODID/d" $FILE
               if $FMAS; then
                 [ "$QCP" -a "$CFG" == "$SYS/etc/audio_effects.conf" ] && continue
-                if [ "$(grep "#$MODID *library bundle.*" $UNITY$FILE)" ] || [ "$(grep "#$MODID *library downmix.*" $UNITY$FILE)" ]; then
-                  sed -i -e "/library fmas #$MODID/d" -e "/uuid 36103c50-8514-11e2-9e96-0800200c9a66 #$MODID/d" $UNITY$FILE
+                if [ "$(grep "#$MODID *library bundle.*" $FILE)" ] || [ "$(grep "#$MODID *library downmix.*" $FILE)" ]; then
+                  sed -i -e "/library fmas #$MODID/d" -e "/uuid 36103c50-8514-11e2-9e96-0800200c9a66 #$MODID/d" $FILE
                 fi
-                sed -i "/fmas { #$MODID/,/} #$MODID/d" $UNITY$FILE
-                sed -ri -e "s|#$MODID(.*)|\1|g" $UNITY$FILE
+                sed -i "/fmas { #$MODID/,/} #$MODID/d" $FILE
+                sed -ri -e "s|#$MODID(.*)|\1|g" $FILE
               fi;;
-      *.xml) sed -i "/<!--$MODID-->/d" $UNITY$FILE
+      *.xml) sed -i "/<!--$MODID-->/d" $FILE
              if $FMAS; then
-               sed -ri "/<!--(.*<effect name=\"virtualizer\".*)$MODID-->/ s/\1/g" $UNITY$FILE
-               sed -ri "/<!--(.*<effect name=\"downmix\".*)$MODID-->/ s/\1/g" $UNITY$FILE
+               sed -ri "/<!--(.*<effect name=\"virtualizer\".*)$MODID-->/ s/\1/g" $FILE
+               sed -ri "/<!--(.*<effect name=\"downmix\".*)$MODID-->/ s/\1/g" $FILE
              fi;;
     esac  
   done
@@ -79,8 +80,9 @@ else
     sed -i "/<!--BEG-$MODID-->/,/<!--END-$MODID-->/d" $UNITY$SYS/etc/audio_policy_configuration.xml
     sed -i -e "s|<!--$MODID\(.*\)|\1|g" -e "s|\(.*\)$MODID-->|\1|g" $UNITY$SYS/etc/audio_policy_configuration.xml
   fi
-  for MIX in ${MIXS}; do
-    sed -i "/<!--$MODID-->/d" $UNITY$MIX
-    sed -i -e "s|<!--$MODID\(.*\)|\1|g" -e "s|\(.*\)$MODID-->|\1|g" $UNITY$MIX
+  for OMIX in ${MIXS}; do
+    MIX="$UNITY$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
+    sed -i "/<!--$MODID-->/d" $MIX
+    sed -i -e "s|<!--$MODID\(.*\)|\1|g" -e "s|\(.*\)$MODID-->|\1|g" $MIX
   done
 fi

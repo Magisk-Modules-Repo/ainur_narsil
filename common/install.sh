@@ -34,6 +34,10 @@ if [ "$QCP" ]; then
     *) BIT="";;
   esac
 fi
+# Set force deep_buffer prop to false if present
+# if [ ! "$(grep 'audio.deep_buffer.media=true' $SYS/build.prop)" ]; then
+  # sed -i "/audio.deep_buffer.media=false/d" $INSTALLER/common/system.prop
+# fi
 
 ## Install logic by UltraM8 @XDA DO NOT MODIFY
 mkdir -p $INSTALLER$ACDB $INSTALLER$BIN $INSTALLER$ETC/audio $INSTALLER$ETC/firmware $INSTALLER$ETC/permissions $INSTALLER$ETC/settings $INSTALLER$ETC/tfa $INSTALLER$SYS/framework $INSTALLER$LIB/modules $INSTALLER$SFX $INSTALLER$SFX64 $INSTALLER$VETC/firmware $INSTALLER$VETC/tfa $INSTALLER$VSFX $INSTALLER$VSFX64
@@ -44,15 +48,9 @@ cp -f $NAZ/libaudiopreprocessing2.so $INSTALLER$SFX64/libaudiopreprocessing.so
 cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/libbundlewrapper.so
 cp -f $NAZ/libeffectproxy2.so $INSTALLER$SFX64/libeffectproxy.so
 if [ $API -ge 26 ]; then
-cp -f $SAU/lib/libeffectproxy4.so $INSTALLER$SFX/libeffectproxy.so
-cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
-cp -f $SAU/lib/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so
-fi
-
-if [ $API -ge 27 ] && [ "$NEXUS" ] || [ "$TREBLE" ]; then
-cp -f $SAU/lib/libeffectproxy3.so $INSTALLER$SFX/libeffectproxy.so
-cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so
-rm -rf $INSTALLER$SFX64/libbundlewrapper.so
+  cp -f $SAU/lib/libeffectproxy4.so $INSTALLER$SFX/libeffectproxy.so 
+  cp -f $SAU/lib/libbundlewrapper4.so $INSTALLER$SFX/libbundlewrapper.so 
+  cp -f $SAU/lib/libbundlewrapper3.so $INSTALLER$SFX64/libbundlewrapper.so 
 fi
 
 if [ "$QCP" ]; then
@@ -60,6 +58,10 @@ if [ "$QCP" ]; then
   if [ $API -ge 26 ] && [ ! "$OP3" ] || [ ! "$OP5" ]; then
     prop_process $INSTALLER/common/propsqcporeo.prop
   fi
+  if [ "$OP3" ]; then 
+    sed -i 's/audio.offload.multiple.enabled(.?)true/'d $INSTALLER/common/system.prop 
+    sed -i 's/audio.offload.pcm.enable(.?)true/'d $INSTALLER/common/system.prop 
+  fi	
   cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
   cp -f $SAU/lib/libdownmix5.so $INSTALLER$SFX/libdownmix.so
   cp -f $SAU/lib/libreverbwrapper6.so $INSTALLER$SFX64/libreverbwrapper.so
@@ -80,8 +82,8 @@ if [ "$QCP" ]; then
   cp -f $VALAR/lib/soundfx/libqcbassboost.so $INSTALLER$VSFX/libqcbassboost.so
   cp -f $VALAR/lib/soundfx/libqcreverb.so $INSTALLER$VSFX/libqcreverb.so
   cp -f $VALAR/lib/soundfx/libqcvirt.so $INSTALLER$VSFX/libqcvirt.so
-  cp -f $MORG/modules/mpq-adapter.ko $INSTALLER/system/lib/modules/mpq-adapter.ko
-  cp -f $MORG/modules/mpq-dmx-hw-plugin.ko $INSTALLER/system/lib/modules/mpq-dmx-hw-plugin.ko
+  cp -f $MORG/modules/mpq-adapter.ko $INSTALLER$LIB/modules/mpq-adapter.ko
+  cp -f $MORG/modules/mpq-dmx-hw-plugin.ko $INSTALLER$LIB/modules/mpq-dmx-hw-plugin.ko
   cp_ch $MORG/hammer/libAudienceAZA.so $ADSP2/libAudienceAZA.so
   if [ ! -f "$ADSP/libc++.so.1" ] && [ ! -f "$ADSP/libc++abi.so.1" ]; then
     cp_ch $MORG/hammer/libc++.so.1 $ADSP2/libc++.so.1
@@ -95,11 +97,9 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/default_vol_level.conf $INSTALLER$ETC/default_vol_level.conf
     cp -f $SAU/files/TFA_default_vol_level.conf $INSTALLER$ETC/TFA_default_vol_level.conf
     cp -f $SAU/files/NOTFA_default_vol_level.conf $INSTALLER$ETC/NOTFA_default_vol_level.conf
-	if [ ! "$NX9" ] || [ ! "$M10" ] || [ ! "$BOLT" ] || [ ! -f "$VEN/etc/TAS2557_A.ftcfg" ]; then
-	  cp -f $SAU/files/RT5506 $INSTALLER$ETC/RT5506
-      cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so
-      cp -f $SAU/files/libhtcacoustic2.so $INSTALLER$LIB64/libhtcacoustic.so
-    fi	
+    [ "$NX9" -o "$M10" -o "$BOLT" -o -f "$AMPA" ] || { cp -f $SAU/files/RT5506 $INSTALLER$ETC/RT5506; 
+                                                       cp -f $SAU/files/libhtcacoustic.so $INSTALLER$LIB/libhtcacoustic.so; 
+                                                       cp -f $SAU/files/libhtcacoustic2.so $INSTALLER$LIB64/libhtcacoustic.so; }
   fi  
   if [ "$M10" ] || [ "$BOLT" ]; then
     cp -f $SAU/lib/libaudio-ftm.so $INSTALLER$LIB/libaudio-ftm.so 
@@ -137,7 +137,7 @@ if [ "$QCP" ]; then
     cp -f $SAU/files/audio/tfa9887_feature.config $INSTALLER$ETC/audio/tfa9887_feature.config
     cp -f $SAU/files/libtfa9887.so $INSTALLER$LIB/libtfa9887.so
   fi  
-  if [ -f "$VEN/etc/TAS2557_A.ftcfg" ]; then
+  if [ -f "AMPA" ]; then
     prop_process $INSTALLER/common/propsresample.prop
     cp -f $SAU/files/TAS2557_A.ftcfg $INSTALLER$ETC/TAS2557_A.ftcfg
     cp -f $SAU/files/TAS2557_B.ftcfg $INSTALLER$ETC/TAS2557_B.ftcfg
@@ -322,87 +322,90 @@ patch_audpol() {
 }
 
 ui_print "   Patching audio_effects configs"
-for FILE in ${CFGS}; do
-  cp_ch $ORIGDIR$FILE $UNITY$FILE
+for OFILE in ${CFGS}; do
+  FILE="$UNITY$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
+  cp_ch $ORIGDIR$OFILE $FILE
   case $FILE in
     *.conf) if $ASP; then
-              sed -i "/audiosphere {/,/} /d" $UNITY$FILE
-              sed -i "s/^effects {/effects {\n  audiosphere { #$MODID\n    library audiosphere\n    uuid 184e62ab-2d19-4364-9d1b-c0a40733866c\n  } #$MODID/g" $UNITY$FILE
-              sed -i "s/^libraries {/libraries {\n  audiosphere { #$MODID\n    path $LIBPATCH\/lib\/soundfx\/libasphere.so\n  } #$MODID/g" $UNITY$FILE
+              sed -i "/audiosphere {/,/} /d" $FILE
+              sed -i "s/^effects {/effects {\n  audiosphere { #$MODID\n    library audiosphere\n    uuid 184e62ab-2d19-4364-9d1b-c0a40733866c\n  } #$MODID/g" $FILE
+              sed -i "s/^libraries {/libraries {\n  audiosphere { #$MODID\n    path $LIBPATCH\/lib\/soundfx\/libasphere.so\n  } #$MODID/g" $FILE
             fi
             if $SHB; then
-              sed -i "/libshoebox {/,/}/d" $UNITY$FILE
-              sed -i "s/^effects {/effects {\n  shoebox { #$MODID\n    library shoebox\n    uuid 1eab784c-1a36-4b2a-b7fc-e34c44cab89e\n  } #$MODID/g" $UNITY$FILE
-              sed -i "s/^libraries {/libraries {\n  shoebox { #$MODID\n    path $LIBPATCH\/lib\/soundfx\/libshoebox.so\n  } #$MODID/g" $UNITY$FILE
+              sed -i "/libshoebox {/,/}/d" $FILE
+              sed -i "s/^effects {/effects {\n  shoebox { #$MODID\n    library shoebox\n    uuid 1eab784c-1a36-4b2a-b7fc-e34c44cab89e\n  } #$MODID/g" $FILE
+              sed -i "s/^libraries {/libraries {\n  shoebox { #$MODID\n    path $LIBPATCH\/lib\/soundfx\/libshoebox.so\n  } #$MODID/g" $FILE
             fi  
             if $FMAS; then
               [ "$QCP" -a "$FILE" == "$SYS/etc/audio_effects.conf" ] && continue
-              backup_and_patch "virtualizer" "library bundle" "library fmas" "uuid 1d4033c0-8557-11df-9f2d-0002a5d5c51b" "uuid 36103c50-8514-11e2-9e96-0800200c9a66" $UNITY$FILE
-              backup_and_patch "downmix" "library downmix" "library fmas" "uuid 93f04452-e4fe-41cc-91f9-e475b6d1d69f" "uuid 36103c50-8514-11e2-9e96-0800200c9a66" $UNITY$FILE
-              sed -i "s/^libraries {/libraries {\n  fmas { #$MODID\n    path $LIBPATCH\/lib\/soundfx\/libfmas.so\n  } #$MODID/g" $UNITY$FILE
+              backup_and_patch "virtualizer" "library bundle" "library fmas" "uuid 1d4033c0-8557-11df-9f2d-0002a5d5c51b" "uuid 36103c50-8514-11e2-9e96-0800200c9a66" $FILE
+              backup_and_patch "downmix" "library downmix" "library fmas" "uuid 93f04452-e4fe-41cc-91f9-e475b6d1d69f" "uuid 36103c50-8514-11e2-9e96-0800200c9a66" $FILE
+              sed -i "s/^libraries {/libraries {\n  fmas { #$MODID\n    path $LIBPATCH\/lib\/soundfx\/libfmas.so\n  } #$MODID/g" $FILE
             fi;;
-    *.xml) if $ASP && [ ! "$(grep "audiosphere" $UNITY$FILE)" ]; then
-             sed -i "/audiosphere/d" $UNITY$FILE
-             sed -i "/<libraries>/ a\        <library name=\"audiosphere\" path=\"libasphere.so\"\/><!--$MODID-->" $UNITY$FILE
-             sed -i "/<effects>/ a\        <effect name=\"audiosphere\" library=\"audiosphere\" uuid=\"184e62ab-2d19-4364-9d1b-c0a40733866c\"\/><!--$MODID-->" $UNITY$FILE
+    *.xml) if $ASP && [ ! "$(grep "audiosphere" $FILE)" ]; then
+             sed -i "/audiosphere/d" $FILE
+             sed -i "/<libraries>/ a\        <library name=\"audiosphere\" path=\"libasphere.so\"\/><!--$MODID-->" $FILE
+             sed -i "/<effects>/ a\        <effect name=\"audiosphere\" library=\"audiosphere\" uuid=\"184e62ab-2d19-4364-9d1b-c0a40733866c\"\/><!--$MODID-->" $FILE
            fi
-           if $SHB && [ ! "$(grep "shoebox" $UNITY$FILE)" ]; then
-             sed -i "/libshoebox/d" $UNITY$FILE
-             sed -i "/<libraries>/ a\        <library name=\"shoebox\" path=\"libshoebox.so\"\/><!--$MODID-->" $UNITY$FILE
-             sed -i "/<effects>/ a\        <effect name=\"shoebox\" library=\"shoebox\" uuid=\"1eab784c-1a36-4b2a-b7fc-e34c44cab89e\"\/><!--$MODID-->" $UNITY$FILE
+           if $SHB && [ ! "$(grep "shoebox" $FILE)" ]; then
+             sed -i "/libshoebox/d" $FILE
+             sed -i "/<libraries>/ a\        <library name=\"shoebox\" path=\"libshoebox.so\"\/><!--$MODID-->" $FILE
+             sed -i "/<effects>/ a\        <effect name=\"shoebox\" library=\"shoebox\" uuid=\"1eab784c-1a36-4b2a-b7fc-e34c44cab89e\"\/><!--$MODID-->" $FILE
            fi  
-           if $FMAS && [ ! "$(grep "fmas" $UNITY$FILE)" ]; then
-             sed -ri "/<effect name=\"virtualizer\"/ s/<!--(.*)$MODID-->/\1/g" $UNITY$FILE
-             sed -ri "/<effect name=\"downmix\" / s/<!--(.*)$MODID-->/\1/g" $UNITY$FILE
-             sed -i "/<effects>/ a\        <effect name=\"virtualizer\" library=\"fmas\" uuid=\"36103c50-8514-11e2-9e96-0800200c9a66\"\/><!--$MODID-->" $UNITY$FILE
-             sed -i "/<effects>/ a\        <effect name=\"downmix\" library=\"fmas\" uuid=\"36103c50-8514-11e2-9e96-0800200c9a66\"\/><!--$MODID-->" $UNITY$FILE
-             sed -i "/<libraries>/ a\        <library name=\"fmas\" path=\"libfmas.so\"\/><!--$MODID-->" $UNITY$FILE
+           if $FMAS && [ ! "$(grep "fmas" $FILE)" ]; then
+             sed -ri "/<effect name=\"virtualizer\"/ s/<!--(.*)$MODID-->/\1/g" $FILE
+             sed -ri "/<effect name=\"downmix\" / s/<!--(.*)$MODID-->/\1/g" $FILE
+             sed -i "/<effects>/ a\        <effect name=\"virtualizer\" library=\"fmas\" uuid=\"36103c50-8514-11e2-9e96-0800200c9a66\"\/><!--$MODID-->" $FILE
+             sed -i "/<effects>/ a\        <effect name=\"downmix\" library=\"fmas\" uuid=\"36103c50-8514-11e2-9e96-0800200c9a66\"\/><!--$MODID-->" $FILE
+             sed -i "/<libraries>/ a\        <library name=\"fmas\" path=\"libfmas.so\"\/><!--$MODID-->" $FILE
            fi
   esac
 done
 
 ##                    POLICY CONFIGS EDITS BY ULTRAM8                           ##
 #ui_print "   Patching audio policy and audio policy configuration"
-for FILE in ${POLS}; do
+for OFILE in ${POLS}; do
+  FILE="$UNITY$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
+  cp_ch $ORIGDIR$OFILE $FILE
   case $FILE in
     *audio_policy.conf) if $AP; then
-                          cp_ch $ORIGDIR$FILE $UNITY$FILE
+                          cp_ch $ORIGDIR$FILE $FILE
                           for AUD in "direct_pcm" "direct" "raw" "multichannel" "compress_offload" "high_res_audio"; do
                             if [ "$AUD" != "compress_offload" ]; then
-                              backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_8_24_BIT" $UNITY$FILE
+                              backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_8_24_BIT" $FILE
                             fi
                             if [ "$AUD" == "direct_pcm" ] || [ "$AUD" == "direct" ] || [ "$AUD" == "raw" ]; then
-                              backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $UNITY$FILE
+                              backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $FILE
                             fi
-                            backup_and_patch "$AUD" "sampling_rates" "sampling_rates 8000\|11025\|16000\|22050\|32000\|44100\|48000\|64000\|88200\|96000\|176400\|192000\|352800\|384000" $UNITY$FILE
+                            backup_and_patch "$AUD" "sampling_rates" "sampling_rates 8000\|11025\|16000\|22050\|32000\|44100\|48000\|64000\|88200\|96000\|176400\|192000\|352800\|384000" $FILE
                           done
                         fi;;
     *audio_output_policy.conf) if $OAP; then
-                                 cp_ch $ORIGDIR$FILE $UNITY$FILE
+                                 cp_ch $ORIGDIR$FILE $FILE
                                  for AUD in "default" "direct" "proaudio" "direct_pcm" "direct_pcm_24" "raw" "compress_offload_16" "compress_offload_24" "compress_offload_HD"; do
                                    if [[ "$AUD" != "compress_offload"* ]]; then
-                                     backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT" $UNITY$FILE
+                                     backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT" $FILE
                                    fi
                                    if [ "$AUD" == "direct" ]; then
                                      if [ "$(grep "compress_offload" $FILE)" ]; then
-                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM\|AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD\|AUDIO_OUTPUT_FLAG_NON_BLOCKING" $UNITY$FILE
+                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM\|AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD\|AUDIO_OUTPUT_FLAG_NON_BLOCKING" $FILE
                                      else
-                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $UNITY$FILE
+                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $FILE
                                      fi
                                    fi
-                                   backup_and_patch "$AUD" "sampling_rates" "sampling_rates 44100\|48000\|96000\|176400\|192000\|352800\|384000" $UNITY$FILE
-                                   [ -z $BIT ] || backup_and_patch "$AUD" "bit_width" "bit_width $BIT" $UNITY$FILE
+                                   backup_and_patch "$AUD" "sampling_rates" "sampling_rates 44100\|48000\|96000\|176400\|192000\|352800\|384000" $FILE
+                                   [ -z $BIT ] || backup_and_patch "$AUD" "bit_width" "bit_width $BIT" $FILE
                                  done
                                fi;;
     *audio_policy_configuration.xml) if $AP; then
-                                       cp_ch $ORIGDIR$FILE $UNITY$FILE
-                                       patch_audpol "primary output" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/" $UNITY$FILE
-                                       patch_audpol "raw" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/" $UNITY$FILE
-                                       patch_audpol "deep_buffer" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"192000\1/" $UNITY$FILE
-                                       patch_audpol "multichannel" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/" $UNITY$FILE
+                                       cp_ch $ORIGDIR$FILE $FILE
+                                       patch_audpol "primary output" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/" $FILE
+                                       patch_audpol "raw" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/" $FILE
+                                       patch_audpol "deep_buffer" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"192000\1/" $FILE
+                                       patch_audpol "multichannel" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/" $FILE
                                        # Use 'channel_masks' for conf files and 'channelMasks' for xml files
-                                       patch_audpol "direct_pcm" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/; s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $UNITY$FILE
-                                       patch_audpol "compress_offload" "s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $UNITY$FILE
+                                       patch_audpol "direct_pcm" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/; s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $FILE
+                                       patch_audpol "compress_offload" "s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $FILE
                                      fi;;
   esac
 done
@@ -412,141 +415,142 @@ done
 ## ! MAKE SURE YOU CREDIT PEOPLE MENTIONED HERE WHEN USING THESE XML EDITS ! ##
 ui_print "   Patching mixer"
 if [ "$QCP" ]; then
-  for MIX in ${MIXS}; do
-    cp_ch $ORIGDIR$MIX $UNITY$MIX
+  for OMIX in ${MIXS}; do
+    MIX="$UNITY$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
+    cp_ch $ORIGDIR$OMIX $MIX
     ## MAIN DAC patches
     # BETA FEATURES
     if [ "$BIT" ]; then
-      patch_mixer_toplevel "SLIM_0_RX Format" "$BIT" $UNITY$MIX
-      patch_mixer_toplevel "SLIM_5_RX Format" "$BIT" $UNITY$MIX
-      [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT" $UNITY$MIX
-      patch_mixer_toplevel "USB_AUDIO_RX Format" "$BIT" $UNITY$MIX
-      patch_mixer_toplevel "HDMI_RX Bit Format" "$BIT" $UNITY$MIX 
+      patch_mixer_toplevel "SLIM_0_RX Format" "$BIT" $MIX
+      patch_mixer_toplevel "SLIM_5_RX Format" "$BIT" $MIX
+      [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX Format" "$BIT" $MIX
+      patch_mixer_toplevel "USB_AUDIO_RX Format" "$BIT" $MIX
+      patch_mixer_toplevel "HDMI_RX Bit Format" "$BIT" $MIX 
     fi
     if [ "$IMPEDANCE" ]; then
-      patch_mixer_toplevel "HPHR Impedance" "$IMPEDANCE" $UNITY$MIX
-      patch_mixer_toplevel "HPHL Impedance" "$IMPEDANCE" $UNITY$MIX
+      patch_mixer_toplevel "HPHR Impedance" "$IMPEDANCE" $MIX
+      patch_mixer_toplevel "HPHL Impedance" "$IMPEDANCE" $MIX
     fi
     if [ "$RESAMPLE" ]; then
-      patch_mixer_toplevel "SLIM_0_RX SampleRate" "$RESAMPLE" $UNITY$MIX
-      patch_mixer_toplevel "SLIM_5_RX SampleRate" "$RESAMPLE" $UNITY$MIX
-      [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE" $UNITY$MIX
-      patch_mixer_toplevel "USB_AUDIO_RX SampleRate" "$RESAMPLE" $UNITY$MIX
-      patch_mixer_toplevel "HDMI_RX SampleRate" "$RESAMPLE" $UNITY$MIX  
+      patch_mixer_toplevel "SLIM_0_RX SampleRate" "$RESAMPLE" $MIX
+      patch_mixer_toplevel "SLIM_5_RX SampleRate" "$RESAMPLE" $MIX
+      [ "$QC8996" -o "$QC8998" ] && patch_mixer_toplevel "SLIM_6_RX SampleRate" "$RESAMPLE" $MIX
+      patch_mixer_toplevel "USB_AUDIO_RX SampleRate" "$RESAMPLE" $MIX
+      patch_mixer_toplevel "HDMI_RX SampleRate" "$RESAMPLE" $MIX  
     fi
     if [ "$BTRESAMPLE" ]; then
-      patch_mixer_toplevel "BT SampleRate" "$BTRESAMPLE" $UNITY$MIX
+      patch_mixer_toplevel "BT SampleRate" "$BTRESAMPLE" $MIX
     fi
     if [ "$AX7" ]; then
-      patch_mixer_toplevel "Smart PA Init Switch" "On" $UNITY$MIX 
+      patch_mixer_toplevel "Smart PA Init Switch" "On" $MIX 
     fi
     ###  ^ ^ ^  Special Axon7 AKM patches by SKREM339  ^ ^ ^  ###
     if [ "$LX3" ]; then
-      patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $UNITY$MIX
-      patch_mixer_toplevel "ESS_HEADPHONE Off" "On" $UNITY$MIX
+      patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $MIX
+      patch_mixer_toplevel "ESS_HEADPHONE Off" "On" $MIX
     fi
     if [ "$X9" ]; then
-      patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $UNITY$MIX
-      patch_mixer_toplevel "Es9018 Hifi Switch" "1" $UNITY$MIX
+      patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $MIX
+      patch_mixer_toplevel "Es9018 Hifi Switch" "1" $MIX
     fi   
     if [ "$Z9" ] || [ "$Z9M" ]; then
-      patch_mixer_toplevel "HP Out Volume" "22" $UNITY$MIX
-      patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" $UNITY$MIX
-      patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" $UNITY$MIX
+      patch_mixer_toplevel "HP Out Volume" "22" $MIX
+      patch_mixer_toplevel "ADC1 Digital Filter" "sharp_roll_off_88" $MIX
+      patch_mixer_toplevel "ADC2 Digital Filter" "sharp_roll_off_88" $MIX
     fi
     if [ "$Z11" ]; then
-      patch_mixer_toplevel "AK4376 DAC Digital Filter Mode" "Slow Roll-Off" $UNITY$MIX
-      patch_mixer_toplevel "AK4376 HPL Power-down Resistor" "Hi-Z" $UNITY$MIX
-      patch_mixer_toplevel "AK4376 HPR Power-down Resistor" "Hi-Z" $UNITY$MIX
-      patch_mixer_toplevel "AK4376 HP-Amp Analog Volume" "15" $UNITY$MIX
+      patch_mixer_toplevel "AK4376 DAC Digital Filter Mode" "Slow Roll-Off" $MIX
+      patch_mixer_toplevel "AK4376 HPL Power-down Resistor" "Hi-Z" $MIX
+      patch_mixer_toplevel "AK4376 HPR Power-down Resistor" "Hi-Z" $MIX
+      patch_mixer_toplevel "AK4376 HP-Amp Analog Volume" "15" $MIX
     fi
     if [ "$V20" ] || [ "$V30" ] || [ "$G6" ]; then
-      patch_mixer_toplevel "Es9018 AVC Volume" "14" $UNITY$MIX
-      patch_mixer_toplevel "Es9018 HEADSET TYPE" "1" $UNITY$MIX
-      patch_mixer_toplevel "Es9018 State" "Hifi" $UNITY$MIX
-      # patch_mixer_toplevel "Es9018 Master Volume" "1" $UNITY$MIX
-      patch_mixer_toplevel "HIFI Custom Filter" "6" $UNITY$MIX
+      patch_mixer_toplevel "Es9018 AVC Volume" "14" $MIX
+      patch_mixer_toplevel "Es9018 HEADSET TYPE" "1" $MIX
+      patch_mixer_toplevel "Es9018 State" "Hifi" $MIX
+      # patch_mixer_toplevel "Es9018 Master Volume" "1" $MIX
+      patch_mixer_toplevel "HIFI Custom Filter" "6" $MIX
       if [ "$V30" ]; then
-        patch_mixer_toplevel "Es9218 Bypass" "0" $UNITY$MIX
+        patch_mixer_toplevel "Es9218 Bypass" "0" $MIX
       fi
     fi
     if [ -f "$AMPA" ]; then 
-      patch_mixer_toplevel "HTC_AS20_VOL Index" "Twelve" $UNITY$MIX
+      patch_mixer_toplevel "HTC_AS20_VOL Index" "Twelve" $MIX
     fi 
     if [ "$QC8996" ] || [ "$QC8998" ]; then 
-      patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn" $UNITY$MIX
-      patch_mixer_toplevel "VBoost Volt" "8.6V" $UNITY$MIX
+      patch_mixer_toplevel "VBoost Ctrl" "AlwaysOn" $MIX
+      patch_mixer_toplevel "VBoost Volt" "8.6V" $MIX
     fi    
     ### MAIN DAC patches  ##
     # Custom Stereo
-    patch_mixer_toplevel "Set Custom Stereo OnOff" "Off" $UNITY$MIX
-    # patch_mixer_toplevel "Set Custom Stereo" "1" $UNITY$MIX
+    patch_mixer_toplevel "Set Custom Stereo OnOff" "Off" $MIX
+    # patch_mixer_toplevel "Set Custom Stereo" "1" $MIX
     # Custom Stereo ##
     # APTX Dec License
     if $APTX; then  
-      patch_mixer_toplevel "APTX Dec License" "21" $UNITY$MIX
+      patch_mixer_toplevel "APTX Dec License" "21" $MIX
     fi
     # HW  DTS HPX edits
-    patch_mixer_toplevel "Set HPX OnOff" "1" $UNITY$MIX
-    patch_mixer_toplevel "Set HPX ActiveBe" "1" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 9 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 13 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 17 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 21 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS" $UNITY$MIX
-    patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS" $UNITY$MIX
+    patch_mixer_toplevel "Set HPX OnOff" "1" $MIX
+    patch_mixer_toplevel "Set HPX ActiveBe" "1" $MIX
+    patch_mixer_toplevel "PCM_Dev Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 9 Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 13 Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 17 Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 21 Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 24 Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 15 Topology" "DTS" $MIX
+    patch_mixer_toplevel "PCM_Dev 33 Topology" "DTS" $MIX
     if [ ! "$M10" ]; then
-      patch_mixer_toplevel "DS2 OnOff" "Off" $UNITY$MIX
+      patch_mixer_toplevel "DS2 OnOff" "Off" $MIX
     fi	
     # APTX Dec License ##
     # Codec Bandwith Expansion
-    patch_mixer_toplevel "Codec Wideband" "1" $UNITY$MIX
+    patch_mixer_toplevel "Codec Wideband" "1" $MIX
     # Codec Bandwith Expansion ##
     # HPH Type
-    patch_mixer_toplevel "HPH Type" "1" $UNITY$MIX
-    patch_mixer_toplevel "RX HPH Mode" "CLS_H_HIFI" $UNITY$MIX
+    patch_mixer_toplevel "HPH Type" "1" $MIX
+    patch_mixer_toplevel "RX HPH Mode" "CLS_H_HIFI" $MIX
     # HPH Type ##	
     # Audiosphere Enable    
     if $ASP; then
-      patch_mixer_toplevel "Audiosphere Enable" "On" $UNITY$MIX
-      patch_mixer_toplevel "MSM ASphere Set Param" "1" $UNITY$MIX
+      patch_mixer_toplevel "Audiosphere Enable" "On" $MIX
+      patch_mixer_toplevel "MSM ASphere Set Param" "1" $MIX
     fi   
     # Audiosphere Enable ##
     # TFA amp patch
     if [ "$M9" ] || [ "$M8" ] || [ "$M10" ]; then
-      patch_mixer_toplevel "TFA9895 Profile" "hq" $UNITY$MIX
-      patch_mixer_toplevel "TFA9895 Playback Volume" "255" $UNITY$MIX
-      patch_mixer_toplevel "SmartPA Switch" "1" $UNITY$MIX
+      patch_mixer_toplevel "TFA9895 Profile" "hq" $MIX
+      patch_mixer_toplevel "TFA9895 Playback Volume" "255" $MIX
+      patch_mixer_toplevel "SmartPA Switch" "1" $MIX
     fi	 
     # TFA amp patch   ##
     ###  v v v  TAS amp Patch  v v v
-    patch_mixer_toplevel "TAS2552 Volume" "125" $UNITY$MIX "updateonly"
+    patch_mixer_toplevel "TAS2552 Volume" "125" $MIX "updateonly"
     if [ -f "$AMPA" ]; then
-      patch_mixer_toplevel "TAS2557 Volume" "30" $UNITY$MIX
+      patch_mixer_toplevel "TAS2557 Volume" "30" $MIX
     fi 
     # HW  SRS Trumedia edits (consider non-working for all QC, may break HDMI on some rare devices, needs custom kernel support)
-    patch_mixer_toplevel "SRS Trumedia" "1" $UNITY$MIX
-    patch_mixer_toplevel "SRS Trumedia HDMI" "1" $UNITY$MIX
-    patch_mixer_toplevel "SRS Trumedia I2S" "1" $UNITY$MIX
-    patch_mixer_toplevel "SRS Trumedia MI2S" "1" $UNITY$MIX       
+    patch_mixer_toplevel "SRS Trumedia" "1" $MIX
+    patch_mixer_toplevel "SRS Trumedia HDMI" "1" $MIX
+    patch_mixer_toplevel "SRS Trumedia I2S" "1" $MIX
+    patch_mixer_toplevel "SRS Trumedia MI2S" "1" $MIX       
     # HW  SRS Trumedia edits  ##
     # if [ "$QC8226" ]; then
-      # patch_mixer_toplevel "HIFI2 RX Volume" "84" $UNITY$MIX 
-      # patch_mixer_toplevel "HIFI3 RX Volume" "84" $UNITY$MIX
-      # patch_mixer_toplevel "HIFI0 RX Volume" "84" $UNITY$MIX
-      # patch_mixer_toplevel "HIFI5 RX Volume" "84" $UNITY$MIX
+      # patch_mixer_toplevel "HIFI2 RX Volume" "84" $MIX 
+      # patch_mixer_toplevel "HIFI3 RX Volume" "84" $MIX
+      # patch_mixer_toplevel "HIFI0 RX Volume" "84" $MIX
+      # patch_mixer_toplevel "HIFI5 RX Volume" "84" $MIX
     # fi
     # 8226 patch  ##
     # 8996
     # if [ "$QC8996" ]; then
-    patch_mixer_toplevel "HiFi Function" "On" $UNITY$MIX 
+    patch_mixer_toplevel "HiFi Function" "On" $MIX 
     # fi
     # 8996  ##
     if $COMP; then
-      sed -i "/<ctl name=\"COMP*[0-9] Switch\"/p" $UNITY$MIX
-      sed -i "/<ctl name=\"COMP*[0-9] Switch\"/ { s/\(.*\)value=\".*\" \/>/\1value=\"0\" \/><!--$MODID-->/; n; s/\( *\)\(.*\)/\1<!--$MODID\2$MODID-->/}" $UNITY$MIX
+      sed -i "/<ctl name=\"COMP*[0-9] Switch\"/p" $MIX
+      sed -i "/<ctl name=\"COMP*[0-9] Switch\"/ { s/\(.*\)value=\".*\" \/>/\1value=\"0\" \/><!--$MODID-->/; n; s/\( *\)\(.*\)/\1<!--$MODID\2$MODID-->/}" $MIX
     fi 
   done
 fi

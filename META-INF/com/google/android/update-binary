@@ -27,6 +27,12 @@ $BOOTMODE && IMG=/data/adb/magisk_merge.img
 ZIP=$3
 MAGISK=true
 DYNAMICOREO=false
+DYNAMICAPP=false
+ALWAYSRW=false
+case $ZIP in
+  *sysover*|*Sysover*|*SYSOVER*) SYSOVERRIDE=true;;
+  *) SYSOVERRIDE=false;;
+esac
 
 # DEFAULT PERMISSIONS
 umask 022
@@ -173,14 +179,16 @@ unity_install() {
   rm -f $INSTALLER/system/placeholder
   $IS64BIT || rm -rf $INSTALLER/system/lib64 $INSTALLER/system/vendor/lib64
   for FILE in $(find $INSTALLER/system -type f | sed "s|$INSTALLER||"); do
+    if $DYNAMICAPP; then
+      if $OLDAPP; then FILE2=$(echo $FILE | sed 's|/system/app/.*/|/system/app/|'); else FILE2=$(echo $FILE | sed 's|/system/app/|/system/priv-app/|'); fi
+    else
+      FILE2=$FILE
+    fi
     if $DYNAMICOREO && [ $API -ge 26 ]; then
       case $FILE in
-        /system/app/*) if [ -d $VEN/app ]; then FILE2=$(echo $FILE | sed "s|/system/|$VEN/|"); else FILE2=$(echo $FILE | sed 's|/system/app/|/system/priv-app/|'); fi;;
-        /system/lib*) FILE2=$(echo $FILE | sed "s|/system/|$VEN/|");;
-        *) FILE2=$FILE;;
+        /system/lib/modules/*) FILE2=$FILE;;
+        /system/lib/*) FILE2=$(echo $FILE | sed "s|/system/|$VEN/|");;
       esac
-    else
-      if $OLDAPP; then FILE2=$(echo $FILE | sed 's|/system/app/.*/|/system/app/|'); else FILE2=$(echo $FILE | sed 's|/system/app/|/system/priv-app/|'); fi
     fi
     cp_ch $INSTALLER$FILE $UNITY$FILE2
   done
@@ -244,9 +252,17 @@ if [ ! -d $MAGISKBIN ] && [ ! -d /data/magisk ]; then
 elif [ ! -f $MAGISKBIN/util_functions.sh ]; then
   require_new_magisk
 else
-  . $MAGISKBIN/util_functions.sh
-  [ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MINMAGISK ] || require_new_magisk
   ui_print "- Magisk install detected"
+  cp -f $MAGISKBIN/util_functions.sh $INSTALLER/common/unityfiles/util_functions_mag.sh
+  if $SYSOVERRIDE; then
+    ui_print "- Overriding paths for system install"
+    $BOOTMODE && { ui_print "   ! Magisk manager isn't supported!"; abort "   ! Install in TWRP !"; }
+    sed -i "s/-o ro/-o rw/g" $INSTALLER/common/unityfiles/util_functions_mag.sh
+  elif $ALWAYSRW; then
+    sed -i "s/-o ro/-o rw/g" $INSTALLER/common/unityfiles/util_functions_mag.sh
+  fi
+  . $INSTALLER/common/unityfiles/util_functions_mag.sh
+  [ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MINMAGISK ] || require_new_magisk
 fi
 
 # MOUNT PARTITIONS AND DETECT VERSION/ARCHITECTURE
@@ -284,7 +300,7 @@ INFO="$MODPATH/$MODID-files"
 if [ -d /system/priv-app ]; then OLDAPP=false; else OLDAPP=true; fi
 
 # SET MAGISK/SYSTEM SPECIFIC VARIABLES
-if $MAGISK; then
+if $MAGISK && ! $SYSOVERRIDE; then
   VEN=/system/vendor
   UNITY="$MODPATH"
   PROP=$MODPATH/system.prop
@@ -296,12 +312,23 @@ if $MAGISK; then
     OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
   fi
 else
-  # DETERMINE SYSTEM BOOT SCRIPT TYPE
-  script_type
+  if $MAGISK && $SYSOVERRIDE; then
+    PROP=$MODPATH/system.prop
+    if $BOOTMODE; then
+      MOD_VER="/sbin/.core/img/$MODID/module.prop"
+      OLD_AML_VER="/sbin/.core/img/audmodlib/module.prop"
+    else
+      MOD_VER="$MODPATH/module.prop"
+      OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
+    fi
+  else
+    # DETERMINE SYSTEM BOOT SCRIPT TYPE
+    script_type
+    PROP=$MODPATH/$MODID-props.sh
+    MOD_VER="/system/etc/$MODID-module.prop"
+    OLD_AML_VER="/system/etc/audmodlib-module.prop"
+  fi
   UNITY=""
-  MOD_VER="/system/etc/$MODID-module.prop"
-  OLD_AML_VER="/system/etc/audmodlib-module.prop"
-  PROP=$MODPATH/$MODID-props.sh
   if [ -d /system/addon.d ]; then
     INFO=/system/addon.d/$MODID-files
   else

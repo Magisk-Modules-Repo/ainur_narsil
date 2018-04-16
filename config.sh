@@ -38,18 +38,24 @@ LATESTARTSERVICE=true
 
 # Unity Variables
 # Uncomment and change 'MINAPI' and 'MAXAPI' to the minimum and maxium android version for your mod (note that magisk has it's own minimum api: 21 (lollipop))
-# Uncomment DYNAMICOREO if you want apps and libs installed to vendor for oreo and newer and system for anything older
+# Uncomment DYNAMICOREO if you want libs installed to vendor for oreo and newer and system for anything older
+# Uncomment DYNAMICAPP if you want anything in $INSTALLER/system/app to be installed to the optimal app directory (/system/priv-app if it exists, /system/app otherwise)
+# Uncomment SYSOVERRIDE if you want the mod to always be installed to system (even on magisk)
+# Uncomment ALWAYSRW if you always want system & vendor mounted as rw - only useful when modifiying init folders or something that needs loaded before magisk mount - you likely won't need this
 #MINAPI=21
 #MAXAPI=25
+#ALWAYSRW=true
+#SYSOVERRIDE=true
 DYNAMICOREO=true
+#DYNAMICAPP=true
 
 # Custom Variables - Keep everything within this function
 unity_custom() {
   if $MAGISK && $BOOTMODE; then ORIGDIR="/sbin/.core/mirror"; else ORIGDIR=""; fi
   if $BOOTMODE; then
-    CFGS="$(find /system /vendor -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" | sed "s|^/vendor|/system/vendor|g")"
-    POLS="$(find /system /vendor -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml" | sed "s|^/vendor|/system/vendor|g")"
-    MIXS="$(find /system /vendor -type f -name "*mixer_paths*.xml" | sed "s|^/vendor|/system/vendor|g")"
+    CFGS="$(find /system /vendor -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
+    POLS="$(find /system /vendor -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
+    MIXS="$(find /system /vendor -type f -name "*mixer_paths*.xml")"
   else  
     CFGS="$(find -L /system -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
     POLS="$(find -L /system -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
@@ -86,13 +92,13 @@ unity_custom() {
   DTS=/data/misc/dts
   TREBLE=$(grep "ro.treble.enabled=true" $SYS/build.prop)
   NEXUS=$(grep "ro.product.device=bullhead|ro.product.device=angler" $SYS/build.prop)
-  MTK=$(grep "ro.mediatek.version*" $SYS/build.prop)
-  QCP=$(grep -E "ro.board.platform=apq*|ro.board.platform=msm*" $SYS/build.prop)
-  EXY=$(grep "ro.chipname*" $SYS/build.prop)
+  MTK=$(grep "ro.mediatek.version.*" $SYS/build.prop)
+  QCP=$(grep -E "ro.board.platform=apq.*|ro.board.platform=msm.*" $SYS/build.prop)
+  EXY=$(grep "ro.chipname.*" $SYS/build.prop)
   QC94=$(grep "ro.board.platform=msm8994" $SYS/build.prop)
-  KIR=$(grep "ro.board.platform=hi*" $SYS/build.prop)
-  SPEC=$(grep "ro.board.platform=sp*" $SYS/build.prop)
-  MIUI=$(grep "ro.miui.ui.version*" $SYS/build.prop)
+  KIR=$(grep "ro.board.platform=hi.*" $SYS/build.prop)
+  SPEC=$(grep "ro.board.platform=sp.*" $SYS/build.prop)
+  MIUI=$(grep "ro.miui.ui.version.*" $SYS/build.prop)
   QC8996=$(grep "ro.board.platform=msm8996" $SYS/build.prop)
   QC8998=$(grep "ro.board.platform=msm8998" $SYS/build.prop)
   TMSM=$(grep "ro.board.platform=msm" $SYS/build.prop | sed 's/^.*=msm//')
@@ -101,11 +107,11 @@ unity_custom() {
   else 
     QCNEW=false; QCOLD=true
   fi
-  M9=$(grep "ro.aa.modelid=0PJA*" $SYS/build.prop)
-  BOLT=$(grep "ro.aa.modelid=2PYB*" $SYS/build.prop)
-  M10=$(grep "ro.aa.modelid=2PS6*" $SYS/build.prop)
-  U11P=$(grep "ro.aa.modelid=2Q4D*" $SYS/build.prop)
-  M8=$(grep "ro.aa.modelid=0P6B*" $SYS/build.prop)
+  M9=$(grep "ro.aa.modelid=0PJA.*" $SYS/build.prop)
+  BOLT=$(grep "ro.aa.modelid=2PYB.*" $SYS/build.prop)
+  M10=$(grep "ro.aa.modelid=2PS6.*" $SYS/build.prop)
+  U11P=$(grep "ro.aa.modelid=2Q4D.*" $SYS/build.prop)
+  M8=$(grep "ro.aa.modelid=0P6B.*" $SYS/build.prop)
   AX7=$(grep -E "ro.build.product=axon7|ro.build.product=ailsa_ii" $SYS/build.prop)
   V20=$(grep "ro.product.device=elsa" $SYS/build.prop)
   V30=$(grep "ro.product.device=joan" $SYS/build.prop)
@@ -114,15 +120,15 @@ unity_custom() {
   Z9M=$(grep -E "ro.product.model=NX510J|ro.product.model=NX518J" $SYS/build.prop)
   Z11=$(grep "ro.product.model=NX531J" $SYS/build.prop)
   LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
-  OP5=$(grep -E "ro.build.product=OnePlus5*|ro.build.product=cheeseburger|ro.build.product=Cheeseburger|ro.build.product=dumpling|ro.build.product=Dumpling" $SYS/build.prop)
-  X9=$(grep "ro.product.model=X900*" $SYS/build.prop)
+  OP5=$(grep -E "ro.build.product=OnePlus5.*|ro.build.product=cheeseburger|ro.build.product=Cheeseburger|ro.build.product=dumpling|ro.build.product=Dumpling" $SYS/build.prop)
+  X9=$(grep "ro.product.model=X900.*" $SYS/build.prop)
   P2XL=$(grep -E "ro.vendor.product.name=taimen|ro.vendor.product.device=taimen" $SYS/build.prop)
   P2=$(grep -E "ro.vendor.product.device=walleye|ro.vendor.product.name=walleye" $SYS/build.prop)
   P1XL=$(grep -E "ro.vendor.product.device=marlin|ro.vendor.product.name=marlin" $SYS/build.prop)
   P1=$(grep -E "ro.vendor.product.device=sailfish|ro.vendor.product.name=sailfish" $SYS/build.prop)
-  NX9=$(grep -E "ro.product.name=volantis*|ro.product.board=flounder*" $SYS/build.prop)
-  OP3=$(grep -E "ro.build.product=OnePlus3*|ro.build.product=oneplus3*|ro.vendor.product.device=oneplus3*|ro.vendor.product.device=OnePlus3*" $SYS/build.prop)
-  X5P=$(grep -E "ro.product.name=vince*|ro.product.device=vince*" $SYS/build.prop)
+  NX9=$(grep -E "ro.product.name=volantis.*|ro.product.board=flounder.*" $SYS/build.prop)
+  OP3=$(grep -E "ro.build.product=OnePlus3.*|ro.build.product=oneplus3.*|ro.vendor.product.device=oneplus3.*|ro.vendor.product.device=OnePlus3.*" $SYS/build.prop)
+  X5P=$(grep -E "ro.product.name=vince.*|ro.product.device=vince.*" $SYS/build.prop)
   [ "$QCP" ] && DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
   if [ -z $DSPBLOCK ]; then
     ADSP=$VEN/lib/rfsa/adsp
@@ -161,7 +167,7 @@ print_modname() {
   ui_print "                                               "
   ui_print "                    A I N U R                  " 
   ui_print "                   S A U R O N                 " 
-  ui_print "                    M K II.II                  " 
+  ui_print "    <version>"
   ui_print "                                               "
   ui_print "          by: UltraM8, Zackptg5, Ahrion,       "
   ui_print "              James34602, LazerL0rd            "
