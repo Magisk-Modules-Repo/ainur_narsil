@@ -28,7 +28,6 @@ ZIP=$3
 MAGISK=true
 DYNAMICOREO=false
 DYNAMICAPP=false
-ALWAYSRW=false
 case $ZIP in
   *sysover*|*Sysover*|*SYSOVER*) SYSOVERRIDE=true;;
   *) SYSOVERRIDE=false;;
@@ -257,8 +256,6 @@ else
   if $SYSOVERRIDE; then
     ui_print "- Overriding paths for system install"
     $BOOTMODE && { ui_print "   ! Magisk manager isn't supported!"; abort "   ! Install in TWRP !"; }
-    sed -i "s/-o ro/-o rw/g" $INSTALLER/common/unityfiles/util_functions_mag.sh
-  elif $ALWAYSRW; then
     sed -i "s/-o ro/-o rw/g" $INSTALLER/common/unityfiles/util_functions_mag.sh
   fi
   . $INSTALLER/common/unityfiles/util_functions_mag.sh

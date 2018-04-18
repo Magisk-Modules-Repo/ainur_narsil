@@ -7,7 +7,6 @@ patch_mixer_toplevel() {
 }
 QCP=
 AP=
-PL=
 FMAS=
 SHB=
 OAP=
@@ -39,7 +38,7 @@ for FILE in ${FILES}; do
   NAME=$(echo "$FILE" | sed "s|$MOD|system|")
   case $NAME in
     *audio_effects*) $ASP && patch_cfgs $MODPATH/$NAME audiosphere audiosphere $LIBDIR/libasphere.so 184e62ab-2d19-4364-9d1b-c0a40733866c
-                     $SHB && patch_cfgs $MODPATH/$NAME shoebox shoebox $LIBDIR/libshoebox.so 1eab784c-1a36-4b2a-b7fc-e34c44cab89e 
+                     $SHB && patch_cfgs $MODPATH/$NAME shoebox shoebox $LIBDIR/libshoebox.so 1eab784c-1a36-4b2a-b7fc-e34c44cab89e
                      $FMAS || continue
                      case $NAME in
                        "system/etc"*) ;;
@@ -51,7 +50,7 @@ for FILE in ${FILES}; do
                                [ ! "$(sed -n "/<effects>/,/<\/effects>/ {/<effect name=\"downmix\" library=\"fmas\" uuid=\"36103c50-8514-11e2-9e96-0800200c9a66\"\/>/p}" $MODPATH/$NAME)" ] && sed -i "/<effects>/ s/<effect name=\"downmix\".*/>/<effect name=\"downmix\" library=\"fmas\" uuid=\"36103c50-8514-11e2-9e96-0800200c9a66\"\/>/" $MODPATH/$NAME;;
                           esac;;
                      esac;;
-    *audio_policy.conf) $AP || break
+    *audio_policy.conf) $AP || continue
                                     for AUD in "direct_pcm" "direct" "raw" "multichannel" "compress_offload" "high_res_audio"; do
                                       if [ "$AUD" != "compress_offload" ]; then
                                         sed -i "/$AUD {/,/}/ s/formats.*/formats AUDIO_FORMAT_PCM_8_24_BIT/g" $MODPATH/$NAME
@@ -61,7 +60,7 @@ for FILE in ${FILES}; do
                                       fi
                                       sed -i "/$AUD {/,/}/ s/sampling_rates.*/sampling_rates 8000\|11025\|16000\|22050\|32000\|44100\|48000\|64000\|88200\|96000\|176400\|192000\|352800\|384000/g" $MODPATH/$NAME
                                     done;;
-    *audio_output_policy.conf) $OAP || break
+    *audio_output_policy.conf) $OAP || continue
                                            for AUD in "default" "direct" "proaudio" "direct_pcm" "direct_pcm_24" "raw" "compress_offload_16" "compress_offload_24" "compress_offload_HD"; do
                                              if [[ "$AUD" != "compress_offload"* ]]; then
                                                sed -i "/$AUD {/,/}/ s/formats.*/formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT/g" $MODPATH/$NAME
@@ -76,7 +75,7 @@ for FILE in ${FILES}; do
                                              sed -i "/$AUD {/,/}/ s/sampling_rates.*/sampling_rates 44100\|48000\|96000\|176400\|192000\|352800\|384000/g" $MODPATH/$NAME
                                              [ -z $BIT ] || sed -i "/$AUD {/,/}/ s/bit_width.*/bit_width $BIT/g" $MODPATH/$NAME
                                            done;;            
-    *audio_policy_configuration.xml) $AP || break
+    *audio_policy_configuration.xml) $AP || continue
                                                  sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"primary output\"/,/ ^*<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/}}" $MODPATH/$NAME
                                                  sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"raw\"/,/<\/mixPort>/ s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/}" $MODPATH/$NAME
                                                  sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"deep_buffer\"/,/<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"192000\1/}}" $MODPATH/$NAME
