@@ -1,7 +1,7 @@
 # Tell user aml is needed if applicable
-if $MAGISK; then
+if $MAGISK && ! $SYSOVERRIDE; then
   if $BOOTMODE; then LOC="/sbin/.core/img/*/system $MOUNTPATH/*/system"; else LOC="$MOUNTPATH/*/system"; fi
-  FILES=$(find $LOC -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" -o -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml" -o -name "*mixer_paths*.xml")
+  FILES=$(find $LOC -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" -o -name "*mixer_paths*.xml")
   if [ ! -z "$FILES" ] && [ ! "$(echo $FILES | grep '/aml/')" ]; then
     ui_print " "
     ui_print "   ! Conflicting audio mod found!"
@@ -14,43 +14,31 @@ fi
 if $BOOTMODE; then AUO=/storage/emulated/0/sauron_useroptions; else AUO=/data/media/0/sauron_useroptions; fi
 ui_print " "
 ui_print "- Sauron User Options -"
+[ -f $AUO ] && UVER=$(grep_prop Version $AUO)
+[ -z $UVER ] && UVER=0
 if [ ! -f $AUO ]; then
   ui_print "   ! sauron_useroptions not detected !"
   ui_print "   Creating $AUO with default options..."
   ui_print "   Using default options"
   cp -f $INSTALLER/sauron_useroptions $AUO
+elif [ $UVER -lt $(grep_prop Version $INSTALLER/sauron_useroptions) ]; then
+  ui_print "   Older version of sauron_useroptions detected!"
+  ui_print "   Updating sauron_useroptions!"
+  read_uo -u
+  cp -f $INSTALLER/sauron_useroptions $AUO
+  for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
+    sed -i "s|$UO=|$UO=$(eval echo \$$UO)|" $AUO
+  done
+  ui_print "   Using specified options"
 else
-  ui_print "   sauron_useroptions detected"
+  ui_print "   Sauron_useroptions detected! "
   ui_print "   Using specified options"
 fi
 cp_ch_nb $AUO $UNITY$SYS/etc/sauron_useroptions
 AUO=$UNITY$SYS/etc/sauron_useroptions
-$MAGISK || sed -i "/^EOF/ i\\$AUO" $INSTALLER/common/unityfiles/addon.sh
-#get_uo "AP" "audpol"
-AP=false
-get_uo "FMAS" "install.fmas"
-get_uo "SHB" "qc.install.shoebox" "QCP"
-get_uo "RPCM" "qc.install.pcm_reverb" "QCP"
-#get_uo "OAP" "qc.out.audpol" "QCP"
-OAP=false
-get_uo "ASP" "qc.install.asp" "QCP"
-get_uo "APTX" "qc.install.aptx" "QCP"
-get_uo "COMP" "qc.remove.compander" "QCP"
-if [ "$QCP" ]; then
-  IMPEDANCE=$(grep_prop "qc.impedance" $AUO)
-  RESAMPLE=$(grep_prop "qc.resample.khz" $AUO)
-  BTRESAMPLE=$(grep_prop "qc.bt.resample.khz" $AUO)    
-  case $(grep_prop "qc.bitsize" $AUO) in
-    16) BIT=S16_LE;;
-    24) BIT=S24_LE;;
-    32) $QCNEW && BIT=S32_LE || BIT="";;
-    *) BIT="";;
-  esac
-fi
-# Set force deep_buffer prop to false if present
-# if [ ! "$(grep 'audio.deep_buffer.media=true' $SYS/build.prop)" ]; then
-  # sed -i "/audio.deep_buffer.media=false/d" $INSTALLER/common/system.prop
-# fi
+if ! $MAGISK || $SYSOVERRIDE; then sed -i "/^EOF/ i\\$AUO" $INSTALLER/common/unityfiles/addon.sh; fi
+read_uo
+ui_print " "
 
 ## Install logic by UltraM8 @XDA DO NOT MODIFY
 mkdir -p $INSTALLER$ACDB $INSTALLER$BIN $INSTALLER$ETC/audio $INSTALLER$ETC/firmware $INSTALLER$ETC/permissions $INSTALLER$ETC/settings $INSTALLER$ETC/tfa $INSTALLER$SYS/framework $INSTALLER$LIB/modules $INSTALLER$SFX $INSTALLER$SFX64 $INSTALLER$VETC/firmware $INSTALLER$VETC/tfa $INSTALLER$VSFX $INSTALLER$VSFX64
@@ -68,12 +56,13 @@ fi
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
-  if [ $API -ge 26 ] && [ ! "$OP3" ] || [ ! "$OP5" ]; then
+  if [ $API -ge 26 ] && [ ! "$OP3" ] && [ ! "$OP5" ]; then
     prop_process $INSTALLER/common/propsqcporeo.prop
   fi
   if [ "$OP3" ]; then 
     sed -i 's/audio.offload.multiple.enabled(.?)true/'d $INSTALLER/common/system.prop 
     sed -i 's/audio.offload.pcm.enable(.?)true/'d $INSTALLER/common/system.prop 
+    sed -i 's/audio.playback.mch.downsample(.?)false/'d $INSTALLER/common/system.prop 
   fi	
   cp -f $SAU/lib/libreverbwrapper5.so $INSTALLER$SFX/libreverbwrapper.so
   cp -f $SAU/lib/libdownmix5.so $INSTALLER$SFX/libdownmix.so
@@ -81,7 +70,7 @@ if [ "$QCP" ]; then
   if $RPCM; then
     cp -f $SAU/lib/libreverbwrapper.so $INSTALLER$SFX/libreverbwrapper.so
     cp -f $SAU/lib/libreverbwrapper1.so $INSTALLER$SFX64/libreverbwrapper.so
-    mkdir -p /data/mediaserver/audio_dump
+    #mkdir -p /data/mediaserver/audio_dump
     cp -f $SAU/lib/libaudioutils.so $INSTALLER$LIB/libaudioutils.so
     cp -f $SAU/lib/libaudioutils2.so $INSTALLER$LIB64/libaudioutils.so
     cp -f $SAU/lib/libeffectproxy.so $INSTALLER$SFX/libeffectproxy.so
@@ -176,7 +165,7 @@ if [ "$QCP" ]; then
   fi
   if [ "$P2XL" ] || [ "$P2" ]; then
     cp -f $SAU/files/bin/ti_audio_s $INSTALLER$BIN/ti_audio_s
-    if $MAGISK; then
+    if $MAGISK && ! $SYSOVERRIDE; then
       mktouch $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin
       mktouch $UNITY$VEN/firmware/tas2557s_uCDSP.bin
       mktouch $UNITY$VEN/firmware/tas2557_cal.bin
@@ -198,7 +187,7 @@ if [ "$QCP" ]; then
   	cp -f $SAU/files/fw/tfa98xx.cnt $INSTALLER$VETC/firmware/tfa98xx.cnt
   fi
   if [ "$X5P" ]; then
-    if $MAGISK; then
+    if $MAGISK && ! $SYSOVERRIDE; then
       mktouch $UNITY$ETC/firmware/tas2557_uCDSP.bin
     else
       mv -f $UNITY$ETC/firmware/tas2557_uCDSP.bin $UNITY$VEN/firmware/tas2557_uCDSP.bin.bak
@@ -276,6 +265,11 @@ if [ "$MTK" ]; then
   cp -f $NAZ/libreverbwrapper2.so $INSTALLER$SFX64/libreverbwrapper.so
 fi
 
+if [ "$KIR" ]; then
+  cp -f $NAZ/libbundlewrapper1.so $INSTALLER$SFX/ibbundlewrapper.so
+  cp -f $NAZ/libbundlewrapper2.so $INSTALLER$SFX64/ibbundlewrapper.so
+fi
+
 if [ "$EXY" ]; then
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $INSTALLER/common/system.prop
   cp -f $SAU/lib/libdownmix2.so $INSTALLER$SFX/libdownmix.so
@@ -323,21 +317,11 @@ patch_mixer_toplevel() {
     sed -i "/<mixer>/ a\    <ctl name=\"$1\" value=\"$2\" \/><!--$MODID-->" $3
   fi
 }
-patch_audpol() {
-  if [ "$(sed -n "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"$1\"/,/<\/mixPort>/p}" $3)" ]; then
-    sed -n "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"$1\"/,/<\/mixPort>/p}" $3 > $INSTALLER/tpatch
-    sed -i -e "s/^\( *\)<mixPort/\1<!--BEG-$MODID--><mixPort/" -e "s/<\/mixPort>/<\/mixPort><!--END-$MODID-->/" $INSTALLER/tpatch
-    sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"$1\"/,/<\/mixPort>/ {$2}}" $INSTALLER/tpatch
-    line=$(($(sed -n "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"$1\"/=}" $3) - 1))
-    sed -i "/<module name=\"primary\"/,/<\/module>/ { s/^\( *\)\(<mixPort name=\"$1\"\)/\1<!--$MODID\2/; /<!--$MODID<mixPort name=\"$1\"/,/<\/mixPort>/{s/\(<\/mixPort>\)/\1$MODID-->/}}" $3
-    sed -i "$line r $INSTALLER/tpatch" $3
-  fi
-}
 
 ui_print "   Patching audio_effects configs"
 for OFILE in ${CFGS}; do
   FILE="$UNITY$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
-  cp_ch $ORIGDIR$OFILE $FILE
+  cp_ch_nb $ORIGDIR$OFILE $FILE 0644 false
   case $FILE in
     *.conf) if $ASP; then
               sed -i "/audiosphere {/,/} /d" $FILE
@@ -375,54 +359,6 @@ for OFILE in ${CFGS}; do
   esac
 done
 
-##                    POLICY CONFIGS EDITS BY ULTRAM8                           ##
-#ui_print "   Patching audio policy and audio policy configuration"
-for OFILE in ${POLS}; do
-  FILE="$UNITY$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
-  cp_ch $ORIGDIR$OFILE $FILE
-  case $FILE in
-    *audio_policy.conf) if $AP; then
-                          cp_ch $ORIGDIR$FILE $FILE
-                          for AUD in "direct_pcm" "direct" "raw" "multichannel" "compress_offload" "high_res_audio"; do
-                            if [ "$AUD" != "compress_offload" ]; then
-                              backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_8_24_BIT" $FILE
-                            fi
-                            if [ "$AUD" == "direct_pcm" ] || [ "$AUD" == "direct" ] || [ "$AUD" == "raw" ]; then
-                              backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $FILE
-                            fi
-                            backup_and_patch "$AUD" "sampling_rates" "sampling_rates 8000\|11025\|16000\|22050\|32000\|44100\|48000\|64000\|88200\|96000\|176400\|192000\|352800\|384000" $FILE
-                          done
-                        fi;;
-    *audio_output_policy.conf) if $OAP; then
-                                 cp_ch $ORIGDIR$FILE $FILE
-                                 for AUD in "default" "direct" "proaudio" "direct_pcm" "direct_pcm_24" "raw" "compress_offload_16" "compress_offload_24" "compress_offload_HD"; do
-                                   if [[ "$AUD" != "compress_offload"* ]]; then
-                                     backup_and_patch "$AUD" "formats" "formats AUDIO_FORMAT_PCM_16_BIT\|AUDIO_FORMAT_PCM_24_BIT_PACKED\|AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_32_BIT" $FILE
-                                   fi
-                                   if [ "$AUD" == "direct" ]; then
-                                     if [ "$(grep "compress_offload" $FILE)" ]; then
-                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM\|AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD\|AUDIO_OUTPUT_FLAG_NON_BLOCKING" $FILE
-                                     else
-                                       backup_and_patch "$AUD" "flags" "flags AUDIO_OUTPUT_FLAG_DIRECT\|AUDIO_OUTPUT_FLAG_DIRECT_PCM" $FILE
-                                     fi
-                                   fi
-                                   backup_and_patch "$AUD" "sampling_rates" "sampling_rates 44100\|48000\|96000\|176400\|192000\|352800\|384000" $FILE
-                                   [ -z $BIT ] || backup_and_patch "$AUD" "bit_width" "bit_width $BIT" $FILE
-                                 done
-                               fi;;
-    *audio_policy_configuration.xml) if $AP; then
-                                       cp_ch $ORIGDIR$FILE $FILE
-                                       patch_audpol "primary output" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\|AUDIO_FORMAT_PCM_16_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"48000,96000,192000\1/" $FILE
-                                       patch_audpol "raw" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/" $FILE
-                                       patch_audpol "deep_buffer" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"192000\1/" $FILE
-                                       patch_audpol "multichannel" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/" $FILE
-                                       # Use 'channel_masks' for conf files and 'channelMasks' for xml files
-                                       patch_audpol "direct_pcm" "s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/; s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $FILE
-                                       patch_audpol "compress_offload" "s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/" $FILE
-                                     fi;;
-  esac
-done
-
 ##                        MIXER EDITS BY ULTRAM8                             ##
 ##                  SPECIAL DEVICE'S EDITS BY SKREM339                       ##
 ## ! MAKE SURE YOU CREDIT PEOPLE MENTIONED HERE WHEN USING THESE XML EDITS ! ##
@@ -430,7 +366,7 @@ ui_print "   Patching mixer"
 if [ "$QCP" ]; then
   for OMIX in ${MIXS}; do
     MIX="$UNITY$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
-    cp_ch $ORIGDIR$OMIX $MIX
+    cp_ch_nb $ORIGDIR$OMIX $MIX 0644 false
     ## MAIN DAC patches
     # BETA FEATURES
     if [ "$BIT" ]; then
@@ -457,7 +393,6 @@ if [ "$QCP" ]; then
     if [ "$AX7" ]; then
       patch_mixer_toplevel "Smart PA Init Switch" "On" $MIX 
     fi
-    ###  ^ ^ ^  Special Axon7 AKM patches by SKREM339  ^ ^ ^  ###
     if [ "$LX3" ]; then
       patch_mixer_toplevel "Es9018 CLK Divider" "DIV4" $MIX
       patch_mixer_toplevel "ESS_HEADPHONE Off" "On" $MIX
@@ -568,9 +503,8 @@ if [ "$QCP" ]; then
   done
 fi
 ui_print "   ! Mixer edits & patches by Ultram8 !"
-ui_print "   ! Axon7 patch by Skrem339 !"
 
-if $MAGISK; then
+if $MAGISK && ! $SYSOVERRIDE; then
   # Add aml script variables
   add_var() {
     if [ "$(eval echo \$$1)" ]; then
@@ -580,14 +514,11 @@ if $MAGISK; then
     fi
   }
   add_var "QCP"
-  add_var "AP"
   add_var "FMAS"
   add_var "SHB"
-  add_var "OAP"
   add_var "ASP"
   add_var "TMSM"
   add_var "QCNEW"
-  add_var "QCOLD"
   add_var "BIT"
   add_var "IMPEDANCE"
   add_var "RESAMPLE"

@@ -52,13 +52,12 @@ unity_custom() {
   if $MAGISK && $BOOTMODE; then ORIGDIR="/sbin/.core/mirror"; else ORIGDIR=""; fi
   if $BOOTMODE; then
     CFGS="$(find /system /vendor -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
-    POLS="$(find /system /vendor -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
     MIXS="$(find /system /vendor -type f -name "*mixer_paths*.xml")"
   else
     CFGS="$(find -L /system -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
-    POLS="$(find -L /system -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
     MIXS="$(find -L /system -type f -name "*mixer_paths*.xml")"
   fi
+  if [ -f $VEN/build.prop ]; then BUILDS="/system/build.prop $VEN/build.prop"; else BUILDS="/system/build.prop"; fi
   SAU=$INSTALLER/custom
   MAIAR=$SAU/manwe/maiar
   VALAR=$SAU/manwe/valar
@@ -88,45 +87,42 @@ unity_custom() {
   HW=$LIB/hw
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
   DTS=/data/misc/dts
-  TREBLE=$(grep "ro.treble.enabled=true" $SYS/build.prop)
-  NEXUS=$(grep "ro.product.device=bullhead|ro.product.device=angler" $SYS/build.prop)
-  MTK=$(grep "ro.mediatek.version.*" $SYS/build.prop)
-  QCP=$(grep -E "ro.board.platform=apq.*|ro.board.platform=msm.*" $SYS/build.prop)
-  EXY=$(grep "ro.chipname.*" $SYS/build.prop)
-  QC94=$(grep "ro.board.platform=msm8994" $SYS/build.prop)
-  KIR=$(grep "ro.board.platform=hi.*" $SYS/build.prop)
-  SPEC=$(grep "ro.board.platform=sp.*" $SYS/build.prop)
-  MIUI=$(grep "ro.miui.ui.version.*" $SYS/build.prop)
-  QC8996=$(grep "ro.board.platform=msm8996" $SYS/build.prop)
-  QC8998=$(grep "ro.board.platform=msm8998" $SYS/build.prop)
-  TMSM=$(grep "ro.board.platform=msm" $SYS/build.prop | sed 's/^.*=msm//')
-  if [ ! -z $TMSM ]; then 
-    if [ $TMSM -ge 8996 ]; then QCNEW=true; QCOLD=false; else QCNEW=false; QCOLD=true; fi; 
-  else 
-    QCNEW=false; QCOLD=true
-  fi
-  M9=$(grep "ro.aa.modelid=0PJA.*" $SYS/build.prop)
-  BOLT=$(grep "ro.aa.modelid=2PYB.*" $SYS/build.prop)
-  M10=$(grep "ro.aa.modelid=2PS6.*" $SYS/build.prop)
-  U11P=$(grep "ro.aa.modelid=2Q4D.*" $SYS/build.prop)
-  M8=$(grep "ro.aa.modelid=0P6B.*" $SYS/build.prop)
-  AX7=$(grep -E "ro.build.product=axon7|ro.build.product=ailsa_ii" $SYS/build.prop)
-  V20=$(grep "ro.product.device=elsa" $SYS/build.prop)
-  V30=$(grep "ro.product.device=joan" $SYS/build.prop)
-  G6=$(grep "ro.product.device=lucye" $SYS/build.prop)
-  Z9=$(grep "ro.product.model=NX508J" $SYS/build.prop)
-  Z9M=$(grep -E "ro.product.model=NX510J|ro.product.model=NX518J" $SYS/build.prop)
-  Z11=$(grep "ro.product.model=NX531J" $SYS/build.prop)
-  LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $SYS/build.prop)
-  OP5=$(grep -E "ro.build.product=OnePlus5.*|ro.build.product=cheeseburger|ro.build.product=Cheeseburger|ro.build.product=dumpling|ro.build.product=Dumpling" $SYS/build.prop)
-  X9=$(grep "ro.product.model=X900.*" $SYS/build.prop)
-  P2XL=$(grep -E "ro.vendor.product.name=taimen|ro.vendor.product.device=taimen" $SYS/build.prop)
-  P2=$(grep -E "ro.vendor.product.device=walleye|ro.vendor.product.name=walleye" $SYS/build.prop)
-  P1XL=$(grep -E "ro.vendor.product.device=marlin|ro.vendor.product.name=marlin" $SYS/build.prop)
-  P1=$(grep -E "ro.vendor.product.device=sailfish|ro.vendor.product.name=sailfish" $SYS/build.prop)
-  NX9=$(grep -E "ro.product.name=volantis.*|ro.product.board=flounder.*" $SYS/build.prop)
-  OP3=$(grep -E "ro.build.product=OnePlus3.*|ro.build.product=oneplus3.*|ro.vendor.product.device=oneplus3.*|ro.vendor.product.device=OnePlus3.*" $SYS/build.prop)
-  X5P=$(grep -E "ro.product.name=vince.*|ro.product.device=vince.*" $SYS/build.prop)
+  TREBLE=$(grep "ro.treble.enabled=true" $BUILDS)
+  NEXUS=$(grep "ro.product.device=bullhead|ro.product.device=angler" $BUILDS)
+  MTK=$(grep "ro.mediatek.version.*" $BUILDS)
+  QCP=$(grep -E "ro.board.platform=apq.*|ro.board.platform=msm.*" $BUILDS)
+  EXY=$(grep "ro.chipname.*" $BUILDS)
+  QC94=$(grep "ro.board.platform=msm8994" $BUILDS)
+  KIR=$(grep "ro.board.platform=hi.*|ro.board.platform=kirin*" $BUILDS)
+  SPEC=$(grep "ro.board.platform=sp.*" $BUILDS)
+  MIUI=$(grep "ro.miui.ui.version.*" $BUILDS)
+  QC8996=$(grep "ro.board.platform=msm8996" $BUILDS)
+  QC8998=$(grep "ro.board.platform=msm8998" $BUILDS)
+  TMSM=$(grep "ro.board.platform=msm" $BUILDS | sed 's/^.*=msm//')
+  QCNEW=false
+  [ ! -z $TMSM ] && { [ $TMSM -ge 8996 ] && QCNEW=true; }
+  M9=$(grep "ro.aa.modelid=0PJA.*" $BUILDS)
+  BOLT=$(grep "ro.aa.modelid=2PYB.*" $BUILDS)
+  M10=$(grep "ro.aa.modelid=2PS6.*" $BUILDS)
+  U11P=$(grep "ro.aa.modelid=2Q4D.*" $BUILDS)
+  M8=$(grep "ro.aa.modelid=0P6B.*" $BUILDS)
+  AX7=$(grep -E "ro.build.product=axon7|ro.build.product=ailsa_ii" $BUILDS)
+  V20=$(grep "ro.product.device=elsa" $BUILDS)
+  V30=$(grep "ro.product.device=joan" $BUILDS)
+  G6=$(grep "ro.product.device=lucye" $BUILDS)
+  Z9=$(grep "ro.product.model=NX508J" $BUILDS)
+  Z9M=$(grep -E "ro.product.model=NX510J|ro.product.model=NX518J" $BUILDS)
+  Z11=$(grep "ro.product.model=NX531J" $BUILDS)
+  LX3=$(grep -E "ro.build.product=X3c50|ro.build.product=X3c70|ro.build.product=x3_row" $BUILDS)
+  OP5=$(grep -E "ro.build.product=OnePlus5.*|ro.build.product=cheeseburger|ro.build.product=Cheeseburger|ro.build.product=dumpling|ro.build.product=Dumpling" $BUILDS)
+  X9=$(grep "ro.product.model=X900.*" $BUILDS)
+  P2XL=$(grep -E "ro.vendor.product.name=taimen|ro.vendor.product.device=taimen" $BUILDS)
+  P2=$(grep -E "ro.vendor.product.device=walleye|ro.vendor.product.name=walleye" $BUILDS)
+  P1XL=$(grep -E "ro.vendor.product.device=marlin|ro.vendor.product.name=marlin" $BUILDS)
+  P1=$(grep -E "ro.vendor.product.device=sailfish|ro.vendor.product.name=sailfish" $BUILDS)
+  NX9=$(grep -E "ro.product.name=volantis.*|ro.product.board=flounder.*" $BUILDS)
+  OP3=$(grep -E "ro.build.product=OnePlus3.*|ro.build.product=oneplus3.*|ro.vendor.product.device=oneplus3.*|ro.vendor.product.device=OnePlus3.*" $BUILDS)
+  X5P=$(grep -E "ro.product.name=vince.*|ro.product.device=vince.*" $BUILDS)
   [ "$QCP" ] && DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
   if [ -z $DSPBLOCK ]; then
     ADSP=$VEN/lib/rfsa/adsp
@@ -140,17 +136,35 @@ unity_custom() {
   fi
 }
 get_uo() {
-  eval "$1=$(grep_prop "$2" $AUO)"
-  if [ -z $(eval echo \$$1) ]; then
-    eval "$1=false"
+  [ "$2" != "NONBOOL" ] && FAL=false
+  eval "$1=$(grep_prop "$1" $AUO)"
+  eval "$1=$FAL"
+  case $(eval echo \$$1) in
+    16) [ "$1" == "BIT" ] && BIT=S16_LE;;
+    24) [ "$1" == "BIT" ] && BIT=S24_LE;;
+    32) [ "$1" == "BIT" ] && $QCNEW && BIT=S32_LE;;
+    "true"|"True"|"TRUE") [ "$2" != "NONBOOL" ] && eval "$1=true";;
+  esac
+}
+read_uo() {
+  if [ "$1" == "-u" ]; then
+    for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
+      eval "$UO=$(grep_prop "$UO" $AUO)"
+    done
   else
-    case $(eval echo \$$1) in
-      "true"|"True"|"TRUE") eval "$1=true";;
-      *) eval "$1=false";;
-    esac
-  fi
-  if [ ! -z $3 ]; then
-    test -z \$$3 && eval "$1=false"
+    get_uo "FMAS"
+    if [ "$QCP" ]; then
+      for UO in "ASP" "SHB" "RPCM" "APTX" "COMP"; do
+        get_uo "$UO"
+      done
+      for UO in "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
+        get_uo "$UO" "NONBOOL"
+      done
+    else
+      for UO in "ASP" "SHB" "RPCM" "APTX" "COMP"; do
+        eval "$UO=false"
+      done
+    fi
   fi
 }
 

@@ -1,111 +1,68 @@
-# AINUR SAURON [MK II]
-# User options file (UO)
-# It's not an obligatory move for Sauron to process
-#
-# Place this file at the root of your sdcard (internal storage)
-# TO ENABLE INSTALL SET PROPS TO true
-# TO DISABLE JUST SET PROPS TO false, or leave prop blank
-# Reflash is mandatory after setting this file - changes
-# are made during install ONLY
-#
-# ! DON'T ASK TO "FIX" ANYTHING IF IT DOESEN'T WORKED FOR YOU!
-#
-# If something isn't working properly at all (leading to bootloop, or sound loss) 
-# you have to find working combination, or don't use UO
+AINUR SAURON [MK II]
+User Options (UO) File
+Version=1
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Note that this file isn't needed for Sauron to process. These are just some extra options
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### INSTRUCTIONS ###
 
+Place this file at the root of your sdcard (internal storage)
 
-### vv Universal options vv
-#
-# Install Fraunhofer "Fmas" virtualizer & downmixer drivers
-# Replaces &/or extends standard processing effects
-install.fmas=
+ENABLE SETTING: set value to 'true' unless told otherwise
+DISABLE SETTING: leave it blank or set to 'false' - this applies to ALL options
 
-### ^^^ Universal options ^^^ ###
+Reflash is mandatory after setting this file - changes are made during install ONLY
+DON'T ASK TO "FIX" ANYTHING IF IT DOESEN'T WORKED FOR YOU!
+If something isn't working properly at all (leading to bootloop, or sound loss), you have to find working combination, or don't use UO
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### UNIVERSAL OPTIONS ###
+FMAS: Installs Fraunhofer "Fmas" virtualizer & downmixer drivers. Replaces &/or extends standard processing effects
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### STABLE QUALCOMM ONLY OPTIONS ###
+ASP: Installs Audiosphere SW & HW effect drivers (Qualcomm 3D audio effect)
+SHB: Installs Shoebox effect drivers (seems to be a new 3D audio effect from Qualcomm)
+RPCM: Installs Reverbwrapper drivers that can apply effect to PCM conversion streams (! UNSTABLE ! might cause bootloops)
+APTX: Installs Aptx/HD dirvers & HW offloadable cappi modules, props & Oreo+ ldac & aptx by LazerL0rd (Still needs further testing by you guys)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### EXPERIMENTAL QUALCOMM ONLY OPTIONS ###
+YOU MAY EXPERIENCE LOOSING SOUND COMPLETELY AFTER BOOT
+Only you can find working combination for theese switchers
 
-
-##### vv Qualcomm ONLY options vv
-#
-# Qualcomm 3D audio effect
-# Install Audiosphere SW & HW effect drivers
-# Can be set true or false
-qc.install.asp=
-
-#
-# Install Shoebox effect drivers (seems to be a new 3D audio effect from Qualcomm)
-# Can be set true or false
-qc.install.shoebox=
-
-#
-# Install Reverbwrapper drivers that can apply effect to PCM conversion streams
-# ! UNSTABLE ! might cause bootloops
-# Can be set true or false
-qc.install.pcm_reverb=
-
-#
-# Install Aptx/HD dirvers & HW offloadable cappi modules, props & Oreo+ ldac & aptx by LazerL0rd
-# Still needs further testing by you guys
-# Can be set true or false
-qc.install.aptx=
-
-## v EXPERIMENTAL v
-# ! NOTE !
-# YOU MAY EXPERIENCE LOOSING SOUND COMPLETELY AFTER BOOT
-# only you can find working combination for theese switchers
-
-#
-# Remove compander 
-# https://en.wikipedia.org/wiki/Companding
-# Current implementation works BOTH for headphones & speakers (won't be separated in MK II)
-# ! Might lead to crackling sounds !
-# Can be set true or false
-qc.remove.compander=
- 
-#
-# QC bitsize helps you force stream channel. 32bit is ONLY supported by msm820+
-# that is because the qualcomm codec before Aqstic supprts 24\192, thus the processing by
-# CPU can be done in 32bit format, but codec will re-bit the stream down to 24bit
-# We don't want this to happen
-#
-# You DON'T want to set forced 16/24/32 bitsize on music that is 16bit! Results
-# May end up with cracling & distorted sound
-# Ex: qc.bitsize=24
-#
-# DO NOT USE if you have any kernel based audio modifications
-qc.bitsize=
-
-
-#
-# Resampling feature to force desired discretization
-# You can choose between:
-# KHZ_44P1 - KHZ_192 (from -> to, depending on the numbers your source audio file is)
-# make sure you write it in like KHZ_XXX, where "XXX" means the desired value
-# the "." is written as "P" as in the example below
-# Ex: qc.resample.khz=KHZ_88P1 for 88100khz playback
-# Same as bitsize - DO NOT force higher rates for lower source!
-#
-# To set native rate - leave blank
-qc.resample.khz=
-
-
-#
-# Impedance feature to support native ohms of your headphones 
-# Write it in thousands - like if your headphones are 32Ω it'll be 32000 
-# Ex: qc.impedance=32000
-#
-# Might require special kernel support
-# ! Highly unstable, might lead to sound loss. NO FIX FOR IT !
-#
-# To leave native impedance leave blank
-qc.impedance=
-
-
-#
-# Bluetooth Resampling
-# Totally Experimental, unexplored & etc
-# We also don't know the max value for bluetooth route
-# I am aware that it could be limited to 16bit/48000khz
-#
-# Ex: qc.resample.khz=KHZ_48 for 48000khz playback
-qc.bt.resample.khz=
-
-### ^^^ Qualcomm ONLY options ^^^ ###
+COMP: Remove comander, see: https://en.wikipedia.org/wiki/Companding
+  Current implementation works BOTH for headphones & speakers (won't be separated in MK II)
+  ! Might lead to crackling sounds !
+RESAMPLE: Resampling feature to force desired discretization
+  **You can choose between: KHZ_44P1 - KHZ_192 (from -> to, depending on the numbers your source audio file is)
+  Make sure you write it in like KHZ_XXX, where "XXX" means the desired value the "." is written as "P" as in the example below
+  Same as bitsize - DO NOT force higher rates for lower source!
+  **Ex: qc.resample.khz=KHZ_88P1 (for 88100khz playback)
+BTRESAMPLE: Bluetooth Resampling
+  Totally Experimental, unexplored & etc
+  We also don't know the max value for bluetooth route
+  I am aware that it could be limited to 16bit/48000khz
+  **Ex: qc.resample.khz=KHZ_48 (for 48000khz playback)
+IMPEDANCE: Impedance feature to support native ohms of your headphones
+  Might require special kernel support
+  ! Highly unstable, might lead to sound loss. NO FIX FOR IT !
+  Write it in thousands - like if your headphones are 32Ω it'll be 32000 
+  **Ex: qc.impedance=32000
+BIT: QC bitsize helps you force stream channel. 32bit is ONLY supported by msm820+
+  This is because the qualcomm codec before Aqstic supprts 24\192, thus the processing by CPU can be done in 32bit format, but codec will re-bit the stream down to 24bit
+  We don't want this to happen
+  You DON'T want to set forced 16/24/32 bitsize on music that is 16bit! Results may end up with cracling & distorted sound
+  DO NOT USE if you have any kernel based audio modifications
+  **Values can be: 16, 24, or 32
+  **Ex: qc.bitsize=24
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### OPTIONS ###
+FMAS=
+ASP=
+SHB=
+RPCM=
+APTX=
+COMP=
+RESAMPLE=
+BTRESAMPLE=
+IMPEDANCE=
+BIT=
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------

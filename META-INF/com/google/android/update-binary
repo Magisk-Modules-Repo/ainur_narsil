@@ -121,6 +121,47 @@ script_type() {
   fi
 }
 
+set_vars() {
+  SYS=/system
+  if [ -d /system/priv-app ]; then OLDAPP=false; else OLDAPP=true; fi
+  if $BOOTMODE; then
+    MOD_VER="/sbin/.core/img/$MODID/module.prop"
+    OLD_AML_VER="/sbin/.core/img/audmodlib/module.prop"
+  else
+    MOD_VER="$MODPATH/module.prop"
+    OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
+  fi
+  INFO="$MODPATH/$MODID-files"
+  PROP=$MODPATH/system.prop
+  if $MAGISK && ! $SYSOVERRIDE; then
+    VEN=/system/vendor
+    UNITY="$MODPATH"
+  else
+    UNITY=""
+    if [ -d /system/addon.d ]; then
+      INFO=/system/addon.d/$MODID-files
+    else
+      INFO=/system/etc/$MODID-files
+    fi
+    if $MAGISK && $SYSOVERRIDE; then
+      patch_script $INSTALLER/common/unityfiles/modidsysover.sh
+      sed -i -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/uninstall.sh" -e '/# CUSTOM USER SCRIPT/d' $INSTALLER/common/unityfiles/modidsysover.sh
+      cp_ch_nb $INSTALLER/common/unityfiles/modidsysover.sh $MOUNTPATH/.core/post-fs-data.d/$MODID-sysover.sh 0755 false
+    else
+      # DETERMINE SYSTEM BOOT SCRIPT TYPE
+      script_type
+      PROP=$MODPATH/$MODID-props.sh
+      MOD_VER="/system/etc/$MODID-module.prop"
+      OLD_AML_VER="/system/etc/audmodlib-module.prop"
+    fi
+  fi
+  if $DYNAMICOREO && [ $API -ge 26 ]; then 
+    LIBPATCH="\/vendor"; LIBDIR=$VEN
+  else 
+    LIBPATCH="\/system"; LIBDIR=/system
+  fi
+}
+
 # INSTALL
 unity_install() {
   ui_print " "
@@ -137,15 +178,17 @@ unity_install() {
   if $MAGISK; then
     ui_print "   Installing scripts for MagiskSU..."
     # AUTO MOUNT
-    $AUTOMOUNT && mktouch $MODPATH/auto_mount
+    $AUTOMOUNT && ! $SYSOVERRIDE && mktouch $MODPATH/auto_mount
     # UPDATE INFO FOR MAGISK MANAGER
     if $BOOTMODE; then
       mktouch /sbin/.core/img/$MODID/update
       cp_ch_nb $INSTALLER/module.prop $MODPATH/module.prop
-    fi 
+    fi
   else
     ui_print "   Installing scripts for $ROOTTYPE..."
     [ "$ROOTTYPE" == "LineageOS SU" -o "$ROOTTYPE" == "other root or rootless" ] && { ui_print " "; ui_print "   ! This root method has no boot script support !"; ui_print "   ! You will need to add init.d support !"; ui_print " "; }
+  fi
+  if ! $MAGISK || $SYSOVERRIDE; then
     # INSTALL ROM BACKUP SCRIPT
     if [ -d /system/addon.d ]; then
       ui_print "   Installing addon.d backup script..."
@@ -171,7 +214,7 @@ unity_install() {
   $POSTFSDATA && install_script $INSTALLER/common/post-fs-data.sh
   
   # SERVICE MODE SCRIPTS
-  $LATESTARTSERVICE && install_script $INSTALLER/common/service.sh
+  $LATESTARTSERVICE && install_script $INSTALLER/common/service.sh -ls
    
   # INSTALL FILES
   ui_print "   Installing files for $ARCH SDK $API device..."
@@ -222,7 +265,14 @@ unity_uninstall() {
         mv -f $LINE.bak $LINE
       else
         rm -f $LINE
-        [ "$(ls $(dirname $LINE))" ] || rm -rf $(dirname $LINE)
+        while true; do
+          LINE=$(dirname $LINE)
+          if [ "$(ls $LINE)" ]; then
+            break 1
+          else
+            rm -rf $LINE
+          fi
+        done
       fi
     done < $FILE
     rm -f $FILE
@@ -230,7 +280,7 @@ unity_uninstall() {
     $MAGISK || abort "   ! Mod not detected !"
   fi
   
-  $MAGISK && rm -rf $MODPATH /sbin/.core/img/$MODID
+  $MAGISK && { rm -rf $MODPATH /sbin/.core/img/$MODID; rm -f $MOUNTPATH/.core/post-fs-data.d/$MODID-sysover.sh; }
   
   # RUN USER INSTALL SCRIPT
   . $INSTALLER/common/uninstall.sh
@@ -257,6 +307,7 @@ else
     ui_print "- Overriding paths for system install"
     $BOOTMODE && { ui_print "   ! Magisk manager isn't supported!"; abort "   ! Install in TWRP !"; }
     sed -i "s/-o ro/-o rw/g" $INSTALLER/common/unityfiles/util_functions_mag.sh
+    sysover_partitions
   fi
   . $INSTALLER/common/unityfiles/util_functions_mag.sh
   [ ! -z $MAGISK_VER_CODE -a $MAGISK_VER_CODE -ge $MINMAGISK ] || require_new_magisk
@@ -291,54 +342,8 @@ sed -i -e "s/<MODID>/$MODID/" -e "/# CUSTOM USER SCRIPT/ r $INSTALLER/common/ser
 mv -f $INSTALLER/common/unityfiles/post-fs-data.sh $INSTALLER/common/post-fs-data.sh
 mv -f $INSTALLER/common/unityfiles/service.sh $INSTALLER/common/service.sh
 
-# UNIVERSAL VARIABLES
-SYS=/system
-INFO="$MODPATH/$MODID-files"
-if [ -d /system/priv-app ]; then OLDAPP=false; else OLDAPP=true; fi
-
-# SET MAGISK/SYSTEM SPECIFIC VARIABLES
-if $MAGISK && ! $SYSOVERRIDE; then
-  VEN=/system/vendor
-  UNITY="$MODPATH"
-  PROP=$MODPATH/system.prop
-  if $BOOTMODE; then
-    MOD_VER="/sbin/.core/img/$MODID/module.prop"
-    OLD_AML_VER="/sbin/.core/img/audmodlib/module.prop"
-  else
-    MOD_VER="$MODPATH/module.prop"
-    OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
-  fi
-else
-  if $MAGISK && $SYSOVERRIDE; then
-    PROP=$MODPATH/system.prop
-    if $BOOTMODE; then
-      MOD_VER="/sbin/.core/img/$MODID/module.prop"
-      OLD_AML_VER="/sbin/.core/img/audmodlib/module.prop"
-    else
-      MOD_VER="$MODPATH/module.prop"
-      OLD_AML_VER="$MOUNTPATH/audmodlib/module.prop"
-    fi
-  else
-    # DETERMINE SYSTEM BOOT SCRIPT TYPE
-    script_type
-    PROP=$MODPATH/$MODID-props.sh
-    MOD_VER="/system/etc/$MODID-module.prop"
-    OLD_AML_VER="/system/etc/audmodlib-module.prop"
-  fi
-  UNITY=""
-  if [ -d /system/addon.d ]; then
-    INFO=/system/addon.d/$MODID-files
-  else
-    INFO=/system/etc/$MODID-files
-  fi
-fi
-
-# USE VENDOR IF OREO OR NEWER
-if $DYNAMICOREO && [ $API -ge 26 ]; then 
-  LIBPATCH="\/vendor"; LIBDIR=$VEN;
-else 
-  LIBPATCH="\/system"; LIBDIR=/system;
-fi
+# SET VARIABLES
+set_vars
 
 # ADD BLANK LINE TO END OF ALL COMMON FILES IF NOT ALREADY PRESENT
 for FILE in $INSTALLER/common/*.sh $INSTALLER/common/*.prop; do
@@ -352,7 +357,21 @@ done
 unity_custom
 
 # DETERMINE MOD INSTALLATION STATUS
-if [ -f "$MOD_VER" ]; then
+if $MAGISK && ! $SYSOVERRIDE && [ -f "/system/addon.d/$MODID-files" -o -f "/system/etc/$MODID-files" ]; then
+  ui_print " "
+  ui_print "   ! Previous system override install detected!"
+  ui_print "   ! Removing...!"
+  $BOOTMODE && { ui_print "   ! Magisk manager isn't supported!"; abort "   ! Install in TWRP !"; }
+  mount -o rw,remount /system
+  [ -L /system/vendor ] && mount -o rw,remount /vendor
+  sysover_partitions
+  SYSOVERRIDE=true
+  set_vars
+  unity_uninstall
+  SYSOVERRIDE=false
+  set_vars
+  unity_install
+elif [ -f "$MOD_VER" ]; then
   if [ $(grep_prop versionCode $MOD_VER) -ge $(grep_prop versionCode $INSTALLER/module.prop) ]; then
     ui_print " "
     ui_print "   ! Current or newer version detected!"

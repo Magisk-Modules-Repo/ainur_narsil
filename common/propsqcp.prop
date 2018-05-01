@@ -20,7 +20,6 @@ audio.adm.buffering.ms=2
 audio.heap.size.multiplier=9
 use.dts_eagle=true
 hpx_send_params=1
-vendor.audio.use.dts_eagle=true
 #
 # Ultram8's hex props
 #

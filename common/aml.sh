@@ -6,14 +6,11 @@ patch_mixer_toplevel() {
   fi
 }
 QCP=
-AP=
 FMAS=
 SHB=
-OAP=
 ASP=
 TMSM=
 QCNEW=
-QCOLD=
 BIT=
 IMPEDANCE=
 RESAMPLE=
