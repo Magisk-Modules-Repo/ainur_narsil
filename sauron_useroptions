@@ -1,6 +1,6 @@
 AINUR SAURON [MK II]
 User Options (UO) File
-Version=1
+Version=2
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Note that this file isn't needed for Sauron to process. These are just some extra options
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ APTX: Installs Aptx/HD dirvers & HW offloadable cappi modules, props & Oreo+ lda
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### EXPERIMENTAL QUALCOMM ONLY OPTIONS ###
 YOU MAY EXPERIENCE LOOSING SOUND COMPLETELY AFTER BOOT
-Only you can find working combination for theese switchers
+Only you can find working combination for these switchers
 
 COMP: Remove comander, see: https://en.wikipedia.org/wiki/Companding
   Current implementation works BOTH for headphones & speakers (won't be separated in MK II)

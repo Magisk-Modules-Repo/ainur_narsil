@@ -136,20 +136,32 @@ unity_custom() {
   fi
 }
 get_uo() {
-  [ "$2" != "NONBOOL" ] && FAL=false
   eval "$1=$(grep_prop "$1" $AUO)"
-  eval "$1=$FAL"
-  case $(eval echo \$$1) in
-    16) [ "$1" == "BIT" ] && BIT=S16_LE;;
-    24) [ "$1" == "BIT" ] && BIT=S24_LE;;
-    32) [ "$1" == "BIT" ] && $QCNEW && BIT=S32_LE;;
-    "true"|"True"|"TRUE") [ "$2" != "NONBOOL" ] && eval "$1=true";;
-  esac
+  if [ "$1" == "BIT" ]; then
+	  case $(eval echo \$$1) in
+	    16) [ "$1" == "BIT" ] && BIT=S16_LE;;
+      24) [ "$1" == "BIT" ] && BIT=S24_LE;;
+      32) [ "$1" == "BIT" ] && if $QCNEW; then BIT=S32_LE; else eval "$1="; fi;;
+      *) eval "$1=";;
+	  esac
+  elif [ "$2" != "NONBOOL" ]; then
+    case $(eval echo \$$1) in
+      "true"|"True"|"TRUE") eval "$1=true";;
+      *) eval "$1=false";;
+    esac
+  fi
 }
 read_uo() {
   if [ "$1" == "-u" ]; then
-    for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
-      eval "$UO=$(grep_prop "$UO" $AUO)"
+    for i in 1 2; do
+      for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
+        if [ $i -eq 1 ]; then 
+          eval "$UO=$(grep_prop "$UO" $AUO)"
+        else
+          sed -i "s|$UO=|$UO=$(eval echo \$$UO)|" $AUO
+        fi
+      done
+      [ $i -eq 1 ] && cp -f $INSTALLER/sauron_useroptions $AUO
     done
   else
     get_uo "FMAS"

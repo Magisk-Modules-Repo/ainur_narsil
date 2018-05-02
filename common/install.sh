@@ -15,9 +15,8 @@ if $BOOTMODE; then AUO=/storage/emulated/0/sauron_useroptions; else AUO=/data/me
 ui_print " "
 ui_print "- Sauron User Options -"
 [ -f $AUO ] && UVER=$(grep_prop Version $AUO)
-[ -z $UVER ] && UVER=0
-if [ ! -f $AUO ]; then
-  ui_print "   ! sauron_useroptions not detected !"
+if [ ! -f $AUO ] || [ -z $UVER ]; then
+  if [ ! -f $AUO ]; then ui_print "   ! Sauron_useroptions not detected !"; else ui_print "   Deprecated version of sauron_useroptions detected!"; fi
   ui_print "   Creating $AUO with default options..."
   ui_print "   Using default options"
   cp -f $INSTALLER/sauron_useroptions $AUO
@@ -25,13 +24,9 @@ elif [ $UVER -lt $(grep_prop Version $INSTALLER/sauron_useroptions) ]; then
   ui_print "   Older version of sauron_useroptions detected!"
   ui_print "   Updating sauron_useroptions!"
   read_uo -u
-  cp -f $INSTALLER/sauron_useroptions $AUO
-  for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
-    sed -i "s|$UO=|$UO=$(eval echo \$$UO)|" $AUO
-  done
   ui_print "   Using specified options"
 else
-  ui_print "   Sauron_useroptions detected! "
+  ui_print "   Up to date sauron_useroptions detected! "
   ui_print "   Using specified options"
 fi
 cp_ch_nb $AUO $UNITY$SYS/etc/sauron_useroptions
