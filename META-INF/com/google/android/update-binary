@@ -205,7 +205,7 @@ unity_install() {
   done
   
   # PROP FILES - add prop function for system installs
-  $PROPFILE && prop_process $INSTALLER/common/system.prop
+  $PROPFILE && { prop_process $INSTALLER/common/system.prop; $MAGISK || echo $PROP >> $INFO; }
   
   # MODULE INFO
   cp_ch_nb $INSTALLER/module.prop $MOD_VER

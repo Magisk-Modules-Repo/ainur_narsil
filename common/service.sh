@@ -39,4 +39,13 @@ if [ "$V20" ] || [ "$V30" ] || [ "$G6" ]; then
  tinymix 'Es9018 HEADSET TYPE' 1
  tinymix 'Es9018 State' 'Hifi'
  tinymix 'HIFI Custom Filter' 6
-fi 
+fi
+
+if [ "$SEINJECT" != "/sbin/sepolicy-inject" ]; then
+  $SEINJECT --live "allow { audioserver mediaserver } dts_data_file dir { read execute open search getattr associate }" "allow audioserver labeledfs filesystem associate" "allow hal_audio_default dts_data_file { read write open }"
+else
+  $SEINJECT -s audioserver -t dts_data_file -c dir -p open,getattr,search,read,execute,associate -l
+  $SEINJECT -s mediaserver -t dts_data_file -c dir -p open,getattr,search,read,execute,associate -l
+  $SEINJECT -s audioserver -t labeledfs -c filesystem -p associate -l
+  $SEINJECT -s hal_audio_default -t dts_data_file -c file -p read,write,open -l
+fi

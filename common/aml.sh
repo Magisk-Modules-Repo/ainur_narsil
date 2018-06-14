@@ -34,12 +34,12 @@ COMP=
 for FILE in ${FILES}; do
   NAME=$(echo "$FILE" | sed "s|$MOD|system|")
   case $NAME in
-    *audio_effects*) $ASP && patch_cfgs $MODPATH/$NAME audiosphere audiosphere $LIBDIR/libasphere.so 184e62ab-2d19-4364-9d1b-c0a40733866c
-                     $SHB && patch_cfgs $MODPATH/$NAME shoebox shoebox $LIBDIR/libshoebox.so 1eab784c-1a36-4b2a-b7fc-e34c44cab89e
+    *audio_effects*) $ASP && patch_cfgs $MODPATH/$NAME audiosphere 184e62ab-2d19-4364-9d1b-c0a40733866c audiosphere $LIBDIR/libasphere.so
+                     $SHB && patch_cfgs $MODPATH/$NAME shoebox 1eab784c-1a36-4b2a-b7fc-e34c44cab89e shoebox $LIBDIR/libshoebox.so
                      $FMAS || continue
                      case $NAME in
                        "system/etc"*) ;;
-                       *) patch_cfgs $MODPATH/$NAME libraryonly fmas $LIBDIR/libfmas.so
+                       *) patch_cfgs -l $MODPATH/$NAME fmas $LIBDIR/libfmas.so
                           case $FILE in
                             *.conf) [ ! "$(sed -n "/^effects {/,/^}/ {/^  virtualizer {/,/^  }/ {/uuid 36103c50-8514-11e2-9e96-0800200c9a66/p}}" $MODPATH/$NAME)" ] && sed -i "/^effects {/,/^}/ {/^  virtualizer {/,/^  }/ s/library bundle.*/library fmas/; s/uuid 1d4033c0-8557-11df-9f2d-0002a5d5c51b.*/uuid 36103c50-8514-11e2-9e96-0800200c9a66/}" $MODPATH/$NAME
                                     [ ! "$(sed -n "/^effects {/,/^}/ {/^  downmix {/,/^  }/ {/uuid 36103c50-8514-11e2-9e96-0800200c9a66/p}}" $MODPATH/$NAME)" ] && sed -i "/^effects {/,/^}/ {/^  downmix {/,/^  }/ s/library downmix.*/library fmas/; s/uuid 93f04452-e4fe-41cc-91f9-e475b6d1d69f.*/uuid 36103c51-8514-11e2-9e96-0800200c9a66/}" $MODPATH/$NAME;;

@@ -88,12 +88,12 @@ unity_custom() {
   HWDTS=/dsp/DTS_HPX_MODULE.so.1
   DTS=/data/misc/dts
   TREBLE=$(grep "ro.treble.enabled=true" $BUILDS)
-  NEXUS=$(grep "ro.product.device=bullhead|ro.product.device=angler" $BUILDS)
+  NEXUS=$(grep -E "ro.product.device=bullhead|ro.product.device=angler" $BUILDS)
   MTK=$(grep "ro.mediatek.version.*" $BUILDS)
   QCP=$(grep -E "ro.board.platform=apq.*|ro.board.platform=msm.*" $BUILDS)
   EXY=$(grep "ro.chipname.*" $BUILDS)
   QC94=$(grep "ro.board.platform=msm8994" $BUILDS)
-  KIR=$(grep "ro.board.platform=hi.*|ro.board.platform=kirin*" $BUILDS)
+  KIR=$(grep -E "ro.board.platform=hi.*|ro.board.platform=kirin*" $BUILDS)
   SPEC=$(grep "ro.board.platform=sp.*" $BUILDS)
   MIUI=$(grep "ro.miui.ui.version.*" $BUILDS)
   QC8996=$(grep "ro.board.platform=msm8996" $BUILDS)
@@ -153,16 +153,12 @@ get_uo() {
 }
 read_uo() {
   if [ "$1" == "-u" ]; then
-    for i in 1 2; do
-      for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do
-        if [ $i -eq 1 ]; then 
-          eval "$UO=$(grep_prop "$UO" $AUO)"
-        else
-          sed -i "s|$UO=|$UO=$(eval echo \$$UO)|" $AUO
-        fi
-      done
-      [ $i -eq 1 ] && cp -f $INSTALLER/sauron_useroptions $AUO
+    for UO in "FMAS" "ASP" "SHB" "RPCM" "APTX" "COMP" "RESAMPLE" "BTRESAMPLE" "IMPEDANCE" "BIT"; do 
+      eval "$UO=$(grep_prop "$UO" $AUO)"
+      sed -i "s|$UO=|$UO=$(eval echo \$$UO)|" $INSTALLER/sauron_useroptions
+      eval "$UO="
     done
+    cp -f $INSTALLER/sauron_useroptions $AUO
   else
     get_uo "FMAS"
     if [ "$QCP" ]; then

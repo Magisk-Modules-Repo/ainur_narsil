@@ -54,11 +54,3 @@ for FILE in /data/misc/dts/*; do
   chcon 'u:object_r:dts_data_file:s0' $FILE
   set_metadata $FILE uid 0 gid 0 mode 0644 capabilities 0x0 selabel u:object_r:audioserver:s0
 done
-
-if [ "$SEINJECT" != "/sbin/sepolicy-inject" ]; then
-  $SEINJECT --live "allow { audioserver mediaserver } dts_data_file dir { read execute open search getattr associate }" "allow audioserver labeledfs filesystem associate"
-else
-  $SEINJECT -s audioserver -t dts_data_file -c dir -p open,getattr,search,read,execute,associate -l
-  $SEINJECT -s mediaserver -t dts_data_file -c dir -p open,getattr,search,read,execute,associate -l
-  $SEINJECT -s audioserver -t labeledfs -c filesystem -p associate -l
-fi
