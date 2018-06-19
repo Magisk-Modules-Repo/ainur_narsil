@@ -1,3 +1,4 @@
+RUNONCE=true
 patch_mixer_toplevel() {
   if [ "$(grep "<ctl name=\"$1\" value=\".*\" />" $MODPATH/$NAME)" ]; then
     sed -i "0,/<ctl name=\"$1\" value=\".*\" \/>/ s/\(<ctl name=\"$1\" value=\"\).*\(\" \/>\)/\1$2\2/" $MODPATH/$NAME
