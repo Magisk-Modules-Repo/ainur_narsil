@@ -1,6 +1,11 @@
-vendor.audio.offload.track.enable=true
-vendor.audio.offload.multiaac.enable=true
-vendor.audio.offload.multiple.enabled=true
-vendor.audio.playback.mch.downsample=false
+persist.vendor.audio.hifi.int_codec=true
 vendor.audio.tunnel.encode=false
 vendor.audio.use.dts_eagle=true
+vendor.audio.adm.buffering.ms=3
+vendor.audio.safx.pbe.enabled=true
+vendor.audio_hal.period_size=192
+vendor.audio.playback.mch.downsample=false
+ro.audio.soundfx.usb=true
+#
+# Ultram8's hex props:
+#

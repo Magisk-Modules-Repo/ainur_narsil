@@ -3,8 +3,8 @@
 # ro.sf.lcd_density=320
 tunnel.audio.encode=false
 audio_hal.period_size=192
-audio.pp.asphere.enabled=false
 audio.safx.pbe.enabled=true
+audio.pp.asphere.enabled=false
 #audio.deep_buffer.media=false
 ro.ril.enable.amr.wideband=1
 persist.dev.pm.dyn_samplingrate=1

@@ -1,7 +1,7 @@
 persist.service.btui.use_aptx=1
 #audio.a2dp.codec.latency=0
 persist.bt.enableAptXHD=true
-persist.bt.a2dp.aptx_disable=false
-persist.bt.a2dp.aptx_hd_disable=false
-persist.bt.a2dp_offload_cap=sbc-aptx-aptxhd
-persistent.bt.a2dp_offload_cap=sbc-aptx-aptXHD-ldac
+#persist.bt.a2dp.aptx_disable=false
+#persist.bt.a2dp.aptx_hd_disable=false
+#persist.bt.a2dp_offload_cap=sbc-aptx-aptxhd
+persist.bt.a2dp_offload_cap=sbc-aac-aptx-aptXHD-ldac
