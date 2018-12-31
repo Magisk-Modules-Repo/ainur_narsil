@@ -140,13 +140,13 @@ if [ $API -ge 26 ] && [ ! $API -ge 27 ]; then
   cp -f $BAR/APO.so $INSTALLER$SFX/libaudiopreprocessing.so
   cp -f $BAR/APO2.so $INSTALLER$SFX64/libaudiopreprocessing.so  
 fi
-#if [ ! -f "$SYS/bin/tinymix" ]; then
+if [ ! -f "$SYS/bin/tinymix" ]; then
   if $IS64BIT; then
     cp -f $GOR/tinymix $INSTALLER$BIN/tinymix
   else
     cp -f $GOR/tinymix2 $INSTALLER$BIN/tinymix
   fi
-#fi
+fi
 
 if [ "$QCP" ]; then
   prop_process $INSTALLER/common/propsqcp.prop
