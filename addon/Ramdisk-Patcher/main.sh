@@ -5,7 +5,7 @@ flash_image() {
   # Make sure all blocks are writable
   magisk --unlock-blocks 2>/dev/null
   case "$1" in
-    *.gz) local COMMAND="magiskboot --decompress '$1' - 2>/dev/null";;
+    *.gz) local COMMAND="magiskboot decompress '$1' - 2>/dev/null";;
     *)    local COMMAND="cat '$1'";;
   esac
   if [ -b "$2" ]; then
@@ -49,17 +49,13 @@ unpack_ramdisk() {
   rm -f boot.img  
   magiskinit -x magisk magisk
   ui_print "   Unpacking boot image..."
-  magiskboot --unpack "$BOOTIMAGE"
+  magiskboot unpack "$BOOTIMAGE"
   case $? in
     1 ) ui_print "   ! Unable to unpack boot image !"; abort "   ! Aborting !";;
     2 ) ui_print "   ChromeOS boot image detected"; CHROMEOS=true;;
-    3 ) ui_print "   ! Sony ELF32 format detected !"; abort "   ! Please use BootBridge from @AdrianDC to flash this mod";;
-    4 ) ui_print "   ! Sony ELF64 format detected !"; abort "   ! Stock kernel cannot be patched, please use a custom kernel";;
   esac
-  ui_print "   Checking ramdisk status..."
-  magiskboot --cpio ramdisk.cpio test
   cd ramdisk
-  magiskboot --cpio ../ramdisk.cpio "extract"
+  magiskboot cpio ../ramdisk.cpio "extract"
   cd /
   ui_print " "
 }
@@ -69,40 +65,41 @@ repack_ramdisk() {
   find . | cpio -H newc -o > ../ramdisk.cpio
   cd ..
   ui_print "- Repacking boot image"
-  magiskboot --repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
+  magiskboot repack "$BOOTIMAGE" || abort "! Unable to repack boot image!"
   $CHROMEOS && sign_chromeos
-  magiskboot --cleanup
-  flash_boot_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
+  if ! flash_image new-boot.img "$BOOTIMAGE"; then
+    ui_print "- Compressing ramdisk to fit in partition"
+    magiskboot cpio ramdisk.cpio compress
+    magiskboot repack "$BOOTIMAGE"
+    flash_image new-boot.img "$BOOTIMAGE" || abort "! Insufficient partition size"
+  fi
+  magiskboot cleanup
   rm -f new-boot.img
   cd /
 }
+find_boot_image() {
+  BOOTIMAGE=
+  if [ ! -z $SLOT ]; then
+    BOOTIMAGE=`find_block ramdisk$SLOT recovery_ramdisk$SLOT boot$SLOT`
+  else
+    BOOTIMAGE=`find_block ramdisk recovery_ramdisk boot boot_a kern-a android_boot kernel lnx bootimg`
+  fi
+  if [ -z $BOOTIMAGE ]; then
+    # Lets see what fstabs tells me
+    BOOTIMAGE=`grep -v '#' /etc/*fstab* | grep -E '/boot[^a-zA-Z]' | grep -oE '/dev/[a-zA-Z0-9_./-]*' | head -n 1`
+  fi
+}
+sign_chromeos() {
+  ui_print "- Signing ChromeOS boot image"
 
-# Load functions only if non-magisk install (use magisk ones if present)
-if ! $MAGISK; then
-  find_boot_image() {
-    BOOTIMAGE=
-    if [ ! -z $SLOT ]; then
-      BOOTIMAGE=`find_block ramdisk$SLOT recovery_ramdisk$SLOT boot$SLOT`
-    else
-      BOOTIMAGE=`find_block ramdisk recovery_ramdisk boot boot_a kern-a android_boot kernel lnx bootimg`
-    fi
-    if [ -z $BOOTIMAGE ]; then
-      # Lets see what fstabs tells me
-      BOOTIMAGE=`grep -v '#' /etc/*fstab* | grep -E '/boot[^a-zA-Z]' | grep -oE '/dev/[a-zA-Z0-9_./-]*' | head -n 1`
-    fi
-  }
-  sign_chromeos() {
-    ui_print "- Signing ChromeOS boot image"
+  echo > empty
+  ./chromeos/futility vbutil_kernel --pack new-boot.img.signed \
+  --keyblock ./chromeos/kernel.keyblock --signprivate ./chromeos/kernel_data_key.vbprivk \
+  --version 1 --vmlinuz new-boot.img --config empty --arch arm --bootloader empty --flags 0x1
 
-    echo > empty
-    ./chromeos/futility vbutil_kernel --pack new-boot.img.signed \
-    --keyblock ./chromeos/kernel.keyblock --signprivate ./chromeos/kernel_data_key.vbprivk \
-    --version 1 --vmlinuz new-boot.img --config empty --arch arm --bootloader empty --flags 0x1
-
-    rm -f empty new-boot.img
-    mv new-boot.img.signed new-boot.img
-  }
-fi
+  rm -f empty new-boot.img
+  mv new-boot.img.signed new-boot.img
+}
 
 api_check -n 17
 $IS64BIT && mv -f $TMPDIR/addon/Ramdisk-Patcher/tools/$ARCH32/magiskinit64 $TMPDIR/addon/Ramdisk-Patcher/tools/$ARCH32/magiskinit
