@@ -906,8 +906,8 @@ fi
 
 if [ "$KIR" ]; then
   # Patch odm files in boot img if kirin device
-  sed -n "/^ *#ODMPATCHES/,/^ *#NON-ODMPATCHES/p" $TMPDIR/common/install.sh | sed '1d;$d' > $TMPDIR/tmp
-  sed -i "/#ODMPATCHES/r $TMPDIR/tmp" $TMPDIR/common/ramdiskinstall.sh
+  sed -n "/^ *#ODMPATCHES/,/^ *#NON-ODMPATCHES/p" $TMPDIR/common/unity_install.sh | sed '1d;$d' > $TMPDIR/tmp
+  sed -i "/#ODMPATCHES/r $TMPDIR/tmp" $TMPDIR/addon/Ramdisk-Patcher/ramdiskinstall.sh
   rm -f $TMPDIR/tmp
   for OMIX in ${MIXS}; do
     MIX="$UNITY$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"

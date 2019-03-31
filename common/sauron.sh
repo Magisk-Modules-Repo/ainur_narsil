@@ -4,7 +4,7 @@
 # More info in the main Magisk thread
 DSPBLOCK=<DSPBLOCK>
 
-if [ ! -d "$MOUNTEDROOT/ainur_sauron" ] && [ -f "$MOUNTEDROOT/ainur_sauron/sauron-files" ]; then
+if [ ! -d "$MODPATH" ] && [ -f "${0%/*}/sauron-files" ]; then
   [ "$DSPBLOCK" ] && mount -o remount,rw /dsp
   while read LINE; do
     if [ "$(echo -n $LINE | tail -c 4)" == ".bak" ]; then
@@ -14,7 +14,7 @@ if [ ! -d "$MOUNTEDROOT/ainur_sauron" ] && [ -f "$MOUNTEDROOT/ainur_sauron/sauro
     else
       rm -f $LINE
     fi      
-  done < $MOUNTEDROOT/ainur_sauron/sauron-files
+  done < ${0%/*}/sauron-files
   [ "$DSPBLOCK" ] && mount -o remount,ro /dsp
-  rm -f $MOUNTEDROOT/ainur_sauron/sauron-files $0
+  rm -f ${0%/*}/sauron-files $0
 fi
