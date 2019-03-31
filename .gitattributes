@@ -2,5 +2,8 @@
 *.sh text eol=lf
 *.prop text eol=lf
 *.md text eol=lf
+*.xml text eol=lf
 META-INF/** text eol=lf
 sauron_useroptions text eol=lf
+common/file_contexts_image text eol=lf
+addon/** eol=lf
