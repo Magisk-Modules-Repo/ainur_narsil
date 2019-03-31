@@ -1,17 +1,12 @@
 af.fast_track_multiplier=1
 persist.audio.hifi.int_codec=true
-persist.audio.hifi.volume=73
 persist.audio.hp=true
 persist.audio.lowlatency.rec=true
-persist.audio.format.24bit=true
 audio.offload.pcm.enable=true
 #audio.offload.buffer.size.kb=320
-audio.offload.pcm.24bit.enable=true
 audio.offload.pcm.16bit.enable=true
-audio.offload.pcm.32bit.enable=true
 audio.offload.multiple.enabled=true
 audio.playback.mch.downsample=false
-audio.heap.size.multiplier=9
 audio.safx.pbe.enabled=true
 use.dts_eagle=true
 hpx_send_params=1

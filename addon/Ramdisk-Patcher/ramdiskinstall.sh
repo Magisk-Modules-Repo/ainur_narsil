@@ -1,3 +1,4 @@
+# Put install only logic here
 patch_xml() {
   if [ "$(xmlstarlet sel -t -m "$3" -c . $2)" ]; then
     [ $(xmlstarlet sel -t -m "$3" -c . $2 | sed -r "s/.*value=\"(.*)\".*/\1/") == $4 ] && return

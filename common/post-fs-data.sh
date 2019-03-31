@@ -41,29 +41,27 @@ change_module "$IDE" "1"
 
 #Preallocate DMA memory buffer expander by UltraM8@XDA
 MSS=$(find $ROOT/sys/module -name maximum_substreams)
-change_module "$MSS" "16"
+change_module "$MSS" "8"
 
 #Double-volume for htc's 3.5 amp
 BTS=$(find $ROOT/sys/devices/virtual/switch/beats/state)
 change_module "$BTS" "1"
 
-
-# Reset dts effects each boot
-for EFFECT in /data/misc/dts/effect*; do
-  cp -f /data/misc/dts/origeffect.bak $EFFECT
-done
-
-### Michi_Nemuritor fix ###
-# based on GH
-chmod 660 /dev/dts_eagle
-chown system:audio /dev/dts_eagle
-
-(
-  sleep 10
-  chmod 771 /data/misc/dts
-)&
-
-for FILE in /data/misc/dts/*; do
-  chcon 'u:object_r:dts_data_file:s0' $FILE
-  set_metadata $FILE uid 0 gid 0 mode 0666 capabilities 0x0 selabel u:object_r:audioserver:s0
-done
+if [ -d /dev/dts_eagle ]; then
+  # Reset dts effects each boot
+  for EFFECT in /data/misc/dts/effect*; do
+    cp -f /data/misc/dts/origeffect.bak $EFFECT
+  done
+  ### Michi_Nemuritor fix ###
+  # based on GH
+  chmod 660 /dev/dts_eagle
+  chown system:audio /dev/dts_eagle
+  (
+    sleep 10
+    chmod 771 /data/misc/dts
+  )&
+  for FILE in /data/misc/dts/*; do
+    chcon 'u:object_r:dts_data_file:s0' $FILE
+    set_metadata $FILE uid 0 gid 0 mode 0666 capabilities 0x0 selabel u:object_r:audioserver:s0
+  done
+fi

@@ -1,4 +1,5 @@
-[ -f "$MOUNTPATH/ainur_sauron/system/bin/xmlstarlet" ] && alias xmlstarlet=$MOUNTPATH/ainur_sauron/system/bin/xmlstarlet
+#!/system/bin/sh
+alias xmlstarlet="$(dirname $MOD)/system/bin/xmlstarlet" 
 
 $CMPSR && { case $NAME in
   *.conf) sed -i "/^effects {/,/^}/ {/loudness_enhancer {/,/}/d}" $MODPATH/$NAME;;
@@ -28,6 +29,7 @@ patch_xml() {
     VALC="value"; VAL="$4"
   fi
   case $2 in
+    *audio_effects_tune*.xml) VAR1=DTS-GAIN; VAR2=config;;
     *mixer_paths*.xml) VAR1=ctl; VAR2=mixer;;
     *sapa_feature*.xml) VAR1=feature; VAR2=model;;
     *mixer_gains*.xml) VAR1=ctl; VAR2=mixer;;
@@ -88,6 +90,8 @@ for FILE in ${FILES}; do
                                        sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"direct_pcm\"/,/<\/mixPort>/ {s/format=\"[^\"]*\(.*\)/format=\"AUDIO_FORMAT_PCM_8_24_BIT\1/; s/samplingRates=\"[^\"]*\(.*\)/samplingRates=\"44100,48000,64000,88200,96000,128000,176400,192000\1/; s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/}}" $MODPATH/$NAME
                                        sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"compress_offload\"/,/<\/mixPort>/ {s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/}}" $MODPATH/$NAME
                                      fi;;
+    *audio_effects_tune*.xml) #EFFECTPATCHES
+                              ;;
     *mixer_paths*.xml) #MIXERPATCHES
                        ;;
     *mixer_gains*.xml) #GAINPATCHES

@@ -1,6 +1,6 @@
 AINUR SAURON [ MK III ]
-User Options (UO) File
-Version=17
+User Options (UO)
+Version=19
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #### INSTRUCTIONS ####
@@ -24,7 +24,8 @@ you have to find working combination, or don't use UO
 +==========================================================================================================================================================================
 ### UNIVERSAL OPTIONS ###
 
-CMPSR: Turn On/Off compressor sfx 
+CMPSR: Compressor soundfx switch
+     Put "true" to turn Off, or leave blank to turn back On
 CMPSR=
 
 FMAS: Installs Fraunhofer "Fmas" virtualizer & downmixer drivers. 
@@ -111,7 +112,7 @@ QIMPEDANCE: Impedance feature to support native ohms of your headphones
   **Ex: N_QIMPEDANCE=32000  
 N_QIMPEDANCE=
 
-BTSMPL: Force resampling for sd660/670/710/845
+BTSMPL: Force BT resampling for sd660/670/710/845
       !! MIGHT WORK ONLY FOR PIE (android9/sdk28) ROMS !!
 	  Supports following sampling rates:
 	  44.1 48 88.2 96 176.4 192

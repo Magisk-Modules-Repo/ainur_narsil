@@ -1,7 +1,6 @@
 id=ainur_sauron
 name=Ainur Sauron
-version=MK III (01.01.2019)
-versionCode=217
+version=MK III (31.03.2019)
+versionCode=228
 author=UltraM8, Zackptg5, Ahrion, James34602, LazerL0rd, John Fawkes, Michi_Nemuritor
 description="One ring to rule them all" - Universal audio modification that supports most CPUs and root solutions. Aimed to boost audio, applying system-wide experimental patches
-minMagisk=18000

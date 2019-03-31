@@ -1,9 +1,9 @@
-AUO=$UNITY$SYS/etc/sauron_useroptions
+AUO=$UNITY/system/etc/sauron_useroptions
 get_uo
 rm -f $AUO
 
-if $MAGISK && ! $SYSOVERRIDE; then
-  rm -f $MOUNTPATH/.core/post-fs-data.d/sauron.sh /sbin/.core/img/.core/post-fs-data.d/sauron.sh $MOUNTPATH/.core/post-fs-data.d/sauron-files /sbin/.core/img/.core/post-fs-data.d/sauron-files
+if $MAGISK && ! $SYSOVER; then
+  rm -f $NVBASE/post-fs-data.d/sauron.sh $NVBASE/post-fs-data.d/sauron-files
 else
   mv -f $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin.bak $UNITY$VEN/firmware/tas2557s_PG21_uCDSP.bin
   mv -f $UNITY$VEN/firmware/tas2557s_uCDSP.bin.bak $UNITY$VEN/firmware/tas2557s_uCDSP.bin
