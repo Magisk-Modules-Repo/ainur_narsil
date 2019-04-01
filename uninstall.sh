@@ -2,7 +2,7 @@ $SYSOVER && { mount -o rw,remount /system; [ -L /system/vendor ] && mount -o rw,
 
 FILE=$INFO
 [ -f $MODPATH/$MODID-files ] && FILE=$MODPATH/$MODID-files
-if [ -f $FILE ]
+if [ -f $FILE ]; then
   while read LINE; do
     if [ "$(echo -n $LINE | tail -c 1)" == "~" ] || [ "$(echo -n $LINE | tail -c 9)" == "NORESTORE" ]; then
       continue
