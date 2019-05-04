@@ -88,7 +88,7 @@ patch_xml() {
 
 # Tell user aml is needed if applicable
 if $MAGISK && ! $SYSOVER; then
-  if $BOOTMODE; then LOC="`dirname $MOUNTEDROOT`/*/system `dirname $MODULEROOT`/*/system"; else LOC="`dirname $MODULEROOT`/*/system"; fi
+  if $BOOTMODE; then LOC="$MOUNTEDROOT/*/system $MODULEROOT/*/system"; else LOC="$MODULEROOT/*/system"; fi
   FILES=$(find $LOC -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" 2>/dev/null)
   if [ ! -z "$FILES" ] && [ ! "$(echo $FILES | grep '/aml/')" ]; then
     ui_print " "

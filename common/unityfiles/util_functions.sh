@@ -277,9 +277,9 @@ set_vars() {
   [ $API -lt 26 ] && DYNLIB=false
   $DYNLIB && { LIBPATCH="\/vendor"; LIBDIR=$VEN; } || { LIBPATCH="\/system"; LIBDIR=/system; }  
   if $MAGISK; then
-    imageless_magisk && MOUNTEDROOT=$NVBASE/modules/$MODID || MOUNTEDROOT=$MAGISKTMP/img/$MODID
+    imageless_magisk && MOUNTEDROOT=$NVBASE/modules || MOUNTEDROOT=$MAGISKTMP/img
     if $BOOTMODE; then
-      MOD_VER="$MOUNTEDROOT/module.prop"
+      MOD_VER="$MOUNTEDROOT/$MODID/module.prop"
       ORIGDIR="$MAGISKTMP/mirror"
     else
       MOD_VER="$MODPATH/module.prop"
@@ -415,7 +415,7 @@ patch_script() {
     sed -i "4i $i=$(eval echo \$$i)" $1
   done
   if $MAGISK; then
-    sed -i -e "s|\$MODPATH|$MOUNTEDROOT|g" -e "s|\$MOUNTPATH|$(basename $MOUNTEDROOT)|g" -e "s|\$MODULEROOT|$(basename $MOUNTEDROOT)|g" -e "11i INFO=$MOUNTEDROOT/$MODID-files" $1
+    sed -i -e "s|\$MODPATH|$MOUNTEDROOT/$MODID|g" -e "s|\$MOUNTPATH|$MOUNTEDROOT|g" -e "s|\$MODULEROOT|$MOUNTEDROOT|g" -e "11i INFO=$MOUNTEDROOT/$MODID/$MODID-files" $1
   else
     sed -i -e "s|\$MODPATH||g" -e "s|\$MOUNTPATH||g" -e "s|\$MODULEROOT||g" -e "11i INFO=$INFO" $1
   fi
@@ -604,7 +604,7 @@ unity_install() {
     fi
     cp -af $TMPDIR/module.prop $MODPATH/module.prop
     # Update info for magisk manager
-    $BOOTMODE && { rm -f $MOUNTEDROOT/remove; mktouch $MOUNTEDROOT/update; cp_ch -n $TMPDIR/module.prop $MOUNTEDROOT/module.prop; }
+    $BOOTMODE && { rm -f $MOUNTEDROOT/$MODID/remove; mktouch $MOUNTEDROOT/$MODID/update; cp_ch -n $TMPDIR/module.prop $MOUNTEDROOT/$MODID/module.prop; }
   elif [ "$NVBASE" == "/system/etc/init.d" ]; then
     ui_print " "
     ui_print "   ! This root method has no boot script support !"
@@ -640,7 +640,7 @@ unity_uninstall() {
   if $MAGISK; then
     rm -rf $MODPATH
     if $BOOTMODE; then
-      [ -d $MOUNTEDROOT/system ] && touch $MOUNTEDROOT/remove || rm -rf $MOUNTEDROOT
+      [ -d $MOUNTEDROOT/$MODID/system ] && touch $MOUNTEDROOT/$MODID/remove || rm -rf $MOUNTEDROOT/$MODID
     fi
   fi
 
