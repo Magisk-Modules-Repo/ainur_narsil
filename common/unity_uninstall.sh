@@ -60,7 +60,7 @@ else
                                        fi;;
     esac
   done
-  for OMIX in ${MIXS} ${APLIS} ${SAPA} ${MIXG} ${MIXA}; do
+  for OMIX in ${MIXS} ${APLIS} ${SAPA} ${MIXG} ${MIXA} ${TUNES}; do
     MIX="$UNITY$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
     sed -i "/<!--$MODID-->/d" $MIX
     sed -i -e "s|<!--$MODID\(.*\)|\1|g" -e "s|\(.*\)$MODID-->|\1|g" $MIX

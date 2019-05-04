@@ -31,14 +31,16 @@ patch_xml() {
   else
     VALC="value"; VAL="$4"
   fi
-  case $2 in
-    *audio_effects_tune*.xml) sed -i "/#EFFECTPATCHES/a\                       patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=DTS-GAIN; VAR2=config;;
-    *mixer_paths*.xml) sed -i "/#MIXERPATCHES/a\                       patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=ctl; VAR2=mixer;;
-    *sapa_feature*.xml) sed -i "/#SAPAPATCHES/a\                        patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=feature; VAR2=model;;
-    *mixer_gains*.xml) sed -i "/#GAINPATCHES/a\                       patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=ctl; VAR2=mixer;;
-    *audio_device*.xml) sed -i "/#ADPATCHES/a\                        patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=kctl; VAR2=mixercontrol;;
-    *audio_platform_info*.xml) sed -i "/#APLIPATCHES/a\                               patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=param; VAR2=config_params;;
-  esac
+  if [ ! "$(grep "patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh)" ]; then
+    case $2 in
+      *audio_effects_tune*.xml) sed -i "/#EFFECTPATCHES/a\                       patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=DTS-GAIN; VAR2=config;;
+      *mixer_paths*.xml) sed -i "/#MIXERPATCHES/a\                       patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=ctl; VAR2=mixer;;
+      *sapa_feature*.xml) sed -i "/#SAPAPATCHES/a\                        patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=feature; VAR2=model;;
+      *mixer_gains*.xml) sed -i "/#GAINPATCHES/a\                       patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=ctl; VAR2=mixer;;
+      *audio_device*.xml) sed -i "/#ADPATCHES/a\                        patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=kctl; VAR2=mixercontrol;;
+      *audio_platform_info*.xml) sed -i "/#APLIPATCHES/a\                               patch_xml $1 \$MODPATH/\$NAME '$3' \"$4\"" $TMPDIR/common/aml.sh; VAR1=param; VAR2=config_params;;
+    esac
+  fi
   if [ "$1" == "-t" -o "$1" == "-ut" -o "$1" == "-tu" ] && [ "$VAR1" ]; then
     if [ "$(grep "<$VAR1 $NAMEC=\"$NAME\" $VALC=\".*\" />" $2)" ]; then
       sed -i "0,/<$VAR1 $NAMEC=\"$NAME\" $VALC=\".*\" \/>/ {/<$VAR1 $NAMEC=\"$NAME\" $VALC=\".*\" \/>/p; s/\(<$VAR1 $NAMEC=\"$NAME\" $VALC=\".*\" \/>\)/<!--$MODID\1$MODID-->/}" $2
@@ -86,7 +88,7 @@ patch_xml() {
 
 # Tell user aml is needed if applicable
 if $MAGISK && ! $SYSOVER; then
-  if $BOOTMODE; then LOC="$MOUNTEDROOT/*/system $MODULEROOT/*/system"; else LOC="$MODULEROOT/*/system"; fi
+  if $BOOTMODE; then LOC="`dirname $MOUNTEDROOT`/*/system `dirname $MODULEROOT`/*/system"; else LOC="`dirname $MODULEROOT`/*/system"; fi
   FILES=$(find $LOC -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" 2>/dev/null)
   if [ ! -z "$FILES" ] && [ ! "$(echo $FILES | grep '/aml/')" ]; then
     ui_print " "
@@ -799,7 +801,7 @@ if [ $QCP ]; then
   done
 fi
 
-if [ "$LG" ] && [ "$AET" ]; then ui_print "   Patching DTS Tune XML... "; fi
+if [ "$LG" ] && [ -f "$AET" ]; then ui_print "   Patching DTS Tune XML... "; fi
   for OTUNE in ${TUNES}; do
     TUNE="$UNITY$(echo $OTUNE | sed "s|^/vendor|/system/vendor|g")"
     cp_ch -i $ORIGDIR$OTUNE $TUNE
