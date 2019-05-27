@@ -1,4 +1,7 @@
-$SYSOVER && { mount -o rw,remount /system; [ -L /system/vendor ] && mount -o rw,remount /vendor; }
+if $SYSOVER || $DIRSEPOL; then
+  rm -f $INFO; mount -o rw,remount /system
+  [ -L /system/vendor ] && mount -o rw,remount /vendor
+fi
 
 FILE=$INFO
 [ -f $MODPATH/$MODID-files ] && FILE=$MODPATH/$MODID-files
@@ -18,4 +21,7 @@ if [ -f $FILE ]; then
   done < $FILE
 fi
 
-$SYSOVER && { rm -f $INFO; mount -o ro,remount /system; [ -L /system/vendor ] && mount -o ro,remount /vendor; }
+if $SYSOVER || $DIRSEPOL; then
+  rm -f $INFO; mount -o ro,remount /system
+  [ -L /system/vendor ] && mount -o ro,remount /vendor
+fi

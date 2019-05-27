@@ -25,15 +25,17 @@ comp_check
 # Uncomment and change 'MINAPI' and 'MAXAPI' to the minimum and maximum android version for your mod
 # Uncomment DYNLIB if you want libs installed to vendor for oreo+ and system for anything older
 # Uncomment SYSOVER if you want the mod to always be installed to system (even on magisk) - note that this can still be set to true by the user by adding 'sysover' to the zipname
+# Uncomment DIRSEPOL if you want sepolicy patches applied to the boot img directly (not recommended) - THIS REQUIRES THE RAMDISK PATCHER ADDON (this addon requires minimum api of 17)
 # Uncomment DEBUG if you want full debug logs (saved to /sdcard in magisk manager and the zip directory in twrp) - note that this can still be set to true by the user by adding 'debug' to the zipname
 #MINAPI=21
 #MAXAPI=25
 DYNLIB=true
 #SYSOVER=true
+#DIRSEPOL=true
 DEBUG=true
 
 # Uncomment if you do *NOT* want Magisk to mount any files for you. Most modules would NOT want to set this flag to true
-# This is obviously irrelevant for system installs
+# This is obviously irrelevant for system installs. This will be set to true automatically if your module has no files in system
 #SKIPMOUNT=true
 
 ##########################################################################################
@@ -118,6 +120,11 @@ set_permissions() {
 
 # Custom Variables for Install AND Uninstall - Keep everything within this function - runs before uninstall/install
 unity_custom() {
+  if [ -f "$(echo $MOD_VER | sed "s|$MODID|ainur_narsil|")" ]; then
+    ui_print " "
+    ui_print "! AINUR NARSIL detected!"
+    abort "! Uninstall Narsil first with Narsil Zip!"
+  fi
   if $BOOTMODE; then SDCARD=/storage/emulated/0; else SDCARD=/data/media/0; fi
   if [ -f $VEN/build.prop ]; then BUILDS="/system/build.prop $VEN/build.prop"; else BUILDS="/system/build.prop"; fi
   SAU=$TMPDIR/custom
@@ -210,6 +217,7 @@ unity_custom() {
   MI8UD=$(grep "ro.vendor.product.name=equuleus.*" $BUILDS)
   MIA2=$(grep "ro.vendor.product.name=jasmine.*" $BUILDS)
   POC=$(grep -E "ro.product.vendor.name=beryllium.*|ro.product.name=beryllium.*" $BUILDS)
+  MI9=$(grep -E "ro.product.vendor.name=cepheus.*|ro.product.name=cepheus.*" $BUILDS)
   if $BOOTMODE; then
     CFGS="$(find /system /vendor -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
     MIXS="$(find /system /vendor -type f -name "*mixer_paths*.xml")"
@@ -233,16 +241,17 @@ unity_custom() {
     APLIS="$(find -L /system -type f -name "*audio_platform_info*.xml")"
     TUNES="$(find -L /system -type f -name "*audio_effects_tune*.xml")"
   fi
+  VNDK=$(find /system/lib /vendor/lib -type d -iname "*vndk*")
+  VNDK64=$(find /system/lib64 /vendor/lib64 -type d -iname "*vndk*")
   [ "$QCP" ] && DSPBLOCK=$(find /dev/block -iname dsp | head -n 1)
-  if [ -z $DSPBLOCK ]; then
+  if [ -z $DSPBLOCK ] || [ "$MI9" ]; then
     if [ "$POC" ]; then ADSP=$VEN/dsp/adsp; else ADSP=$VEN/lib/rfsa/adsp; fi
     ADSP2=$UNITY$ADSP
   else
     ADSP=/dsp
     ADSP2=$ADSP
     mkdir /dsp
-    if is_mounted /dsp; then mount -o remount,rw /dsp; else mount -o rw $DSPBLOCK /dsp; fi
-    is_mounted /dsp || abort "! Cannot mount /dsp"
+    if is_mounted /dsp; then mount -o remount,rw /dsp; else mount_part dsp; fi
   fi
   # Patch ramdisk only if KIR
   [ "$KIR" ] || rm -rf $TMPDIR/addon/Ramdisk-Patcher

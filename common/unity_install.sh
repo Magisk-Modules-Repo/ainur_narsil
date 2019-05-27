@@ -88,7 +88,7 @@ patch_xml() {
 
 # Tell user aml is needed if applicable
 if $MAGISK && ! $SYSOVER; then
-  if $BOOTMODE; then LOC="`dirname $MOUNTEDROOT`/*/system `dirname $MODULEROOT`/*/system"; else LOC="`dirname $MODULEROOT`/*/system"; fi
+  if $BOOTMODE; then LOC="$MOUNTEDROOT/*/system $MODULEROOT/*/system"; else LOC="$MODULEROOT/*/system"; fi
   FILES=$(find $LOC -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml" 2>/dev/null)
   if [ ! -z "$FILES" ] && [ ! "$(echo $FILES | grep '/aml/')" ]; then
     ui_print " "
@@ -211,9 +211,9 @@ if [ "$QCP" ]; then
       cp -f $CIRU/snd-soc-sdm845.ko $MODU/modules/snd-soc-sdm845.ko
     fi
   fi
-  cp_ch $CIRU/SAPlusCmnModule.so.1 $ADSP2/SAPlusCmnModule.so.1
-  cp_ch $CIRU/SVACmnModule.so.1 $ADSP2/SVACmnModule.so.1  
-  cp_ch $CIRU/libAudienceAZA.so $ADSP2/libAudienceAZA.so
+  [ "$MI9" ] || cp_ch $CIRU/SAPlusCmnModule.so.1 $ADSP2/SAPlusCmnModule.so.1
+  [ "$MI9" ] || cp_ch $CIRU/SVACmnModule.so.1 $ADSP2/SVACmnModule.so.1  
+  [ "$MI9" ] || cp_ch $CIRU/libAudienceAZA.so $ADSP2/libAudienceAZA.so
   if [ -f "$SYS/etc/htc_audio_effects.conf" ] || [ -f "$VEN/etc/htc_audio_effects.conf" ]; then
     prop_process $TMPDIR/common/propshtc.prop
     cp -f $CAR/default_vol_level.conf $TMPDIR$ETC/default_vol_level.conf
@@ -337,7 +337,7 @@ if [ "$QCP" ]; then
     cp -f $MOR/General_cal2.acdb $TMPDIR$ACDB/General_cal.acdb
     cp -f $MOR/Global_cal2.acdb $TMPDIR$ACDB/Global_cal.acdb  
   fi
-  if [ ! -f "$HWDTS" ]; then
+  if [ ! -f "$HWDTS" ] && [ ! "$MI9" ]; then
     cp_ch $TORU/DTS_HPX_MODULE.so.1 $ADSP2/DTS_HPX_MODULE.so.1
     cp_ch $TORU/SrsTruMediaModule.so.1 $ADSP2/SrsTruMediaModule.so.1
     cp_ch $TORU/effect /data/misc/dts/effect
@@ -411,8 +411,8 @@ if [ "$QCP" ]; then
   fi
   if $APTX; then
     prop_process $TMPDIR/common/propsaptx.prop
-    cp_ch $MOR/capi_v2_aptX_Classic.so $ADSP2/capi_v2_aptX_Classic.so
-    cp_ch $MOR/capi_v2_aptX_HD.so $ADSP2/capi_v2_aptX_HD.so
+    [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_Classic.so $ADSP2/capi_v2_aptX_Classic.so
+    [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_HD.so $ADSP2/capi_v2_aptX_HD.so
     if [ $API -ge 25 ]; then
       [ -f "$VLIB/libaptX-1.0.0-rel-Android21-ARMv7A.so" -o -f "$LIB/libaptX-1.0.0-rel-Android21-ARMv7A.so" ] && cp -f $MOR/libaptX-1.0.0-rel-Android21-ARMv7A.so $TMPDIR$LIB/libaptX-1.0.0-rel-Android21-ARMv7A.so
       [ -f "$VLIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so" -o -f "$LIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so" ] && cp -f $MOR/libaptXHD-1.0.0-rel-Android21-ARMv7A.so $TMPDIR$LIB/libaptXHD-1.0.0-rel-Android21-ARMv7A.so
@@ -433,8 +433,8 @@ if [ "$QCP" ]; then
       cp -f $MOR/adsp_avs_config2.acdb $TMPDIR$ACDB/adsp_avs_config.acdb
       sed -i 's/persist.bt.a2dp_offload_cap(.?)sbc-aac-aptx-aptXHD-ldac/'d $TMPDIR/common/system.prop
       echo "persist.vendor.bt.a2dp_offload_cap=sbc-aptx-aptxhd-aac-ldac" >> $TMPDIR/common/system.prop
-      cp_ch $MOR/capi_v2_aptX_ClassicP.so $ADSP2/capi_v2_aptX_Classic.so
-      cp_ch $MOR/capi_v2_aptX_HDP.so $ADSP2/capi_v2_aptX_HD.so    
+      [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_ClassicP.so $ADSP2/capi_v2_aptX_Classic.so
+      [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_HDP.so $ADSP2/capi_v2_aptX_HD.so 	  
     fi
   fi
 fi
