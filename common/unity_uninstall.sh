@@ -66,3 +66,7 @@ else
     sed -i -e "s|<!--$MODID\(.*\)|\1|g" -e "s|\(.*\)$MODID-->|\1|g" $MIX
   done
 fi
+if [ "$KIR" ]; then
+  sed -i "s/UNINSTALL=false/UNINSTALL=true/" $TMPDIR/custom/AnyKernel3/anykernel.sh
+  run_ak3
+fi

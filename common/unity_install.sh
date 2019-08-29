@@ -47,7 +47,7 @@ patch_xml() {
       sed -i "0,/<$VAR1 $NAMEC=\"$NAME\" $VALC=\".*\" \/>/ s/\(<$VAR1 $NAMEC=\"$NAME\" $VALC=\"\).*\(\" \/>\)/\1$VAL\2<!--$MODID-->/" $2
     elif [ "$1" == "-t" ]; then
       sed -i "/<$VAR2>/ a\    <$VAR1 $NAMEC=\"$NAME\" $VALC=\"$VAL\" \/><!--$MODID-->" $2
-    fi    
+    fi
   elif [ "$(xmlstarlet sel -t -m "$3" -c . $2)" ]; then
     [ "$(xmlstarlet sel -t -m "$3" -c . $2 | sed -r "s/.*$VALC=\"(.*)\".*/\1/")" == "$VAL" ] && return
     xmlstarlet ed -P -L -i "$3" -t elem -n "$MODID" $2
@@ -77,13 +77,13 @@ patch_xml() {
     for i in ${LN}; do
       sed -i "$i d" $2
       sed -ri "${i}s/$/<!--$MODID-->/" $2
-    done 
+    done
   fi
   local LN=$(sed -n "/^ *<!--$MODID-->$/=" $2 | tac)
   for i in ${LN}; do
     sed -i "$i d" $2
     sed -ri "$((i-1))s/$/<!--$MODID-->/" $2
-  done 
+  done
 }
 
 # Tell user aml is needed if applicable
@@ -141,7 +141,7 @@ fi
 cp -f $BAR/RWU2.so $TMPDIR$SFX64/libreverbwrapper.so
 if [ $API -ge 26 ] && [ ! $API -ge 27 ]; then
   cp -f $BAR/APO.so $TMPDIR$SFX/libaudiopreprocessing.so
-  cp -f $BAR/APO2.so $TMPDIR$SFX64/libaudiopreprocessing.so  
+  cp -f $BAR/APO2.so $TMPDIR$SFX64/libaudiopreprocessing.so
 fi
 if [ ! -f "$SYS/bin/tinymix" ]; then
   if $IS64BIT; then
@@ -184,11 +184,11 @@ if [ "$QCP" ]; then
     cp -f $BAR/RWQP2.so $TMPDIR$SFX64/libreverbwrapper.so
     cp -f $BAR/BBQP.so $TMPDIR$VSFX/libqcbassboost.so
     cp -f $BAR/RQP.so $TMPDIR$VSFX/libqcreverb.so
-    cp -f $BAR/VQP.so $TMPDIR$VSFX/libqcvirt.so   
+    cp -f $BAR/VQP.so $TMPDIR$VSFX/libqcvirt.so
     cp -f $BAR/BBQP2.so $TMPDIR$VSFX64/libqcbassboost.so
     cp -f $BAR/RQP2.so $TMPDIR$VSFX64/libqcreverb.so
-    cp -f $BAR/VQP2.so $TMPDIR$VSFX64/libqcvirt.so   
-  fi  
+    cp -f $BAR/VQP2.so $TMPDIR$VSFX64/libqcvirt.so
+  fi
   if [ -d "$SYS/lib/modules" ] || [ -d "$VEN/lib/modules" ]; then
     cp -f $CIRU/mpq-adapter.ko $MODU/modules/mpq-adapter.ko
     cp -f $CIRU/mpq-dmx-hw-plugin.ko $MODU/modules/mpq-dmx-hw-plugin.ko
@@ -212,7 +212,7 @@ if [ "$QCP" ]; then
     fi
   fi
   [ "$MI9" ] || cp_ch $CIRU/SAPlusCmnModule.so.1 $ADSP2/SAPlusCmnModule.so.1
-  [ "$MI9" ] || cp_ch $CIRU/SVACmnModule.so.1 $ADSP2/SVACmnModule.so.1  
+  [ "$MI9" ] || cp_ch $CIRU/SVACmnModule.so.1 $ADSP2/SVACmnModule.so.1
   [ "$MI9" ] || cp_ch $CIRU/libAudienceAZA.so $ADSP2/libAudienceAZA.so
   if [ -f "$SYS/etc/htc_audio_effects.conf" ] || [ -f "$VEN/etc/htc_audio_effects.conf" ]; then
     prop_process $TMPDIR/common/propshtc.prop
@@ -328,14 +328,14 @@ if [ "$QCP" ]; then
       cp -f $MOR/Codec_cal.acdb $TMPDIR$ACDB/Codec_cal.acdb
       if [ "$SD845" ]; then
         cp -f $MOR/Headset_cal.acdb $TMPDIR$ACDB/Headset_cal.acdb
-        cp -f $MOR/General_cal.acdb $TMPDIR$ACDB/General_cal.acdb  
-        cp -f $MOR/Global_cal.acdb $TMPDIR$ACDB/Global_cal.acdb    
+        cp -f $MOR/General_cal.acdb $TMPDIR$ACDB/General_cal.acdb
+        cp -f $MOR/Global_cal.acdb $TMPDIR$ACDB/Global_cal.acdb
       fi
     fi
   elif [ "$QC94" ] && $ACDBP && [ ! "$M9" ]; then
     cp -f $MOR/Headset_cal2.acdb $TMPDIR$ACDB/Headset_cal.acdb
     cp -f $MOR/General_cal2.acdb $TMPDIR$ACDB/General_cal.acdb
-    cp -f $MOR/Global_cal2.acdb $TMPDIR$ACDB/Global_cal.acdb  
+    cp -f $MOR/Global_cal2.acdb $TMPDIR$ACDB/Global_cal.acdb
   fi
   if [ ! -f "$HWDTS" ] && [ ! "$MI9" ]; then
     cp_ch $TORU/DTS_HPX_MODULE.so.1 $ADSP2/DTS_HPX_MODULE.so.1
@@ -371,7 +371,7 @@ if [ "$QCP" ]; then
     if [ $API -ge 28 ]; then
       cp -f $GOR/ASP.so $TMPDIR$SFX/libasphere.so
       cp -f $GOR/ASP2.so $TMPDIR$SFX64/libasphere.so
-      if [ ! -f "$LIB/qtigef.so" ]; then 
+      if [ ! -f "$LIB/qtigef.so" ]; then
         cp -f $GOR/libqtigefP.so $TMPDIR$LIB/libqtigef.so
         cp -f $GOR/libqtigefP2.so $TMPDIR$LIB64/libqtigef.so
       fi
@@ -387,11 +387,11 @@ if [ "$QCP" ]; then
     if [ $API -ge 28 ]; then
       cp -f $GOR/SBQP.so $TMPDIR$SFX/libshoebox.so
       cp -f $GOR/SBQP2.so $TMPDIR$SFX64/libshoebox.so
-      if [ ! -f "$LIB/qtigef.so" ]; then 
+      if [ ! -f "$LIB/qtigef.so" ]; then
         cp -f $GOR/libqtigefP.so $TMPDIR$LIB/libqtigef.so
         cp -f $GOR/libqtigefP2.so $TMPDIR$LIB64/libqtigef.so
-      fi    
-    fi  
+      fi
+    fi
   fi
   if $RPCM; then
     cp -f $GOR/RPRW.so $TMPDIR$SFX/libreverbwrapper.so
@@ -434,7 +434,7 @@ if [ "$QCP" ]; then
       sed -i 's/persist.bt.a2dp_offload_cap(.?)sbc-aac-aptx-aptXHD-ldac/'d $TMPDIR/common/system.prop
       echo "persist.vendor.bt.a2dp_offload_cap=sbc-aptx-aptxhd-aac-ldac" >> $TMPDIR/common/system.prop
       [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_ClassicP.so $ADSP2/capi_v2_aptX_Classic.so
-      [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_HDP.so $ADSP2/capi_v2_aptX_HD.so 	  
+      [ "$MI9" ] || cp_ch $MOR/capi_v2_aptX_HDP.so $ADSP2/capi_v2_aptX_HD.so
     fi
   fi
 fi
@@ -468,7 +468,7 @@ if [ "$EXY" ]; then
   cp -f $BAR/BWE2.so $TMPDIR$SFX/libbundlewrapper.so
   if [ $API -ge 26 ]; then
     cp -f $BAR/BWEO.so $TMPDIR$SFX/libbundlewrapper.so
-  fi 
+  fi
   if [ $API -ge 28 ]; then
     cp -f $BAR/BWEP2.so $TMPDIR$SFX/libbundlewrapper.so
     cp -f $BAR/DMEP2.so $TMPDIR$SFX64/libdownmix.so
@@ -774,7 +774,7 @@ if [ $QCP ]; then
       patch_xml -u $MIX '/mixer/path[@name="voiceanc-headphone"]/ctl[@name="COMP1 Switch"]' 0
       patch_xml -u $MIX '/mixer/path[@name="voiceanc-headphone"]/ctl[@name="COMP2 Switch"]' 0
       patch_xml -u $MIX '/mixer/path[@name="handset"]/ctl[@name="COMP1 Switch"]' 0
-      patch_xml -u $MIX '/mixer/path[@name="handset"]/ctl[@name="COMP2 Switch"]' 0 
+      patch_xml -u $MIX '/mixer/path[@name="handset"]/ctl[@name="COMP2 Switch"]' 0
     fi
   done
   ### Audio platform patches section
@@ -790,11 +790,11 @@ if [ $QCP ]; then
       patch_xml -u $APLI '/audio_platform_info/app_types/app[@mode="default"]' 'max_rate=192000'
       if [ ! "$P1" ] && [ ! "$P1XL" ] && [ ! "$P2XL" ] && [ ! "$P2" ] && [ ! "$PXL3XL" ]; then
         if [ ! "$(grep '<app_types>' $APLI)" ]; then
-          sed -i "s/<\/audio_platform_info>/  <app_types><!--$MODID-->\n    <app uc_type=\"PCM_PLAYBACK\" mode=\"default\" bit_width=\"24\" id=\"69936\" max_rate=\"192000\" \/><!--$MODID-->\n    <app uc_type=\"PCM_PLAYBACK\" mode=\"default\" bit_width=\"24\" id=\"69940\" max_rate=\"192000\" \/><!--$MODID-->\n  <app_types><!--$MODID-->\n<\/audio_platform_info>/" $APLI        
+          sed -i "s/<\/audio_platform_info>/  <app_types><!--$MODID-->\n    <app uc_type=\"PCM_PLAYBACK\" mode=\"default\" bit_width=\"24\" id=\"69936\" max_rate=\"192000\" \/><!--$MODID-->\n    <app uc_type=\"PCM_PLAYBACK\" mode=\"default\" bit_width=\"24\" id=\"69940\" max_rate=\"192000\" \/><!--$MODID-->\n  <app_types><!--$MODID-->\n<\/audio_platform_info>/" $APLI
         else
           for i in 69936 69940; do
-            [ "$(xmlstarlet sel -t -m "/audio_platform_info/app_types/app[@uc_type=\"PCM_PLAYBACK\"][@mode=\"default\"][@id=\"$i\"]" -c . $APLI)" ] || sed -i "/<audio_platform_info>/,/<\/audio_platform_info>/ {/<app_types>/,/<\/app_types>/ s/\(^ *\)\(<\/app_types>\)/\1  <app uc_type=\"PCM_PLAYBACK\" mode=\"default\" bit_width=\"24\" id=\"$i\" max_rate=\"192000\" \/><!--$MODID-->\n\1\2/}" $APLI              
-          done   
+            [ "$(xmlstarlet sel -t -m "/audio_platform_info/app_types/app[@uc_type=\"PCM_PLAYBACK\"][@mode=\"default\"][@id=\"$i\"]" -c . $APLI)" ] || sed -i "/<audio_platform_info>/,/<\/audio_platform_info>/ {/<app_types>/,/<\/app_types>/ s/\(^ *\)\(<\/app_types>\)/\1  <app uc_type=\"PCM_PLAYBACK\" mode=\"default\" bit_width=\"24\" id=\"$i\" max_rate=\"192000\" \/><!--$MODID-->\n\1\2/}" $APLI
+          done
         fi
       fi
     fi
@@ -909,7 +909,7 @@ fi
 if [ "$KIR" ]; then
   # Patch odm files in boot img if kirin device
   sed -n "/^ *#ODMPATCHES/,/^ *#NON-ODMPATCHES/p" $TMPDIR/common/unity_install.sh | sed '1d;$d' > $TMPDIR/tmp
-  sed -i "/#ODMPATCHES/r $TMPDIR/tmp" $TMPDIR/addon/Ramdisk-Patcher/ramdiskinstall.sh
+  sed -i "/#ODMPATCHES/r $TMPDIR/tmp" $TMPDIR/custom/AnyKernel3/anykernel.sh
   rm -f $TMPDIR/tmp
   for OMIX in ${MIXS}; do
     MIX="$UNITY$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
@@ -926,7 +926,7 @@ fi
 
 ui_print "   ! Mixer edits & patches by Ultram8 !"
 
-if $MAGISK && ! $SYSOVER; then  
+if $MAGISK && ! $SYSOVER; then
   for i in "ASP" "SHB" "FMAS" "AP" "OAP" "BIT" "COMP" "QCP" "CMPSR"; do
     sed -i "2i $i=$(eval echo \$$i)" $TMPDIR/common/aml.sh
   done

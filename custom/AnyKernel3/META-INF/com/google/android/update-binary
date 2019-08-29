@@ -1,0 +1,258 @@
+#!/sbin/sh
+# AnyKernel3 Backend (DO NOT CHANGE)
+# osm0sis @ xda-developers
+
+OUTFD=/proc/self/fd/$2;
+ZIPFILE="$3";
+
+ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true || BOOTMODE=false;
+$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
+
+$BOOTMODE && DIR=/sdcard || DIR=$(dirname "$ZIPFILE");
+
+test "$home" || home=/tmp/anykernel;
+
+ui_print() {
+  until [ ! "$1" ]; do
+    echo -e "ui_print $1\nui_print" > $OUTFD;
+    shift;
+  done;
+}
+show_progress() { echo "progress $1 $2" > $OUTFD; }
+file_getprop() { $bb grep "^$2=" "$1" | $bb cut -d= -f2-; }
+int2ver() {
+  if [ "$1" -eq "$1" ] 2>/dev/null; then 
+    echo "$1.0.0";
+  elif [ ! "$(echo "$1" | $bb cut -d. -f3)" ]; then
+    echo "$1.0";
+  else
+    echo "$1";
+  fi;
+}
+cleanup() {
+  cd $(dirname $home);
+  rm -rf $home;
+}
+debugging() {
+  case $(basename "$ZIPFILE" .zip) in
+    *-debugging)
+      ui_print " " "Creating debugging archive in $DIR...";
+      test -f /tmp/recovery.log && log=/tmp/recovery.log;
+      $bb tar -czf "$DIR/anykernel3-$(date +%Y-%m-%d_%H%M%S)-debug.tgz" $home $log;
+    ;;
+  esac;
+}
+is_mounted() { $bb mount | $bb grep -q " $1 "; }
+unmount_all() {
+  ($bb umount /system;
+  if [ -e /system_root ] && [ ! -f /system/build.prop -o -L /system ]; then
+    $bb umount /system_root;
+  fi;
+  $bb umount /system;
+  umount /vendor;
+  $bb umount /data) 2>/dev/null;
+}
+abort() {
+  ui_print "$@";
+  debugging;
+  if [ ! -f anykernel.sh -o "$(file_getprop anykernel.sh do.cleanuponabort 2>/dev/null)" == 1 ]; then
+    cleanup;
+  fi;
+  # unmount_all;
+  exit 1;
+}
+
+#show_progress 1.34 4;
+ui_print " ";
+cleanup;
+mkdir -p $home/bin;
+cd $home;
+unzip -o "$ZIPFILE";
+if [ $? != 0 -o ! "$(ls tools)" ]; then
+  abort "Unzip failed. Aborting...";
+fi;
+for arch32 in x86 arm; do
+  if [ -d $home/tools/$arch32 ]; then
+    bb=$home/tools/$arch32/busybox;
+    chmod 755 $bb;
+    $bb >/dev/null 2>&1;
+    if [ $? == 0 ]; then
+      $bb mv -f $home/tools/$arch32/* $home/tools;
+      break;
+    fi;
+  fi;
+done;
+bb=$home/tools/busybox;
+chmod 755 $bb;
+$bb chmod -R 755 tools bin;
+$bb --install -s bin;
+if [ $? != 0 -o -z "$(ls bin)" ]; then
+  abort "Busybox setup failed. Aborting...";
+fi;
+
+if [ -f banner ]; then
+  while IFS='' read -r line || $bb [[ -n "$line" ]]; do
+    ui_print "$line";
+  done < banner;
+  ui_print " " " ";
+fi;
+
+ui_print "$(file_getprop anykernel.sh kernel.string)";
+if [ -f version ]; then
+  ui_print " ";
+  while IFS='' read -r line || $bb [[ -n "$line" ]]; do
+    ui_print "$line";
+  done < version;
+  ui_print " ";
+fi;
+ui_print " " "   Patching ramdisk" "   AnyKernel3 by osm0sis @ xda-developers" " ";
+
+# unmount_all;
+# if ! is_mounted /system; then
+  # $bb mount -o ro -t auto /system;
+# fi;
+# ($bb mount -o ro -t auto /vendor;
+# $bb mount /data) 2>/dev/null;
+# if [ -f /system/system/build.prop ]; then
+  # $bb umount /system;
+  # $bb umount /system 2>/dev/null;
+  # for mntpt in /system /system_root; do
+    # if [ -L $mntpt -o ! -d $mntpt ]; then
+      # rm -f $mntpt;
+      # mkdir $mntpt;
+    # fi;
+  # done;
+  # $bb mount -o ro -t auto /dev/block/bootdevice/by-name/system /system_root;
+  # $bb mount -o bind /system_root/system /system;
+# fi;
+savedpath="$LD_LIBRARY_PATH";
+savedpre="$LD_PRELOAD";
+unset LD_LIBRARY_PATH;
+unset LD_PRELOAD;
+
+if [ ! "$(getprop 2>/dev/null)" ]; then
+  getprop() {
+    local propval="$(file_getprop /default.prop $1 2>/dev/null)";
+    test "$propval" || local propval="$(file_getprop /system/build.prop $1 2>/dev/null)";
+    test "$propval" && echo "$propval" || echo "";
+  }
+elif [ ! "$(getprop ro.product.device 2>/dev/null)" -a ! "$(getprop ro.build.product 2>/dev/null)" ]; then
+  getprop() {
+    ($(which getprop) | $bb grep "$1" | $bb cut -d[ -f3 | $bb cut -d] -f1) 2>/dev/null;
+  }
+fi;
+
+if [ "$(file_getprop anykernel.sh do.devicecheck)" == 1 ]; then
+  ui_print "Checking device...";
+  device=$(getprop ro.product.device);
+  product=$(getprop ro.build.product);
+  for testname in $(file_getprop anykernel.sh 'device.name.*'); do
+    if [ "$device" == "$testname" -o "$product" == "$testname" ]; then
+      ui_print "$testname" " ";
+      match=1;
+      break;
+    fi;
+  done;
+  if [ ! "$match" ]; then
+    abort " " "Unsupported device. Aborting...";
+  fi;
+fi;
+
+supported_ver=$(file_getprop anykernel.sh supported.versions | $bb tr -d '[:space:]');
+if [ "$supported_ver" ]; then
+  ui_print "Checking Android version...";
+  android_ver=$(file_getprop /system/build.prop ro.build.version.release);
+  parsed_ver=$(int2ver $android_ver);
+  if echo $supported_ver | $bb grep -q '-'; then
+    lo_ver=$(int2ver "$(echo $supported_ver | $bb cut -d- -f1)");
+    hi_ver=$(int2ver "$(echo $supported_ver | $bb cut -d- -f2)");
+    if echo -e "$hi_ver\n$lo_ver\n$parsed_ver" | $bb sort -g | $bb grep -n "$parsed_ver" | $bb grep -q '^2:'; then
+      supported=1;
+    fi;
+  else
+    for ver in $(echo $supported_ver | $bb sed 's;,; ;g'); do
+      if [ "$(int2ver $ver)" == "$parsed_ver" ]; then
+        supported=1;
+        break;
+      fi;
+    done;
+  fi;
+  if [ "$supported" ]; then
+    ui_print "$android_ver" " ";
+  else
+    abort " " "Unsupported Android version. Aborting...";
+  fi;
+fi;
+
+supported_lvl=$(file_getprop anykernel.sh supported.patchlevels | $bb grep -oE '[0-9]{4}-[0-9]{2}|-');
+if [ "$supported_lvl" ]; then
+  ui_print "Checking Android security patch level...";
+  android_lvl=$(file_getprop /system/build.prop ro.build.version.security_patch);
+  parsed_lvl=$(echo $android_lvl | $bb grep -oE '[0-9]{4}-[0-9]{2}');
+  if echo $supported_lvl | $bb grep -q '^\-'; then
+    lo_lvl=0000-00;
+    hi_lvl=$(echo $supported_lvl | $bb awk '{ print $2 }');
+  elif echo $supported_lvl | $bb grep -q ' - '; then
+    lo_lvl=$(echo $supported_lvl | $bb awk '{ print $1 }');
+    hi_lvl=$(echo $supported_lvl | $bb awk '{ print $3 }');
+  elif echo $supported_lvl | $bb grep -q '\-$'; then
+    lo_lvl=$(echo $supported_lvl | $bb awk '{ print $1 }');
+    hi_lvl=9999-99;
+  fi;
+  if echo -e "$hi_lvl\n$lo_lvl\n$parsed_lvl" | $bb sort -g | $bb grep -n "$parsed_lvl" | $bb grep -q '^2:'; then
+    ui_print "$android_lvl" " ";
+  else
+    abort " " "Unsupported Android security patch level. Aborting...";
+  fi;
+fi;
+
+#ui_print "Installing...";
+core=$($bb grep -oE 'ak.*core.sh' anykernel.sh);
+test -f tools/$core || $bb ln -s $home/tools/ak*-core.sh $home/tools/$core;
+PATH="$home/bin:$PATH" home=$home $bb ash anykernel.sh $2;
+if [ $? != 0 ]; then
+  abort;
+fi;
+
+if [ "$(file_getprop anykernel.sh do.modules)" == 1 ]; then
+  ui_print " " "Pushing modules...";
+  $bb mount -o rw,remount -t auto /system;
+  $bb mount -o rw,remount -t auto /vendor 2>/dev/null;
+  cd $home/modules;
+  for module in $(find . -name '*.ko'); do
+    modtarget=$(echo $module | $bb cut -c2-);
+    if [ ! -e $modtarget ]; then
+      case $module in
+        */vendor/*) modcon=vendor;;
+        *) modcon=system;;
+      esac;
+    fi;
+    if is_mounted $modtarget; then
+      $bb mount -o rw,remount -t auto $modtarget;
+    fi;
+    mkdir -p $(dirname $modtarget);
+    $bb cp -rLf $module $modtarget;
+    $bb chown 0:0 $modtarget;
+    $bb chmod 644 $modtarget;
+    if [ "$modcon" ]; then
+      chcon "u:object_r:${modcon}_file:s0" $modtarget;
+    fi;
+    if is_mounted $modtarget; then
+      $bb mount -o ro,remount -t auto $modtarget;
+    fi;
+  done;
+  cd $home;
+  $bb mount -o ro,remount -t auto /system;
+  $bb mount -o ro,remount -t auto /vendor 2>/dev/null;
+fi;
+
+debugging;
+
+if [ "$(file_getprop anykernel.sh do.cleanup)" == 1 ]; then
+  cleanup;
+fi;
+
+test "$savedpath" && export LD_LIBRARY_PATH="$savedpath";
+test "$savedpre" && export LD_PRELOAD="$savedpre";
+
+# unmount_all;

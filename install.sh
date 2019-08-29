@@ -25,13 +25,11 @@ comp_check
 # Uncomment and change 'MINAPI' and 'MAXAPI' to the minimum and maximum android version for your mod
 # Uncomment DYNLIB if you want libs installed to vendor for oreo+ and system for anything older
 # Uncomment SYSOVER if you want the mod to always be installed to system (even on magisk) - note that this can still be set to true by the user by adding 'sysover' to the zipname
-# Uncomment DIRSEPOL if you want sepolicy patches applied to the boot img directly (not recommended) - THIS REQUIRES THE RAMDISK PATCHER ADDON (this addon requires minimum api of 17)
 # Uncomment DEBUG if you want full debug logs (saved to /sdcard in magisk manager and the zip directory in twrp) - note that this can still be set to true by the user by adding 'debug' to the zipname
 #MINAPI=21
 #MAXAPI=25
 DYNLIB=true
 #SYSOVER=true
-#DIRSEPOL=true
 DEBUG=true
 
 # Uncomment if you do *NOT* want Magisk to mount any files for you. Most modules would NOT want to set this flag to true
@@ -105,16 +103,16 @@ set_permissions() {
   # Use $VEN for vendor (Do not use /system$VEN, the $VEN is set to proper vendor path already - could be /vendor, /system/vendor, etc.)
 
   # Some examples:
-  
+
   # For directories (includes files in them):
   # set_perm_recursive  <dirname>                <owner> <group> <dirpermission> <filepermission> <contexts> (default: u:object_r:system_file:s0)
-  
+
   # set_perm_recursive $UNITY/system/lib 0 0 0755 0644
   # set_perm_recursive $UNITY$VEN/lib/soundfx 0 0 0755 0644
 
   # For files (not in directories taken care of above)
   # set_perm  <filename>                         <owner> <group> <permission> <contexts> (default: u:object_r:system_file:s0)
-  
+
   # set_perm $UNITY/system/lib/libart.so 0 0 0644
 }
 
@@ -253,11 +251,18 @@ unity_custom() {
     mkdir /dsp
     if is_mounted /dsp; then mount -o remount,rw /dsp; else mount_part dsp; fi
   fi
-  # Patch ramdisk only if KIR
-  [ "$KIR" ] || rm -rf $TMPDIR/addon/Ramdisk-Patcher
 }
 
 # Custom Functions for Install AND Uninstall - You can put them here
+run_ak3() {
+  cp -rf $UF/tools/* $TMPDIR/custom/AnyKernel3/tools
+  cp_ch -i $TMPDIR/custom/AnyKernel3/META-INF/com/google/android/update-binary $TMPDIR/ak3/META-INF/com/google/android/update-binary 0755
+  cd $TMPDIR/custom/AnyKernel3
+  zip -qr0 $TMPDIR/ak3 .
+  cd /
+  $TMPDIR/ak3/META-INF/com/google/android/update-binary 1 $OUTFD $TMPDIR/ak3.zip
+}
+
 get_uo() {
   case "$1" in
     "-u") cat $AUO | sed 's/\r$//g' | tr '\r' '\n' > $AUO.tmp; mv -f $AUO.tmp $AUO
@@ -289,7 +294,7 @@ get_uo() {
                      88.2) echo 'persist.vendor.bt.soc.scram_freqs=882.' >> $TMPDIR/common/system.prop; echo 'persist.vendor.bt.soc.scram_freqs=882' >> $TMPDIR/common/system.prop;;
                      96) echo 'persist.vendor.bt.soc.scram_freqs=96.' >> $TMPDIR/common/system.prop; echo 'persist.vendor.bt.soc.scram_freqs=96' >> $TMPDIR/common/system.prop;;
                      176.4) echo 'persist.vendor.bt.soc.scram_freqs=1764.' >> $TMPDIR/common/system.prop; echo 'persist.vendor.bt.soc.scram_freqs=1764' >> $TMPDIR/common/system.prop;;
-                     192) echo 'persist.vendor.bt.soc.scram_freqs=192.' >> $TMPDIR/common/system.prop; echo 'persist.vendor.bt.soc.scram_freqs=192' >> $TMPDIR/common/system.prop;; 
+                     192) echo 'persist.vendor.bt.soc.scram_freqs=192.' >> $TMPDIR/common/system.prop; echo 'persist.vendor.bt.soc.scram_freqs=192' >> $TMPDIR/common/system.prop;;
                      *) eval "$UO=";;
                    esac
                  fi;;
