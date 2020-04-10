@@ -1,0 +1,13 @@
+# This file will be read by resetprop
+# Example: Change dpi
+# ro.sf.lcd_density=320
+tunnel.audio.encode=false
+audio_hal.period_size=192
+audio.safx.pbe.enabled=false
+audio.pp.asphere.enabled=false
+ro.ril.enable.amr.wideband=1
+persist.dev.pm.dyn_samplingrate=1
+lpa.decode=false
+lpa.use-stagefright=false
+lpa.releaselock=false
+

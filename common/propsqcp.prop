@@ -2,14 +2,9 @@ af.fast_track_multiplier=1
 persist.audio.hifi.int_codec=true
 persist.audio.hp=true
 persist.audio.lowlatency.rec=true
-audio.offload.pcm.enable=true
-#audio.offload.buffer.size.kb=320
 audio.offload.pcm.16bit.enable=true
-audio.offload.multiple.enabled=true
 audio.playback.mch.downsample=false
-audio.safx.pbe.enabled=true
-use.dts_eagle=true
-hpx_send_params=1
+audio.safx.pbe.enabled=false
 #
 # Ultram8's hex props:
 #
@@ -18,13 +13,7 @@ audio.nat.codec.enabled=1
 fastrpc.perf.adsp=1
 fastrpc.perf.freq=1000
 fastrpc.perf.kernel=1
-ro.audio.usb.period_us=20000
 af.thread.throttle=0
 ro.audio.max_fast_tracks=8
-audio.hwacceffects.needed=true
-eagle_dsec_islicensevalid=1
-DTS_EAGLE_PLATFORM_SUPPORT=true
-DTS_NEW_PARAM_READY=1
-EagleLicense=1
-HD_stream_only=1
-effect.reverb.pcm=1
+audio.hwacceffects.needed=false
+effect.reverb.pcm=0

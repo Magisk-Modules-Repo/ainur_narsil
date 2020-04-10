@@ -1,2 +1,0 @@
-/data/misc/dts(/.*)?		u:object_r:dts_data_file:s0
-/dev/dts_eagle		u:object_r:audio_device:s0
