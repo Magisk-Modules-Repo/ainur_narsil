@@ -1,5 +1,14 @@
 # Post Fs controller script
 
+change_module() {
+  [ "$1" ] || return 0
+  for FILE in $1; do
+    chmod 666 $FILE
+    echo "$2" > $FILE
+    chmod 444 $FILE
+  done
+}
+
 #Force high performance DAC by ZeroInfinity@XDA
 #requires custom kernel support for uhqa
 HPM=$(find /sys/module -name high_perf_mode)

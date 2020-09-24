@@ -236,7 +236,6 @@ if [ -d "/system/lib/modules" ]; then
 else
   MODU=$MODPATH/system/vendor/lib
 fi
-MIXNUM=$(echo $MIXS | wc -w)
 
 ##########################################################################################
 # Pre-installation
@@ -497,16 +496,6 @@ fi
 
 # Mixer modifications by UltraM8
 ui_print "   Patching mixers..."
-if [ $MIXNUM -gt 5 ]; then
-  ui_print " "
-  ui_print "     ! More than 5 mixer files detected!"
-  ui_print "     If using aml, other mixer mods may not work"
-  ui_print " "
-  sleep 3
-else
-  sed -i "/\*mixer_paths\*/d" $MODPATH.aml.sh
-fi
-
 if [ $QCP ]; then
   for OMIX in ${MIXS}; do
     MIX="$MODPATH$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"

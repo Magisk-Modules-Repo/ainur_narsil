@@ -3,7 +3,7 @@
 
 ## Installation instructions
  - Either install as a module from Magisk Manager, or via your choice of custom recovery.
- - For advanced features, edit the sauron_useroptions file at Internal Storage (instructions contianed) and reflash *twice*.
+ - For advanced features, edit the narsil_useroptions file at Internal Storage (instructions contianed) and reflash *twice*.
 
 ## Troubleshooting
  - If ANYTHING fails, first and foremost provide logs found at Internal Storage.
@@ -20,4 +20,5 @@
 
 ## Credits 
  - [Magisk](https://github.com/topjohnwu/Magisk)
- - [Magisk Module Template Extended](https://forum.xda-developers.com/apps/magisk/magisk-module-template-extended-mmt-ex-t4029819)
+ - [MMT-Ex Template](https://github.com/Zackptg5/MMT-Extended/)
+ - [XMLStarlet](http://xmlstar.sourceforge.net)
