@@ -149,6 +149,7 @@ MIUI=$(grep "ro.miui.ui.version.*|ro.product.brand=Xiaomi*" $BUILDS)
 TMSM=$(grep "ro.board.platform=msm" $BUILDS | sed 's/^.*=msm//')
 QC94=$(grep "ro.board.platform=msm8994" $BUILDS)
 QCP=$(grep -E "ro.board.platform=apq.*|ro.board.platform=msm.*|ro.board.platform=sdm.*" $BUILDS)
+[ -z $QCP ] && QCP="$(cat /proc/cpuinfo | grep 'Qualcomm')"
 QC8996=$(grep "ro.board.platform=msm8996" $BUILDS)
 QC8998=$(grep "ro.board.platform=msm8998" $BUILDS)
 SD625=$(grep "ro.board.platform=msm8953" $BUILDS)
@@ -331,10 +332,10 @@ if [ "$QCP" ]; then
   if [ -f "$AMPA" ]; then
     cp_ch $MINAS/TAS2557_A.ftcfg $MODPATH$VETC/TAS2557_A.ftcfg
     cp_ch $MINAS/TAS2557_B.ftcfg $MODPATH$VETC/TAS2557_B.ftcfg
-    cp_ch $MINAS/tas2557s_uCDSP_PG21.bin $MODPATH$ETC/firmware/tas2557s_uCDSP_PG21.bin
+    cp_ch $MINAS/tas2557s_uCDSP_PG21.bin $MODPATH/system/firmware/tas2557s_uCDSP_PG21.bin
     if [ -f "$U11P" ]; then
-      cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH$VETC/firmware/tas2557s_uCDSP_24bit.bin
-      cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH$VETC/firmware/tas2557s_uCDSP.bin
+      cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP_24bit.bin
+      cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP.bin
     fi
   fi
   if [ "$MI8SE" ]; then
@@ -343,22 +344,22 @@ if [ "$QCP" ]; then
     cp_ch $MINAS/TAS2557_B.ftcfg $MODPATH$VETC/tas2557_goer.ftcfg
     cp_ch $MINAS/audio_snd-soc-tas2557.ko $MODU/modules/audio_snd-soc-tas2557.ko
     # test
-    cp_ch $MINAS/tas2557_uCDSP $MODPATH$VETC/firmware/tas2557_uCDSP
-    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH$VETC/firmware/tas2557s_uCDSP_24bit.bin
-    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH$VETC/firmware/tas2557s_uCDSP.bin
+    cp_ch $MINAS/tas2557_uCDSP $MODPATH/system/vendor/firmware/tas2557_uCDSP
+    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP_24bit.bin
+    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP.bin
   elif [ "$MI8EE" ] || [ "$MI8UD" ]; then
     cp_ch $MINAS/ti_audio_s $MODPATH/system/bin/ti_audio_s
     cp_ch $MINAS/TAS2557_A.ftcfg $MODPATH$VETC/tas2557.ftcfg
     cp_ch $MINAS/audio_snd-soc-tas2557.ko $MODU/modules/audio_snd-soc-tas2557.ko
-    cp_ch $MINAS/tas2557_uCDSP $MODPATH$VETC/firmware/tas2557_uCDSP
-    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH$VETC/firmware/tas2557s_uCDSP_24bit.bin
-    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH$VETC/firmware/tas2557s_uCDSP.bin
+    cp_ch $MINAS/tas2557_uCDSP $MODPATH/system/vendor/firmware/tas2557_uCDSP
+    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP_24bit.bin
+    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP.bin
   elif [ "$MIA2" ]; then
     cp_ch $MINAS/TAS2557_A.ftcfg $MODPATH$VETC/speaker.ftcfg
     cp_ch $MINAS/audio_snd-soc-tas2557.ko $MODU/modules/audio_snd-soc-tas2557.ko
-    cp_ch $MINAS/tas2557_uCDSP $MODPATH$VETC/firmware/tas2557_uCDSP
-    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH$VETC/firmware/tas2557s_uCDSP_24bit.bin
-    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH$VETC/firmware/tas2557s_uCDSP.bin
+    cp_ch $MINAS/tas2557_uCDSP $MODPATH/system/vendor/firmware/tas2557_uCDSP
+    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP_24bit.bin
+    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP.bin
   elif [ "$POC" ]; then
    cp_ch $MINAS/tas2559_l.ftcfg $MODPATH$VETC/tas2559_l.ftcfg
    cp_ch $MINAS/tas2559_r.ftcfg $MODPATH$VETC/tas2559_r.ftcfg
@@ -370,23 +371,23 @@ if [ "$QCP" ]; then
     mktouch $MODPATH/system/vendor/firmware/tas2557s_PG21_uCDSP.bin
     mktouch $MODPATH/system/vendor/firmware/tas2557s_uCDSP.bin
     mktouch $MODPATH/system/vendor/firmware/tas2557_cal.bin
-    cp_ch $MINAS/tas2557s_uCDSP_PG21.bin $MODPATH$VETC/firmware/tas2557s_uCDSP_PG21.bin
-    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH$VETC/firmware/tas2557s_uCDSP_24bit.bin
-    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH$VETC/firmware/tas2557s_uCDSP.bin
+    cp_ch $MINAS/tas2557s_uCDSP_PG21.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP_PG21.bin
+    cp_ch $MINAS/tas2557s_uCDSP_24bit.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP_24bit.bin
+    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH/system/vendor/firmware/tas2557s_uCDSP.bin
     cp_ch $MINAS/TAS2557_A.ftcfg $MODPATH$VETC/TAS2557_A.ftcfg
     cp_ch $MINAS/TAS2557_B.ftcfg $MODPATH$VETC/TAS2557_B.ftcfg
     cp_ch $MINAS/audio_snd-soc-tas2557.ko $MODU/modules/audio_snd-soc-tas2557.ko
-    [ "$MI9" ] || cp_ch $MINAS/capi_v2_smartAmp_TAS25xx.so.1 $ADSP/capi_v2_smartAmp_TAS25xx.so.1
-    [ "$P2" ] && cp_ch $MINAS/tfa98xx.cnt $MODPATH$VETC/firmware/tfa98xx.cnt
+    [ "$MI9" ] || cp_ch $MINAS/capi_v2_smartAmp_TAS25xx.so.1 $MODPATH$ADSP/capi_v2_smartAmp_TAS25xx.so.1
+    [ "$P2" ] && cp_ch $MINAS/tfa98xx.cnt $MODPATH/system/vendor/firmware/tfa98xx.cnt
   elif [ "$P1XL" ] || [ "$P1" ]; then
-    cp_ch $MINAS/tfa98xx.cnt $MODPATH$VETC/firmware/tfa98xx.cnt
+    cp_ch $MINAS/tfa98xx.cnt $MODPATH/system/vendor/firmware/tfa98xx.cnt
   elif [ "$X5P" ]; then
-    mktouch $MODPATH$ETC/firmware/tas2557_uCDSP.bin
-    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH$ETC/firmware/tas2557s_uCDSP.bin
+    mktouch $MODPATH/system/firmware/tas2557_uCDSP.bin
+    cp_ch $MINAS/tas2557s_uCDSP.bin $MODPATH/system/firmware/tas2557s_uCDSP.bin
     cp_ch $MINAS/files/TAS2557_A.ftcfg $MODPATH$VETC/TAS2557_A.ftcfg
     cp_ch $MINAS/files/TAS2557_B.ftcfg $MODPATH$VETC/TAS2557_B.ftcfg
     cp_ch $MINAS/audio_snd-soc-tas2557.ko $MODU/modules/audio_snd-soc-tas2557.ko
-    [ "$MI9" ] || cp_ch $MINAS/capi_v2_smartAmp_TAS25xx.so.1 $ADSP/capi_v2_smartAmp_TAS25xx.so.1
+    [ "$MI9" ] || cp_ch $MINAS/capi_v2_smartAmp_TAS25xx.so.1 $MODPATH$ADSP/capi_v2_smartAmp_TAS25xx.so.1
   fi
   if $QCNEW && $ACDBP; then
     if [ -f "$ACDB/Codec_cal.acdb" ]; then
@@ -496,7 +497,7 @@ fi
 
 # Mixer modifications by UltraM8
 ui_print "   Patching mixers..."
-if [ $QCP ]; then
+if [ "$QCP" ]; then
   for OMIX in ${MIXS}; do
     MIX="$MODPATH$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
     cp_ch $ORIGDIR$OMIX $MIX
@@ -524,14 +525,14 @@ if [ $QCP ]; then
       if [ ! "$LG" ]; then
         patch_xml -s $MIX '/mixer/ctl[@name="QUAT_MI2S_RX SampleRate"]' "$RESAMPLE"
       fi
-      [ $QCNEW ] && { patch_xml -s $MIX '/mixer/ctl[@name="SLIM_6_RX SampleRate"]' "$RESAMPLE"; patch_xml -s $MIX '/mixer/ctl[@name="SLIM_2_RX SampleRate"]' "$RESAMPLE"; }
+      $QCNEW && { patch_xml -s $MIX '/mixer/ctl[@name="SLIM_6_RX SampleRate"]' "$RESAMPLE"; patch_xml -s $MIX '/mixer/ctl[@name="SLIM_2_RX SampleRate"]' "$RESAMPLE"; }
       patch_xml -s $MIX '/mixer/ctl[@name="USB_AUDIO_RX SampleRate"]' "$RESAMPLE"
       patch_xml -s $MIX '/mixer/ctl[@name="HDMI_RX SampleRate"]' "$RESAMPLE"
       if [ "$V30" ] || [ "$G7" ]; then
        patch_xml -s $MIX '/mixer/ctl[@name="TERT_MI2S_RX SampleRate"]' "$RESAMPLE"
       fi
     fi
-    if [ "$QC8996" ] || [ $QCNEW ]; then
+    if [ "$QC8996" ] || $QCNEW; then
       patch_xml -s $MIX '/mixer/ctl[@name="VBoost Ctrl"]' "AlwaysOn"
     fi
     patch_xml -s $MIX '/mixer/ctl[@name="Set Custom Stereo OnOff"]' "Off"
@@ -540,7 +541,7 @@ if [ $QCP ]; then
     patch_xml -s $MIX '/mixer/ctl[@name="DS2 OnOff"]' "Off"
     patch_xml -s $MIX '/mixer/ctl[@name="Codec Wideband"]' "1"
     patch_xml -s $MIX '/mixer/ctl[@name="HPH Type"]' "1"
-	  if [ $QCNEW ]; then
+	  if $QCNEW; then
       patch_xml -u $MIX '/mixer/ctl[@name="RX HPH Mode"]' "CLS_AB_HIFI"
   	else
 	    patch_xml -u $MIX '/mixer/ctl[@name="RX HPH Mode"]' "CLS_H_AB"
@@ -660,7 +661,7 @@ if [ $QCP ]; then
     fi
   done
 
-  if [ -f $VNDKQ ]; then
+  if [ -f "$VNDKQ" ]; then
     ui_print "   Patching Q HAL config... "
     for OACONF in ${ACONF}; do
       ACONF="$MODPATH$(echo $OACONF | sed "s|^/vendor|/system/vendor|g")"

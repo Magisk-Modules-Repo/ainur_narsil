@@ -114,6 +114,5 @@ for FILE in $FILES; do
                                        sed -i "/<module name=\"primary\"/,/<\/module>/ {/<mixPort name=\"compress_offload\"/,/<\/mixPort>/ {s/channelMasks=\"[^\"]*\(.*\)/channelMasks=\"AUDIO_CHANNEL_OUT_PENTA\|AUDIO_CHANNEL_OUT_5POINT1\|AUDIO_CHANNEL_OUT_6POINT1\|AUDIO_CHANNEL_OUT_7POINT1\1/}}" $FILE
                                      fi;;
     *audio_effects*) process_effects $FILE;;
-    *mixer_paths*.xml) cp -f $OFILE $FILE;;
   esac
 done
