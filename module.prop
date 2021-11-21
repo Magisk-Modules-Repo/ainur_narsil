@@ -1,6 +1,6 @@
 id=ainur_narsil
 name=Ainur Narsil
-version=MK I (01.01.2021)
+version=MK I (09.09.2021)
 versionCode=52
 author=UltraM8, Zackptg5, LazerL0rd, and JohnFawkes
 description=NARSIL is system-wide audio modification that helps keeping android playback tract clean from most sound FX (OpenSL & hardware DSPs). This might be especially handy for devices with great internal codecs & DACs - leaving pure hardware audio tuned by manufacturer.
