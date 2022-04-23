@@ -10,4 +10,9 @@ persist.dev.pm.dyn_samplingrate=1
 lpa.decode=false
 lpa.use-stagefright=false
 lpa.releaselock=false
+ro.audio.resampler.psd.stopband=132
+ro.audio.resampler.psd.halflength=960
+ro.audio.resampler.psd.cutoff_percent=98
+ro.audio.resampler.psd.tbwcheat=0
+audio.safemedia.bypass=true
 
