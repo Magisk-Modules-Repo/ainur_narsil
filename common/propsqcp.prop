@@ -10,9 +10,6 @@ audio.safx.pbe.enabled=false
 #
 #audio.native.dsd.buffer.size.kb=320
 audio.nat.codec.enabled=1
-fastrpc.perf.adsp=1
-fastrpc.perf.freq=1000
-fastrpc.perf.kernel=1
 af.thread.throttle=0
 ro.audio.max_fast_tracks=8
 audio.hwacceffects.needed=false

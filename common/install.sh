@@ -19,7 +19,7 @@ get_uo() {
          case $UO in
            "BIT") case "$BIT" in
                     "S16_LE");;
-                    "S24_3LE") echo -e 'persist.audio.format.24bit=true\naudio.offload.pcm.24bit.enable=true\npersist.vendor.audio_hal.dsp_bit_width_enforce_mode=1' >> $MODPATH/system.prop;;
+                    "S24_3LE") echo -e 'persist.audio.format.24bit=true\naudio.offload.pcm.24bit.enable=true\npersist.vendor.audio_hal.dsp_bit_width_enforce_mode=24' >> $MODPATH/system.prop;;
                     "S32_LE") $QCNEW && echo -e 'persist.vendor.audio_hal.dsp_bit_width_enforce_mode=1\naudio.offload.pcm.32bit.enable=true' >> $MODPATH/system.prop || unset BIT;;
                     *) unset BIT;;
                   esac;;
@@ -422,6 +422,7 @@ if [ "$MTK" ]; then
 elif [ "$EXY" ]; then
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $MODPATH/system.prop
 elif [ "$MIUI" ]; then
+  prop_process $MODPATH/common/propsmi.prop
   sed -i 's/persist.audio.hifi(.?)true/'d $MODPATH/system.prop
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $MODPATH/system.prop
   sed -i 's/persist.audio.hifi.volume(.?)1/'d $MODPATH/system.prop
@@ -547,6 +548,7 @@ if [ "$QCP" ]; then
 	    patch_xml -u $MIX '/mixer/ctl[@name="RX HPH Mode"]' "CLS_H_AB"
     fi
     patch_xml -s $MIX '/mixer/ctl[@name="HiFi Function"]' "On"
+    patch_xml -s $MIX '/mixer/ctl[@name="HiFi Filter"]' "On"
     patch_xml -s $MIX '/mixer/ctl[@name="App Type Gain"]' "8192"
     patch_xml -s $MIX '/mixer/ctl[@name="Audiosphere Enable"]' "Off"
     patch_xml -s $MIX '/mixer/ctl[@name="MSM ASphere Set Param"]' "0"
@@ -673,8 +675,8 @@ if [ "$QCP" ]; then
         patch_xml -u $ACONF '/configs/flag[@name="audiosphere_enabled"]' "false"
       fi
       # <flag name="custom_stereo_enabled" value="true" />
-      patch_xml -u $ACONF '/configs/flag[@name="ext_qdsp_enabled"]' "true"
-      patch_xml -u $ACONF '/configs/flag[@name="maxx_audio_enabled"]' "true"
+      #patch_xml -u $ACONF '/configs/flag[@name="ext_qdsp_enabled"]' "true"
+      #patch_xml -u $ACONF '/configs/flag[@name="maxx_audio_enabled"]' "true"
       # patch_xml -u $ACONF '/configs/flag[@name="wsa_enabled"]' 'value="true"'
       # <flag name="spkr_prot_enabled" value="true" />
       patch_xml -u $ACONF '/configs/flag[@name="hifi_audio_enabled"]' "true"
