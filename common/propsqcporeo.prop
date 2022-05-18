@@ -8,11 +8,12 @@ vendor.audio.playback.mch.downsample=false
 vendor.audio.playback.dsp.pathdelay=0
 #
 persist.vendor.audio.ha_proxy.enabled=true
-persist.vendor.audio.format.24bit=true
 vendor.audio.adm.phaseshift.ms=1
 vendor.audio.adm.buffering.ms=1
 vendor.audio.truehd.buffer.size.kb=256
-persist.vendor.audio.delta.refresh=true
+ro.vendor.audio.sfx.spk.movie=true
+ro.vendor.audio.spk.stereo=true
+ro.vendor.audio.surround.support=true
 vendor.audio.feature.vbat.enable=false
 vendor.audio.hfp.enable=false
 vendor.audio.kpi_optimize.enable=false

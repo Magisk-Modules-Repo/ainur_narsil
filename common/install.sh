@@ -20,7 +20,7 @@ get_uo() {
            "BIT") case "$BIT" in
                     "S16_LE");;
                     "S24_3LE") echo -e 'persist.audio.format.24bit=true\naudio.offload.pcm.24bit.enable=true\npersist.vendor.audio_hal.dsp_bit_width_enforce_mode=24' >> $MODPATH/system.prop;;
-                    "S32_LE") $QCNEW && echo -e 'persist.vendor.audio_hal.dsp_bit_width_enforce_mode=1\naudio.offload.pcm.32bit.enable=true' >> $MODPATH/system.prop || unset BIT;;
+                    "S32_LE") $QCNEW && echo -e 'persist.vendor.audio_hal.dsp_bit_width_enforce_mode=24\naudio.offload.pcm.32bit.enable=true' >> $MODPATH/system.prop || unset BIT;;
                     *) unset BIT;;
                   esac;;
            # Put non-boolean variables here
@@ -422,7 +422,6 @@ if [ "$MTK" ]; then
 elif [ "$EXY" ]; then
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $MODPATH/system.prop
 elif [ "$MIUI" ]; then
-  prop_process $MODPATH/common/propsmi.prop
   sed -i 's/persist.audio.hifi(.?)true/'d $MODPATH/system.prop
   sed -i 's/alsa.mixer.playback.master(.?)DAC1/'d $MODPATH/system.prop
   sed -i 's/persist.audio.hifi.volume(.?)1/'d $MODPATH/system.prop
