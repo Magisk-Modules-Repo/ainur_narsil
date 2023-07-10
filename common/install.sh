@@ -194,17 +194,19 @@ MI8UD=$(grep "ro.vendor.product.name=equuleus.*" $BUILDS)
 MIA2=$(grep "ro.vendor.product.name=jasmine.*" $BUILDS)
 POC=$(grep -E "ro.product.vendor.name=beryllium.*|ro.product.name=beryllium.*" $BUILDS)
 MI9=$(grep -E "ro.product.vendor.name=cepheus.*|ro.product.name=cepheus.*" $BUILDS)
-CFGS="$(find /system /vendor -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
-MIXS="$(find /system /vendor -type f -name "mixer_paths*.xml")"
-POLS="$(find /system /vendor -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
-SAPA="$(find /system /vendor -type f -name "*sapa_feature*.xml")"
-MIXG="$(find /system /vendor -type f -name "*mixer_gains*.xml")"
-MIXA="$(find /system /vendor -type f -name "*audio_device*.xml")"
-MODA="$(find /system /vendor -type f -name "modules.alias")"
-MODD="$(find /system /vendor -type f -name "modules.dep")"
-APLIS="$(find /system /vendor -type f -name "audio_platform_info*.xml")"
-TUNES="$(find /system /vendor -type f -name "*audio_effects_tune*.xml")"
-ACONF="$(find /system /vendor -type f -name "audio_configs*.xml")"
+
+PARTITIONS="/system /vendor $PARTITIONS"
+CFGS="$(find $PARTITIONS -type f -name "*audio_effects*.conf" -o -name "*audio_effects*.xml")"
+MIXS="$(find $PARTITIONS -type f -name "mixer_paths*.xml")"
+POLS="$(find $PARTITIONS -type f -name "*audio_*policy*.conf" -o -name "*audio_*policy*.xml")"
+SAPA="$(find $PARTITIONS -type f -name "*sapa_feature*.xml")"
+MIXG="$(find $PARTITIONS -type f -name "*mixer_gains*.xml")"
+MIXA="$(find $PARTITIONS -type f -name "*audio_device*.xml")"
+MODA="$(find $PARTITIONS -type f -name "modules.alias")"
+MODD="$(find $PARTITIONS -type f -name "modules.dep")"
+APLIS="$(find $PARTITIONS -type f -name "audio_platform_info*.xml")"
+TUNES="$(find $PARTITIONS -type f -name "*audio_effects_tune*.xml")"
+ACONF="$(find $PARTITIONS -type f -name "audio_configs*.xml")"
 REMLIBS="$(find /system/lib*/soundfx /vendor/lib*/soundfx -type f -name "lib*.so")"
 VNDK=$(find /system/lib /vendor/lib -type d -iname "*vndk*")
 VNDK64=$(find /system/lib64 /vendor/lib64 -type d -iname "*vndk*")
@@ -306,6 +308,7 @@ done
 ui_print "   Removing audio effects..."
 for OFILE in ${CFGS}; do
   FILE="$MODPATH$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
+  $KSU && FILE="$(echo $FILE | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
   cp_ch $ORIGDIR$OFILE $FILE
   process_effects $FILE
 done
@@ -454,6 +457,7 @@ if $AP || $OAP; then
   ui_print "   Patching audio policies"
   for OFILE in ${POLS}; do
     FILE="$MODPATH$(echo $OFILE | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && FILE="$(echo $FILE | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     case $FILE in
       *audio_policy.conf) if $AP; then
                             cp_ch $ORIGDIR$OFILE $FILE
@@ -500,6 +504,7 @@ ui_print "   Patching mixers..."
 if [ "$QCP" ]; then
   for OMIX in ${MIXS}; do
     MIX="$MODPATH$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && MIX="$(echo $MIX | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$OMIX $MIX
     sed -i 's/\t/  /g' $MIX
     if [ "$BIT" ]; then
@@ -641,6 +646,7 @@ if [ "$QCP" ]; then
 
   for OAPLI in ${APLIS}; do
     APLI="$MODPATH$(echo $OAPLI | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && APLI="$(echo $APLI | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$OAPLI $APLI
     sed -i 's/\t/  /g' $APLI
     if [ ! "$OP5" ]; then
@@ -666,6 +672,7 @@ if [ "$QCP" ]; then
     ui_print "   Patching Q HAL config... "
     for OACONF in ${ACONF}; do
       ACONF="$MODPATH$(echo $OACONF | sed "s|^/vendor|/system/vendor|g")"
+      $KSU && ACONF="$(echo $ACONF | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
       cp_ch $ORIGDIR$OACONF $ACONF
       sed -i 's/\t/  /g' $ACONF
       if $ASP; then
@@ -686,6 +693,7 @@ if [ "$QCP" ]; then
 elif [ "$EXY" ]; then
   for OMIX in ${MIXS}; do
     MIX="$MODPATH$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && MIX="$(echo $MIX | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$OMIX $MIX
     sed -i 's/\t/  /g' $MIX
     patch_xml -s $MIX '/mixer/ctl[@name="Output Ramp Up"]' "0ms/6dB"
@@ -700,6 +708,7 @@ elif [ "$EXY" ]; then
   done
   for OSAPA in ${SAPA}; do
     SAP="$MODPATH$(echo $OSAPA | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && SAP="$(echo $SAP | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$SAP $SAP
     sed -i 's/\t/  /g' $SAP
     patch_xml -s $SAP '/feed/feature[@name="support_powersaving_mode"]' "false"
@@ -717,6 +726,7 @@ elif [ "$EXY" ]; then
   done
   for GMIX in ${MIXG}; do
     GAIN="$MODPATH$(echo $GMIX | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && GAIN="$(echo $GAIN | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$GAIN $GAIN
     sed -i 's/\t/  /g' $GAIN
     patch_xml -s $GAIN '/mixer/ctl[@name="HPOUT2L Impedance Volume"]' "117"
@@ -725,6 +735,7 @@ elif [ "$EXY" ]; then
 elif [ "$MTK" ]; then
   for OMIX in ${MIXA}; do
     MIX="$MODPATH$(echo $OMIX | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && MIX="$(echo $MIX | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$OMIX $MIX
     sed -i 's/\t/  /g' $MIX
     if [ "$MIMPEDANCE" ]; then
@@ -749,6 +760,7 @@ if [ "$LG" ] && [ -f "$AET" ]; then
   ui_print "   Patching DTS Tune XML... "
   for OTUNE in ${TUNES}; do
     TUNE="$MODPATH$(echo $OTUNE | sed "s|^/vendor|/system/vendor|g")"
+    $KSU && TUNE="$(echo $TUNE | sed -e "s|^/odm|/system/odm|g" -e "s|^/my_product|/system/my_product|g")"
     cp_ch $ORIGDIR$OTUNE $TUNE
     sed -i 's/\t/  /g' $TUNE
     # Absolute value: default LL preset is Light mode 0, other values can be 1 for Medium and 2 for Aggressive -DEFAULT(0)
